@@ -2,19 +2,40 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { createJob, type JobFormState } from "../actions";
+import type { JobFormState } from "./actions";
 import { BillingFields } from "@/components/billing-fields";
 
-const initial: JobFormState = {};
+export type JobDefaults = {
+  name: string;
+  clientName: string;
+  billingType: "hourly" | "fixed";
+  amount: string;
+  estimatedHours: string;
+  notes: string;
+};
 
-export function JobForm({ clientNames }: { clientNames: string[] }) {
-  const [state, action, pending] = useActionState(createJob, initial);
+type Props = {
+  clientNames: string[];
+  action: (prev: JobFormState, formData: FormData) => Promise<JobFormState>;
+  defaults?: JobDefaults;
+  jobId?: string;
+  submitLabel: string;
+  cancelHref: string;
+};
+
+const initial: JobFormState = {};
+const empty: JobDefaults = { name: "", clientName: "", billingType: "hourly", amount: "", estimatedHours: "", notes: "" };
+
+export function JobForm({ clientNames, action, defaults = empty, jobId, submitLabel, cancelHref }: Props) {
+  const [state, formAction, pending] = useActionState(action, initial);
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={formAction} className="space-y-5">
+      {jobId && <input type="hidden" name="id" value={jobId} />}
+
       <div>
         <label htmlFor="name" className="label">Job name</label>
-        <input id="name" name="name" type="text" required autoFocus className="input" placeholder="e.g. Kitchen remodel" />
+        <input id="name" name="name" type="text" required autoFocus={!jobId} defaultValue={defaults.name} className="input" placeholder="e.g. Kitchen remodel" />
       </div>
 
       <div>
@@ -27,6 +48,7 @@ export function JobForm({ clientNames }: { clientNames: string[] }) {
           type="text"
           list="client-names"
           autoComplete="off"
+          defaultValue={defaults.clientName}
           className="input"
           placeholder="Start typing — new names are added automatically"
         />
@@ -37,7 +59,7 @@ export function JobForm({ clientNames }: { clientNames: string[] }) {
         </datalist>
       </div>
 
-      <BillingFields />
+      <BillingFields defaultType={defaults.billingType} defaultAmount={defaults.amount} />
 
       <div>
         <label htmlFor="estimated_hours" className="label">
@@ -50,6 +72,7 @@ export function JobForm({ clientNames }: { clientNames: string[] }) {
           inputMode="decimal"
           min="0"
           step="0.5"
+          defaultValue={defaults.estimatedHours}
           className="input"
           placeholder="e.g. 20"
         />
@@ -59,15 +82,15 @@ export function JobForm({ clientNames }: { clientNames: string[] }) {
         <label htmlFor="notes" className="label">
           Notes <span className="font-normal text-stone-400">(optional)</span>
         </label>
-        <textarea id="notes" name="notes" rows={3} className="input" />
+        <textarea id="notes" name="notes" rows={3} defaultValue={defaults.notes} className="input" />
       </div>
 
       {state.error && <p className="error">{state.error}</p>}
 
       <div className="flex gap-3">
-        <Link href="/jobs" className="btn-secondary">Cancel</Link>
+        <Link href={cancelHref} className="btn-secondary">Cancel</Link>
         <button type="submit" disabled={pending} className="btn-primary">
-          {pending ? "Saving…" : "Create job"}
+          {pending ? "Saving…" : submitLabel}
         </button>
       </div>
     </form>

@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { getJobTotals, summarize } from "@/lib/jobs";
 import { formatCents, formatDuration } from "@/lib/calc";
-import { formatDate, formatTime } from "@/lib/dates";
+import { formatDate, formatDayHeading, formatTime } from "@/lib/dates";
+import { CATEGORY_LABELS } from "@/lib/expenses";
 import { getPeople, personLabel } from "@/lib/people";
 import { JobSummaryBlock } from "@/components/job-summary";
 import { archiveJob, unarchiveJob } from "../actions";
@@ -63,14 +64,17 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             {job.estimated_minutes !== null && ` · est. ${formatDuration(job.estimated_minutes * 60)}`}
           </p>
         </div>
-        {isArchived ? (
-          <span className="shrink-0 rounded-full bg-stone-200 px-2 py-0.5 text-xs text-stone-700">Archived</span>
-        ) : (
-          <form action={startTimerFromJob}>
-            <input type="hidden" name="job_id" value={job.id} />
-            <button type="submit" className="btn-primary w-auto px-4 py-2 text-sm">Start timer</button>
-          </form>
-        )}
+        <div className="flex shrink-0 items-center gap-3">
+          <Link href={`/jobs/${job.id}/edit`} className="text-sm text-stone-600 hover:underline">Edit</Link>
+          {isArchived ? (
+            <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs text-stone-700">Archived</span>
+          ) : (
+            <form action={startTimerFromJob}>
+              <input type="hidden" name="job_id" value={job.id} />
+              <button type="submit" className="btn-primary w-auto px-4 py-2 text-sm">Start timer</button>
+            </form>
+          )}
+        </div>
       </div>
 
       <section className="card">
@@ -125,16 +129,25 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold">Expenses</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Expenses</h2>
+          {!isArchived && (
+            <Link href={`/expenses/new?job=${job.id}`} className="text-sm text-emerald-800 hover:underline">
+              + Add expense
+            </Link>
+          )}
+        </div>
         {expenses?.length ? (
           <ul className="card divide-y divide-stone-100 p-0">
             {expenses.map((x) => (
-              <li key={x.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium capitalize">{x.category}</p>
-                  <p className="truncate text-xs text-stone-500">{x.spent_on}{x.description ? ` · ${x.description}` : ""}</p>
-                </div>
-                <span className="shrink-0 text-sm font-semibold tabular-nums">{formatCents(x.amount_cents)}</span>
+              <li key={x.id}>
+                <Link href={`/expenses/${x.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-stone-50">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{x.description || CATEGORY_LABELS[x.category]}</p>
+                    <p className="truncate text-xs text-stone-500">{CATEGORY_LABELS[x.category]} · {formatDayHeading(x.spent_on, tz)}</p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums">{formatCents(x.amount_cents)}</span>
+                </Link>
               </li>
             ))}
           </ul>
