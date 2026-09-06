@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
+import { parseDollars } from "@/lib/calc";
 
 export type OnboardingState = { error?: string };
 
@@ -52,12 +53,10 @@ export async function createFirstJob(
   if (!name) return { error: "What should we call this job?" };
 
   const billingType = formData.get("billing_type") === "fixed" ? "fixed" : "hourly";
-  const amountRaw = String(formData.get("amount") ?? "").trim();
-  const amount = amountRaw === "" ? null : Number(amountRaw);
-  if (amount !== null && (!Number.isFinite(amount) || amount < 0)) {
+  const cents = parseDollars(String(formData.get("amount") ?? ""));
+  if (cents !== null && Number.isNaN(cents)) {
     return { error: "Enter a valid amount, or leave it blank." };
   }
-  const cents = amount === null ? null : Math.round(amount * 100);
 
   const supabase = await createClient();
   const { error } = await supabase.from("jobs").insert({
