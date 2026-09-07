@@ -27,6 +27,8 @@ export async function getPeople(orgId: string, meId: string): Promise<Person[]> 
     }));
 }
 
-export function personLabel(people: Person[], userId: string): string {
+/** Label for an entry's author; removed or deleted people show as "Former member". */
+export function personLabel(people: Person[], userId: string | null): string {
+  if (!userId) return "Former member";
   return people.find((p) => p.userId === userId)?.label ?? "Former member";
 }

@@ -111,7 +111,7 @@ export type Database = {
           receipt_path: string | null
           spent_on: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           amount_cents: number
@@ -124,7 +124,7 @@ export type Database = {
           receipt_path?: string | null
           spent_on?: string
           updated_at?: string
-          user_id: string
+          user_id: string | null
         }
         Update: {
           amount_cents?: number
@@ -137,7 +137,7 @@ export type Database = {
           receipt_path?: string | null
           spent_on?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -461,7 +461,7 @@ export type Database = {
           started_at: string
           stopped_at: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -474,7 +474,7 @@ export type Database = {
           started_at: string
           stopped_at?: string | null
           updated_at?: string
-          user_id: string
+          user_id: string | null
         }
         Update: {
           created_at?: string
@@ -487,7 +487,7 @@ export type Database = {
           started_at?: string
           stopped_at?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -511,11 +511,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invite: { Args: { token: string }; Returns: string }
       auth_is_owner: { Args: never; Returns: boolean }
       auth_org_id: { Args: never; Returns: string }
       create_organization: {
         Args: { org_name: string; org_timezone?: string }
         Returns: string
+      }
+      delete_account: { Args: never; Returns: undefined }
+      invite_preview: {
+        Args: { token: string }
+        Returns: {
+          organization_name: string
+          invited_email: string
+          state: string
+        }[]
       }
     }
     Enums: {
