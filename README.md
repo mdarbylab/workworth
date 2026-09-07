@@ -22,6 +22,14 @@ Checks: `npm run lint` and `npm run build`.
   `proxy.ts` for session refresh in `proxy.ts` at the repo root).
 - All writes go through server actions. Every org-scoped query relies on RLS.
 
+## Invites
+
+Inviting someone creates a pending membership that holds a seat. The owner
+shares the invite link from Settings (copy, or the "Email it" mailto button).
+The invitee signs in with the invited email and taps Join; `accept_invite`
+checks the email matches and the seat-limit trigger enforces the plan. The app
+does not send email itself, so no service-role key is needed for this.
+
 ## Supabase auth configuration
 
 Email links (magic link and signup confirmation) land on `/auth/callback`,
