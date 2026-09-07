@@ -19,7 +19,7 @@ export function PeriodPicker({ period }: { period: Period }) {
       <div className="grid grid-cols-4 gap-1 rounded-lg bg-stone-200 p-1">
         {PRESETS.map(({ key, label }) => {
           const active = key === "custom" ? custom : !custom && period.key === key;
-          const cls = `rounded-md px-2 py-1.5 text-center text-sm font-medium ${
+          const cls = `rounded-md px-1 py-1.5 text-center text-xs font-medium sm:px-2 sm:text-sm ${
             active ? "bg-white text-emerald-900 shadow-sm" : "text-stone-600 hover:text-stone-900"
           }`;
           return key === "custom" ? (

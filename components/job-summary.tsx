@@ -13,11 +13,13 @@ export function JobSummaryBlock({ summary, compact = false }: { summary: JobSumm
 
   if (compact) {
     return (
-      <dl className="grid grid-cols-5 gap-2 text-center">
+      <dl className="grid grid-cols-3 gap-x-2 gap-y-3 text-center sm:grid-cols-5">
         {rows.map(([label, value, cls]) => (
           <div key={label} className="min-w-0">
-            <dt className="truncate text-[11px] uppercase tracking-wide text-stone-500">{label}</dt>
-            <dd className={`truncate text-sm font-semibold tabular-nums ${cls ?? ""}`}>{value}</dd>
+            <dt className="text-[11px] uppercase tracking-wide text-stone-500">
+              {label === "Effective rate" ? "Rate" : label}
+            </dt>
+            <dd className={`text-sm font-semibold tabular-nums ${cls ?? ""}`}>{value}</dd>
           </div>
         ))}
       </dl>

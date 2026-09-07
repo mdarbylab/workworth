@@ -79,26 +79,26 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
                       )}
                       {r.clientName && <span className="block truncate text-xs text-stone-500">{r.clientName}</span>}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{formatDuration(r.seconds)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{formatCents(r.revenueCents)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{formatCents(r.expensesCents)}</td>
-                    <td className={`px-3 py-2 text-right font-medium tabular-nums ${r.profitCents < 0 ? "text-red-700" : ""}`}>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatDuration(r.seconds)}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatCents(r.revenueCents)}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatCents(r.expensesCents)}</td>
+                    <td className={`whitespace-nowrap px-3 py-2 text-right font-medium tabular-nums ${r.profitCents < 0 ? "text-red-700" : ""}`}>
                       {formatCents(r.profitCents)}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">{formatRate(r.rateCents)}</td>
+                    <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums">{formatRate(r.rateCents)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot className="border-t border-stone-200 bg-stone-50 font-semibold">
                 <tr>
                   <td className="px-4 py-2">Total</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{formatDuration(report.seconds)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{formatCents(report.revenueCents)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{formatCents(report.expensesCents)}</td>
-                  <td className={`px-3 py-2 text-right tabular-nums ${report.profitCents < 0 ? "text-red-700" : ""}`}>
+                  <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatDuration(report.seconds)}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatCents(report.revenueCents)}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatCents(report.expensesCents)}</td>
+                  <td className={`whitespace-nowrap px-3 py-2 text-right tabular-nums ${report.profitCents < 0 ? "text-red-700" : ""}`}>
                     {formatCents(report.profitCents)}
                   </td>
-                  <td className="px-4 py-2 text-right tabular-nums">{formatRate(report.rateCents)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums">{formatRate(report.rateCents)}</td>
                 </tr>
               </tfoot>
             </table>

@@ -34,6 +34,13 @@ export function EntryForm({ jobs, defaults, action, entryId, submitLabel, cancel
     <form action={formAction} className="space-y-5">
       {entryId && <input type="hidden" name="id" value={entryId} />}
 
+      {jobs.length === 0 && (
+        <p className="notice">
+          You need a job first.{" "}
+          <Link href="/jobs/new" className="font-medium underline">Create one</Link> and come back.
+        </p>
+      )}
+
       <div>
         <label htmlFor="job_id" className="label">Job</label>
         <select id="job_id" name="job_id" defaultValue={defaults.jobId} required className="input">
