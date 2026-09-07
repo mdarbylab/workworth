@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { safeNext } from "@/lib/safe-next";
 
 // Handles both PKCE (?code=) and token-hash (?token_hash=&type=) email links.
 export async function GET(request: NextRequest) {
@@ -8,6 +9,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
+  const next = safeNext(searchParams.get("next"));
 
   const supabase = await createClient();
   let failed = true;
@@ -23,5 +25,5 @@ export async function GET(request: NextRequest) {
   if (failed) {
     return NextResponse.redirect(`${origin}/login?error=link`);
   }
-  return NextResponse.redirect(`${origin}/`);
+  return NextResponse.redirect(`${origin}${next}`);
 }

@@ -6,8 +6,9 @@ import { signUp, type AuthState } from "../actions";
 
 const initial: AuthState = {};
 
-export function SignupForm() {
+export function SignupForm({ next = "/", defaultEmail = "" }: { next?: string; defaultEmail?: string }) {
   const [state, action, pending] = useActionState(signUp, initial);
+  const loginHref = next === "/" ? "/login" : `/login?next=${encodeURIComponent(next)}`;
 
   return (
     <div className="space-y-5">
@@ -17,6 +18,7 @@ export function SignupForm() {
       </div>
 
       <form action={action} className="space-y-4">
+        <input type="hidden" name="next" value={next} />
         <div>
           <label htmlFor="email" className="label">Email</label>
           <input
@@ -25,6 +27,7 @@ export function SignupForm() {
             type="email"
             autoComplete="email"
             required
+            defaultValue={defaultEmail}
             className="input"
             placeholder="you@example.com"
           />
@@ -53,7 +56,7 @@ export function SignupForm() {
 
       <p className="text-center text-sm text-stone-600">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-emerald-800 hover:underline">
+        <Link href={loginHref} className="font-medium text-emerald-800 hover:underline">
           Sign in
         </Link>
       </p>

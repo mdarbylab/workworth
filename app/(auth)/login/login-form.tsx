@@ -6,22 +6,26 @@ import { sendMagicLink, signInWithPassword, type AuthState } from "../actions";
 
 const initial: AuthState = {};
 
-export function LoginForm({ initialError }: { initialError?: string }) {
+type Props = { initialError?: string; initialMessage?: string; next?: string };
+
+export function LoginForm({ initialError, initialMessage, next = "/" }: Props) {
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [pwState, pwAction, pwPending] = useActionState(signInWithPassword, initial);
   const [mlState, mlAction, mlPending] = useActionState(sendMagicLink, initial);
 
   const submitted = pwState !== initial || mlState !== initial;
-  const state = !submitted && initialError
-    ? { error: initialError }
+  const state: AuthState = !submitted && (initialError || initialMessage)
+    ? { error: initialError, message: initialMessage }
     : mode === "password" ? pwState : mlState;
   const pending = mode === "password" ? pwPending : mlPending;
+  const signupHref = next === "/" ? "/signup" : `/signup?next=${encodeURIComponent(next)}`;
 
   return (
     <div className="space-y-5">
       <h1 className="text-xl font-semibold">Sign in</h1>
 
       <form action={mode === "password" ? pwAction : mlAction} className="space-y-4">
+        <input type="hidden" name="next" value={next} />
         <div>
           <label htmlFor="email" className="label">Email</label>
           <input
@@ -73,7 +77,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
 
       <p className="text-center text-sm text-stone-600">
         New here?{" "}
-        <Link href="/signup" className="font-medium text-emerald-800 hover:underline">
+        <Link href={signupHref} className="font-medium text-emerald-800 hover:underline">
           Create an account
         </Link>
       </p>

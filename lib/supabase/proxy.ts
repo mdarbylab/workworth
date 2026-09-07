@@ -39,7 +39,8 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublic && pathname !== "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.search = "";
+    // Bring the person back to where they were headed (e.g. an invite link).
+    url.search = pathname.startsWith("/invite/") ? `?next=${encodeURIComponent(pathname)}` : "";
     return NextResponse.redirect(url);
   }
 
