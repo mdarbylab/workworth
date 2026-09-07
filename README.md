@@ -14,6 +14,20 @@ npm run dev                  # http://localhost:3000
 
 Checks: `npm run lint` and `npm run build`.
 
+### Running the UI without Supabase access
+
+`scripts/mock-supabase.mjs` is a small stand-in for Supabase Auth + PostgREST
+with fixture data, useful for visual QA in sandboxes that can't reach the real
+project. It is not used in production.
+
+```sh
+node scripts/mock-supabase.mjs                 # add MOCK_EMPTY=1 for empty states
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=mock npm run dev
+```
+
+Set the cookie it prints (`sb-localhost-auth-token`) in your browser to be
+signed in as the fixture owner.
+
 ## Stack
 
 - Next.js (App Router, TypeScript, Tailwind), hosted on Netlify.
