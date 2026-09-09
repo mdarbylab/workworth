@@ -44,6 +44,35 @@ The invitee signs in with the invited email and taps Join; `accept_invite`
 checks the email matches and the seat-limit trigger enforces the plan. The app
 does not send email itself, so no service-role key is needed for this.
 
+## Deploying to Netlify
+
+`netlify.toml` sets the build command and the Next.js plugin; preview deploys
+run per branch. Set these in the Netlify UI (never in the repo):
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase publishable key |
+| `NEXT_PUBLIC_POSTHOG_KEY` | no | Enables analytics; blank disables it entirely |
+| `NEXT_PUBLIC_POSTHOG_HOST` | no | Defaults to `https://us.i.posthog.com` |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | no | Shows "Send feedback"; also the waitlist fallback |
+| `NEXT_PUBLIC_WAITLIST_URL` | no | Upgrade waitlist page, preferred over email |
+
+Add the deploy URL plus `/auth/callback` to Supabase's redirect allowlist for
+production and for preview deploys.
+
+## Analytics and monitoring
+
+Product events (SPEC §12) are defined in `lib/analytics/events.ts`. Server
+actions report them through `lib/analytics/server.ts` after the response is
+sent; browser events go through `components/analytics.tsx`. Events carry user
+and organization ids only, never emails or free text. With no PostHog key set,
+nothing is loaded and no requests are made.
+
+Server exceptions are reported via `instrumentation.ts`, client exceptions from
+the error boundary. `GET /api/health` returns `{ ok: true }` when the database
+answers and 503 otherwise — point an uptime monitor at it.
+
 ## Supabase auth configuration
 
 Email links (magic link and signup confirmation) land on `/auth/callback`,
