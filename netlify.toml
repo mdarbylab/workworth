@@ -1,0 +1,14 @@
+# Netlify build configuration (SPEC §10: hosted on Netlify, preview deploys per branch).
+# Runtime env vars (Supabase URL/anon key, PostHog key, support email, waitlist URL)
+# live in the Netlify UI, never in this repo (§11).
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
