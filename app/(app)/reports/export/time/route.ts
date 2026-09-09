@@ -5,6 +5,7 @@ import { resolvePeriod } from "@/lib/periods";
 import { csvResponse, toCsv } from "@/lib/csv";
 import { dateKey, timeKey } from "@/lib/dates";
 import { getPeople, personLabel } from "@/lib/people";
+import { track } from "@/lib/analytics/server";
 
 // Time entries CSV for the period (SPEC §5.5). RLS scopes rows to what the
 // signed-in user may see; times are rendered in the org timezone (§13.8).
@@ -63,6 +64,12 @@ export async function GET(request: NextRequest) {
       edited.has(e.id) ? "yes" : "no",
       e.notes ?? "",
     ];
+  });
+
+  track("csv_exported", { userId: ctx.user.id, organizationId: ctx.organization.id }, {
+    kind: "time",
+    period: period.key,
+    rows: rows.length,
   });
 
   const csv = toCsv(

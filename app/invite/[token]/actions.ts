@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { track } from "@/lib/analytics/server";
 
 export type AcceptState = { error?: string };
 
@@ -23,8 +24,11 @@ export async function acceptInvite(_prev: AcceptState, formData: FormData): Prom
   if (!UUID.test(token)) return { error: "This invite link isn't valid." };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("accept_invite", { token });
+  const { data: orgId, error } = await supabase.rpc("accept_invite", { token });
   if (error) return { error: inviteErrorMessage(error.message) };
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) track("member_joined", { userId: user.id, organizationId: orgId });
 
   revalidatePath("/", "layout");
   redirect("/today");

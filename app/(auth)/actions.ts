@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
 import { safeNext } from "@/lib/safe-next";
+import { track } from "@/lib/analytics/server";
 
 export type AuthState = { error?: string; message?: string };
 
@@ -48,6 +49,7 @@ export async function signUp(
     options: { emailRedirectTo: await callbackUrl(next) },
   });
   if (error) return { error: error.message };
+  if (data.user) track("signup", { userId: data.user.id }, { confirmed: !!data.session });
 
   if (!data.session) {
     return { message: `We sent a confirmation link to ${email}. Open it to finish signing up.` };

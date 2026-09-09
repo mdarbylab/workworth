@@ -5,6 +5,7 @@ import { resolvePeriod } from "@/lib/periods";
 import { csvResponse, toCsv } from "@/lib/csv";
 import { CATEGORY_LABELS } from "@/lib/expenses";
 import { getPeople, personLabel } from "@/lib/people";
+import { track } from "@/lib/analytics/server";
 
 // Expenses CSV for the period (SPEC §5.5). RLS scopes rows to what the
 // signed-in user may see.
@@ -39,6 +40,12 @@ export async function GET(request: NextRequest) {
     personLabel(people, x.user_id),
     x.description ?? "",
   ]);
+
+  track("csv_exported", { userId: ctx.user.id, organizationId: ctx.organization.id }, {
+    kind: "expenses",
+    period: period.key,
+    rows: rows.length,
+  });
 
   const csv = toCsv(["Date", "Amount", "Category", "Job", "Client", "Person", "Description"], rows);
   return csvResponse(`workworth-expenses-${period.fromKey}-to-${period.toKey}.csv`, csv);

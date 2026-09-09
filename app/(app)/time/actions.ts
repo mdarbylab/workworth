@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { parseDateTime } from "@/lib/dates";
 import { MAX_ENTRY_SECONDS, formatDuration } from "@/lib/calc";
+import { track } from "@/lib/analytics/server";
 
 export type TimerState = { error?: string };
 export type EntryFormState = { error?: string; warning?: string };
@@ -42,6 +43,7 @@ async function insertRunningEntry(jobId: string): Promise<string | null> {
     if (error.code === "23505") return "You already have a timer running.";
     return "Couldn't start the timer. Please try again.";
   }
+  track("timer_started", { userId: ctx.user.id, organizationId: ctx.membership.organization_id });
   revalidatePath("/", "layout");
   return null;
 }
@@ -65,12 +67,16 @@ export async function startTimerFromJob(formData: FormData) {
 export async function stopTimer(): Promise<TimerState> {
   const ctx = await requireMembership();
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("time_entries")
     .update({ stopped_at: new Date().toISOString() })
     .eq("user_id", ctx.user.id)
-    .is("stopped_at", null);
+    .is("stopped_at", null)
+    .select("duration_seconds");
   if (error) return { error: "Couldn't stop the timer. Please try again." };
+  track("timer_stopped", { userId: ctx.user.id, organizationId: ctx.membership.organization_id }, {
+    duration_seconds: data?.[0]?.duration_seconds ?? null,
+  });
   revalidatePath("/", "layout");
   return {};
 }
@@ -144,6 +150,9 @@ export async function createTimeEntry(_prev: EntryFormState, formData: FormData)
   });
   if (error) return { error: "Couldn't save that entry. Please try again." };
 
+  track("time_entry_manual", { userId: ctx.user.id, organizationId: ctx.membership.organization_id }, {
+    duration_seconds: Math.round((parsed.stoppedAt.getTime() - parsed.startedAt.getTime()) / 1000),
+  });
   revalidatePath("/", "layout");
   redirect("/time");
 }
@@ -171,6 +180,7 @@ export async function updateTimeEntry(_prev: EntryFormState, formData: FormData)
     .select("id");
   if (error || !data?.length) return { error: "Couldn't update that entry." };
 
+  track("time_entry_edited", { userId: ctx.user.id, organizationId: ctx.membership.organization_id });
   revalidatePath("/", "layout");
   redirect("/time");
 }

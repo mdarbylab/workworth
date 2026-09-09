@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { parseDollars } from "@/lib/calc";
 import { isExpenseCategory, isValidDateKey, type ExpenseCategory } from "@/lib/expenses";
+import { track } from "@/lib/analytics/server";
 
 export type ExpenseFormState = { error?: string };
 
@@ -58,6 +59,10 @@ export async function createExpense(_prev: ExpenseFormState, formData: FormData)
   });
   if (error) return { error: "Couldn't save that expense. Please try again." };
 
+  track("expense_added", { userId: ctx.user.id, organizationId: ctx.membership.organization_id }, {
+    category: parsed.category,
+    has_job: parsed.job_id !== null,
+  });
   revalidatePath("/", "layout");
   redirect("/expenses");
 }

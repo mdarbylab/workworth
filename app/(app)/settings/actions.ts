@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
+import { track } from "@/lib/analytics/server";
 
 export type SettingsState = { error?: string; message?: string };
 
@@ -77,11 +78,15 @@ export async function inviteMember(_prev: SettingsState, formData: FormData): Pr
   });
   if (error) {
     if (error.code === "23514" || error.message.includes("seat limit")) {
+      track("seat_limit_hit", { userId: ctx.user.id, organizationId: ctx.organization.id }, {
+        seat_limit: ctx.organization.seat_limit,
+      });
       return { error: `The free plan includes ${ctx.organization.seat_limit} people. Remove someone to free a seat, or upgrade.` };
     }
     return { error: "Couldn't create the invite. Please try again." };
   }
 
+  track("member_invited", { userId: ctx.user.id, organizationId: ctx.organization.id });
   revalidatePath("/settings");
   return { message: `Invite created for ${email}. Share the link below.` };
 }

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { parseDollars } from "@/lib/calc";
 import type { TablesInsert } from "@/lib/supabase/types";
+import { track } from "@/lib/analytics/server";
 
 export type JobFormState = { error?: string };
 
@@ -84,6 +85,10 @@ export async function createJob(_prev: JobFormState, formData: FormData): Promis
     .single();
   if (error) return { error: "Couldn't save the job. Please try again." };
 
+  track("job_created", { userId: ctx.user.id, organizationId: orgId }, {
+    billing_type: fields.billing_type,
+    has_client: clientId !== null,
+  });
   revalidatePath("/", "layout");
   redirect(`/jobs/${job.id}`);
 }

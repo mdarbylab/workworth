@@ -6,6 +6,7 @@ import { periodQuery, resolvePeriod } from "@/lib/periods";
 import { buildReport } from "@/lib/reports";
 import { formatCents, formatDuration, formatRate } from "@/lib/calc";
 import { PeriodPicker } from "./period-picker";
+import { TrackOnMount } from "@/components/analytics";
 
 export const metadata: Metadata = { title: "Reports" };
 
@@ -34,6 +35,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
         <p className="text-stone-500">{period.label}</p>
       </div>
 
+      <TrackOnMount event="report_viewed" props={{ period: period.key }} />
       <PeriodPicker period={period} />
 
       <section className="card">

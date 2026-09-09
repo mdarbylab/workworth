@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { parseDollars } from "@/lib/calc";
+import { track } from "@/lib/analytics/server";
 
 export type OnboardingState = { error?: string };
 
@@ -29,7 +30,7 @@ export async function createOrganization(
   const timezone = normalizeTimezone(String(formData.get("timezone") ?? ""));
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("create_organization", {
+  const { data: orgId, error } = await supabase.rpc("create_organization", {
     org_name: name,
     org_timezone: timezone,
   });
@@ -37,6 +38,9 @@ export async function createOrganization(
     if (error.message.includes("already belongs")) redirect("/onboarding");
     return { error: "Couldn't create your business. Please try again." };
   }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) track("org_created", { userId: user.id, organizationId: orgId }, { timezone });
 
   redirect("/onboarding");
 }
@@ -67,6 +71,11 @@ export async function createFirstJob(
     fixed_price_cents: billingType === "fixed" ? cents : null,
   });
   if (error) return { error: "Couldn't save that job. Please try again." };
+
+  track("job_created", { userId: ctx.user.id, organizationId: ctx.membership.organization_id }, {
+    billing_type: billingType,
+    onboarding: true,
+  });
 
   redirect("/today");
 }
