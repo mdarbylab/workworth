@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/(auth)/actions";
+import { resetAnalytics } from "@/components/analytics";
 
 export function AvatarMenu({ email }: { email: string | null }) {
   const [open, setOpen] = useState(false);
@@ -48,7 +49,7 @@ export function AvatarMenu({ email }: { email: string | null }) {
           >
             Settings
           </Link>
-          <form action={signOut}>
+          <form action={signOut} onSubmit={() => resetAnalytics()}>
             <button
               type="submit"
               role="menuitem"
