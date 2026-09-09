@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
 import { signOut } from "@/app/(auth)/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
+import { FeedbackLink } from "@/components/feedback-link";
+import { UpgradeLink } from "./upgrade-link";
 import { BusinessForm } from "./business-form";
 import { InviteForm } from "./invite-form";
 import { CopyButton } from "./copy-button";
@@ -39,7 +41,13 @@ export default async function SettingsPage() {
   const people = members ?? [];
   const seatsUsed = people.length; // pending invites hold a seat (§6)
   const seatsFull = seatsUsed >= org.seat_limit;
-  const waitlistUrl = process.env.NEXT_PUBLIC_WAITLIST_URL;
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
+  // Prefer a real waitlist page; fall back to emailing support.
+  const waitlistHref =
+    process.env.NEXT_PUBLIC_WAITLIST_URL ||
+    (supportEmail
+      ? `mailto:${supportEmail}?subject=${encodeURIComponent("WorkWorth Pro waitlist")}`
+      : "");
 
   return (
     <div className="space-y-6">
@@ -127,10 +135,8 @@ export default async function SettingsPage() {
             <p className="font-medium text-emerald-900">Add another person → upgrade</p>
             <p className="mt-1 text-emerald-900/80">
               Pro brings more people, invoicing, and tax estimates.{" "}
-              {waitlistUrl ? (
-                <a href={waitlistUrl} target="_blank" rel="noopener noreferrer" className="font-medium underline">
-                  Join the waitlist
-                </a>
+              {waitlistHref ? (
+                <UpgradeLink href={waitlistHref} seatLimit={org.seat_limit} />
               ) : (
                 <span>Waitlist opening soon.</span>
               )}
@@ -138,6 +144,16 @@ export default async function SettingsPage() {
           </div>
         )}
       </section>
+
+      {supportEmail && (
+        <section className="card space-y-2">
+          <h2 className="font-semibold">Feedback</h2>
+          <p className="text-sm text-stone-600">
+            WorkWorth is in beta. Tell us what&apos;s missing or broken — it goes straight to us.
+          </p>
+          <FeedbackLink email={supportEmail} className="btn-secondary" />
+        </section>
+      )}
 
       <section className="card space-y-4">
         <h2 className="font-semibold">Account</h2>
