@@ -64,7 +64,7 @@ export const COOKIE_VALUE = "base64-" + b64url(JSON.stringify(session));
 // ---------- fixtures ----------
 
 const organizations = [
-  { id: ORG, name: "Rivera Electric", timezone: TZ, currency: "USD", plan: "free", seat_limit: 2, created_at: hoursAgo(500), updated_at: hoursAgo(1) },
+  { id: ORG, name: "Rivera Electric", timezone: TZ, currency: "USD", plan: "free", seat_limit: 2, address: "1420 Mission St\nAustin, TX 78701", contact_email: "hello@riveraelectric.com", contact_phone: "(512) 555-0134", created_at: hoursAgo(500), updated_at: hoursAgo(1) },
 ];
 
 const memberships = [
@@ -73,7 +73,7 @@ const memberships = [
 ];
 
 const clients = [
-  { id: "c-1", organization_id: ORG, name: "Hernandez family", email: null, phone: null, notes: null, created_at: hoursAgo(400), updated_at: hoursAgo(400) },
+  { id: "c-1", organization_id: ORG, name: "Hernandez family", email: "m.hernandez@example.com", phone: "(512) 555-0198", notes: null, created_at: hoursAgo(400), updated_at: hoursAgo(400) },
   { id: "c-2", organization_id: ORG, name: "Blue Fern Café", email: null, phone: null, notes: null, created_at: hoursAgo(300), updated_at: hoursAgo(300) },
 ];
 
@@ -145,7 +145,10 @@ function matches(row, col, expr) {
   const dot = expr.indexOf(".");
   const op = expr.slice(0, dot);
   const raw = expr.slice(dot + 1);
-  const v = row[col];
+  // PostgREST filters on an embedded table use a dotted path (jobs.client_id).
+  const v = col.includes(".")
+    ? col.split(".").reduce((o, k) => (o == null ? undefined : o[k]), row)
+    : row[col];
   let result;
   switch (op) {
     case "eq": result = String(v) === raw; break;
