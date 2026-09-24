@@ -10,6 +10,7 @@ export const EVENTS = [
   "time_entry_edited",
   "expense_added",
   "report_viewed",
+  "client_report_viewed",
   "csv_exported",
   "member_invited",
   "member_joined",

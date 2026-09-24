@@ -38,7 +38,7 @@ Effective rate: $105.80/hr
 
 Not in v1: invoicing, tax estimates, mileage, receipt scanning, payments, scheduling, payroll, HR, CRM, native mobile apps, integrations, AI features, multiple businesses per user, roles beyond owner/member.
 
-The schema is designed so invoicing and tax estimates can be added without migration pain (see §7), but no code is written for them in v1.
+The schema is designed so invoicing and tax estimates can be added without migration pain (see §7), but no code is written for them in v1. The client report (§5.8) is not an invoice: it has no invoice number, no payment terms, no tax, and nothing is marked paid.
 
 ## 4. The rule for adding anything
 
@@ -93,11 +93,11 @@ What did I actually make?     $3,638
 Effective hourly rate:        $96.45
 ```
 
-Then a breakdown table by job. **Export CSV** for time entries and for expenses.
+Then a breakdown table by job. **Export CSV** for time entries and for expenses. A client picker links through to the client report (§5.8).
 
 ### 5.6 Settings
 
-- Business: name, timezone, currency (USD only in v1, field exists).
+- Business: name, timezone, currency (USD only in v1, field exists), and optional address, phone and contact email used only as the letterhead on client reports (§5.8).
 - People: list of members (max 2 on free). **Invite** by email. Remove member.
 - Account: email, password, delete account.
 - Plan: shows "Free — 2 of 2 seats used" and, when both seats are used, the only upsell in the product: *Add another person → upgrade.* (Upgrade is a waitlist link in v1, not a checkout.)
@@ -110,6 +110,25 @@ Then a breakdown table by job. **Export CSV** for time entries and for expenses.
 4. Lands on Today with the timer ready.
 
 Three screens, no tour.
+
+### 5.8 Client report
+
+The one screen whose output leaves the business. Picked from Reports: choose a client, get a printable document covering the selected period.
+
+One document, one toggle — **Show rates and amounts**:
+
+- **On** (default) → *Work summary*: dates, work done, hours, and amounts. For the client who is paying.
+- **Off** → *Timesheet*: dates, work done, hours. For HR, or for a client who approves hours before an invoice.
+
+Layout, top to bottom: business letterhead (name, plus whichever of address / phone / contact email are filled in) · document title and period · **Prepared for** the client · one table per job, grouped and subtotalled · grand totals · an **Approved by / Date** signature block · a footer naming the timezone.
+
+Rules:
+
+- **Expenses, profit, and effective hourly rate never appear.** Those are the business's numbers, not the client's.
+- Only stopped time entries are included. A running timer is not work you can bill for yet.
+- Fixed-price jobs show hours for the record and state the agreed price separately; hours do not change the price.
+- Work on a job with no rate or price set is excluded from the total, and the screen warns about it. The warning does not print.
+- Output is the browser's print-to-PDF. No PDF library in v1.
 
 ---
 
@@ -129,7 +148,7 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 
 | Table | Purpose | Key columns |
 |---|---|---|
-| `organizations` | the business | name, timezone, currency, plan (`free`), seat_limit (2) |
+| `organizations` | the business | name, timezone, currency, plan (`free`), seat_limit (2), address, contact_email, contact_phone (all three optional, letterhead only) |
 | `memberships` | user ↔ org | user_id, organization_id, role, invited_email, accepted_at, removed_at |
 | `clients` | who the work is for | name, email, phone, notes |
 | `jobs` | unit of work | client_id, name, billing_type (`hourly`/`fixed`), hourly_rate_cents, fixed_price_cents, estimated_minutes, status (`active`/`archived`), notes |
@@ -204,7 +223,7 @@ v1 builds only the free plan. The `plan` and `seat_limit` columns exist so Pro i
 
 ## 12. Analytics events
 
-`signup`, `org_created`, `job_created`, `timer_started`, `timer_stopped`, `time_entry_manual`, `time_entry_edited`, `expense_added`, `report_viewed`, `csv_exported`, `member_invited`, `member_joined`, `seat_limit_hit`, `upgrade_clicked`.
+`signup`, `org_created`, `job_created`, `timer_started`, `timer_stopped`, `time_entry_manual`, `time_entry_edited`, `expense_added`, `report_viewed`, `client_report_viewed`, `csv_exported`, `member_invited`, `member_joined`, `seat_limit_hit`, `upgrade_clicked`.
 
 **North-star metric for v1:** % of new users who track time on 3 different days in their first 2 weeks. If this is bad, we fix the product before adding features.
 
@@ -223,6 +242,7 @@ v1 builds only the free plan. The `plan` and `seat_limit` columns exist so Pro i
 9. No org can read another org's data (tested with two accounts).
 10. Works on iPhone Safari, Android Chrome, and desktop Chrome at 375px and 1280px widths.
 11. Deployed on Netlify with a production Supabase project; env vars not in repo.
+12. A client report shows hours, and amounts only when the toggle is on. It never shows expenses, profit, or effective hourly rate, and it prints on one clean page per few jobs with no app chrome.
 
 ---
 

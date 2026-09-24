@@ -7,6 +7,8 @@ import { buildReport } from "@/lib/reports";
 import { formatCents, formatDuration, formatRate } from "@/lib/calc";
 import { PeriodPicker } from "./period-picker";
 import { TrackOnMount } from "@/components/analytics";
+import { ClientReportForm } from "./client-report-form";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Reports" };
 
@@ -16,7 +18,11 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
   if (!ctx?.organization) redirect("/onboarding");
 
   const period = resolvePeriod(params, ctx.organization.timezone);
-  const report = await buildReport(period);
+  const supabase = await createClient();
+  const [report, { data: clients }] = await Promise.all([
+    buildReport(period),
+    supabase.from("clients").select("id, name").order("name"),
+  ]);
   const q = periodQuery(period);
   const hasFixed = report.rows.some((r) => r.jobId && r.revenueCents > 0 && r.seconds === 0);
 
@@ -106,6 +112,15 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
             </table>
           </div>
         )}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="font-semibold">Report for a client</h2>
+        <ClientReportForm
+          clients={clients ?? []}
+          periodQuery={q}
+          periodLabel={period.label}
+        />
       </section>
 
       <section className="space-y-2">

@@ -37,10 +37,22 @@ export async function updateBusiness(_prev: SettingsState, formData: FormData): 
   const timezone = String(formData.get("timezone") ?? "").trim();
   if (!validTimezone(timezone)) return { error: "Pick a valid timezone." };
 
+  // Optional letterhead details for client reports (SPEC 5.8).
+  const address = String(formData.get("address") ?? "").trim().slice(0, 300) || null;
+  const contactEmail = String(formData.get("contact_email") ?? "").trim().toLowerCase() || null;
+  const contactPhone = String(formData.get("contact_phone") ?? "").trim().slice(0, 40) || null;
+  if (contactEmail && !EMAIL.test(contactEmail)) return { error: "Enter a valid contact email, or leave it blank." };
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("organizations")
-    .update({ name, timezone })
+    .update({
+      name,
+      timezone,
+      address,
+      contact_email: contactEmail,
+      contact_phone: contactPhone,
+    })
     .eq("id", ctx.organization.id);
   if (error) return { error: "Couldn't save. Please try again." };
 

@@ -5,9 +5,17 @@ import { updateBusiness, type SettingsState } from "./actions";
 
 const initial: SettingsState = {};
 
-type Props = { name: string; timezone: string; timezones: string[]; currency: string };
+type Props = {
+  name: string;
+  timezone: string;
+  timezones: string[];
+  currency: string;
+  address: string;
+  contactEmail: string;
+  contactPhone: string;
+};
 
-export function BusinessForm({ name, timezone, timezones, currency }: Props) {
+export function BusinessForm({ name, timezone, timezones, currency, address, contactEmail, contactPhone }: Props) {
   const [state, action, pending] = useActionState(updateBusiness, initial);
 
   return (
@@ -29,6 +37,29 @@ export function BusinessForm({ name, timezone, timezones, currency }: Props) {
         <label htmlFor="currency" className="label">Currency</label>
         <input id="currency" type="text" value={currency} readOnly className="input bg-stone-50 text-stone-500" />
       </div>
+
+      <fieldset className="space-y-4 border-t border-stone-100 pt-4">
+        <legend className="label">
+          On client reports <span className="font-normal text-stone-400">(all optional)</span>
+        </legend>
+        <p className="-mt-2 text-xs text-stone-500">
+          These appear at the top of a report you hand to a client. Blank ones are left off.
+        </p>
+        <div>
+          <label htmlFor="address" className="label">Address</label>
+          <textarea id="address" name="address" rows={3} maxLength={300} defaultValue={address} className="input" placeholder="Street&#10;City, postcode" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="contact_phone" className="label">Phone</label>
+            <input id="contact_phone" name="contact_phone" type="tel" maxLength={40} defaultValue={contactPhone} className="input" />
+          </div>
+          <div>
+            <label htmlFor="contact_email" className="label">Contact email</label>
+            <input id="contact_email" name="contact_email" type="email" defaultValue={contactEmail} className="input" placeholder="hello@yourbusiness.de" />
+          </div>
+        </div>
+      </fieldset>
 
       {state.error && <p className="error">{state.error}</p>}
       {state.message && <p className="notice">{state.message}</p>}

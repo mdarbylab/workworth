@@ -111,3 +111,27 @@ export function formatDayHeading(key: string, tz: string, now = new Date()): str
     ...(sameYear ? {} : { year: "numeric" }),
   }).format(date);
 }
+
+/** "Thu 3 Sep 2026" — unambiguous on a document that leaves your hands. */
+export function formatDocShortDate(key: string, tz: string): string {
+  const [y, m, d] = key.split("-").map(Number);
+  const date = zonedToUtc(y, m, d, 12, 0, tz);
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+export function formatDocDate(key: string, tz: string): string {
+  const [y, m, d] = key.split("-").map(Number);
+  const date = zonedToUtc(y, m, d, 12, 0, tz);
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}

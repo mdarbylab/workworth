@@ -56,7 +56,15 @@ export default async function SettingsPage() {
       <section className="card space-y-4">
         <h2 className="font-semibold">Business</h2>
         {isOwner ? (
-          <BusinessForm name={org.name} timezone={org.timezone} timezones={timezoneOptions(org.timezone)} currency={org.currency} />
+          <BusinessForm
+            name={org.name}
+            timezone={org.timezone}
+            timezones={timezoneOptions(org.timezone)}
+            currency={org.currency}
+            address={org.address ?? ""}
+            contactEmail={org.contact_email ?? ""}
+            contactPhone={org.contact_phone ?? ""}
+          />
         ) : (
           <dl className="space-y-2">
             <Row label="Name" value={org.name} />

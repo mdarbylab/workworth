@@ -34,3 +34,77 @@
     @apply rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900;
   }
 }
+
+/* ---------- Client-facing work report (SPEC 5.8) ---------- */
+
+.statement .sheet {
+  @apply mx-auto max-w-[48rem] rounded-xl border border-stone-200 bg-white p-5 text-stone-900 shadow-sm sm:p-8;
+}
+
+.statement .sheet-head {
+  @apply flex flex-wrap items-start justify-between gap-4 border-b-2 border-stone-900 pb-4;
+}
+
+.statement .biz-name { @apply text-xl font-bold tracking-tight; }
+.statement .biz-line { @apply text-sm whitespace-pre-line text-stone-600; }
+.statement .sheet-meta { @apply text-right; }
+.statement .doc-title { @apply text-lg font-semibold uppercase tracking-wide; }
+
+.statement .sheet-for { @apply py-4; }
+.statement .label-sm { @apply text-[11px] font-semibold uppercase tracking-wider text-stone-500; }
+.statement .client-name { @apply text-base font-semibold; }
+
+.statement .job { @apply mt-5 break-inside-avoid; }
+.statement .job-head { @apply flex flex-wrap items-baseline justify-between gap-2 border-b border-stone-300 pb-1; }
+.statement .job-head h2 { @apply text-base font-semibold; }
+.statement .job-rate { @apply text-sm text-stone-600; }
+
+.statement .table-wrap { @apply -mx-1 overflow-x-auto px-1; }
+.statement table { @apply mt-2 w-full min-w-[19rem] border-collapse text-sm; }
+.statement thead th { @apply border-b border-stone-300 pb-1 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-500; }
+.statement tbody td { @apply border-b border-stone-100 py-1.5 align-top; }
+.statement tfoot td { @apply pt-2 font-semibold; }
+.statement .c-num { @apply pl-4 text-right tabular-nums whitespace-nowrap; }
+.statement .c-date { @apply whitespace-nowrap pr-3; }
+.statement .c-work { @apply w-full pr-3; }
+
+.statement .fixed-note { @apply mt-2 text-sm text-stone-600; }
+
+.statement .totals { @apply mt-6 ml-auto w-full max-w-xs; }
+.statement .total-row { @apply flex justify-between border-t border-stone-300 py-1.5 text-sm; }
+.statement .total-row.grand { @apply border-t-2 border-stone-900 text-base font-bold; }
+.statement .total-row .num { @apply tabular-nums; }
+
+.statement .warn { @apply mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900; }
+.statement .empty { @apply py-8 text-center text-stone-600; }
+
+.statement .sign { @apply mt-12 grid grid-cols-2 gap-8 break-inside-avoid; }
+.statement .sign .rule { @apply mb-1 border-b border-stone-400; height: 2.5rem; }
+
+.statement .sheet-foot { @apply mt-8 border-t border-stone-200 pt-3 text-xs text-stone-500; }
+
+@media print {
+  @page { margin: 16mm; }
+
+  /* Strip the app shell so only the document prints. */
+  body > div > aside,
+  body > div > header,
+  body > div > nav,
+  .no-print { display: none !important; }
+
+  body { background: #fff !important; }
+  main { padding: 0 !important; }
+
+  .statement .sheet {
+    max-width: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .statement .table-wrap { overflow: visible; margin: 0; padding: 0; }
+  .statement table { min-width: 0; page-break-inside: auto; }
+  .statement tr { page-break-inside: avoid; }
+  .statement thead { display: table-header-group; }
+}
