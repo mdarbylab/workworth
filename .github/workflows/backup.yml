@@ -1,0 +1,138 @@
+name: Backup database
+
+# Nightly logical backup of the Supabase database, encrypted and pushed to a
+# separate private repository. The free plan has no automated backups, so this
+# is the off-site copy Supabase's own docs tell free-plan projects to keep.
+#
+# This repository is public. The dump never touches it: it is written only to
+# the private repo named by BACKUP_REPO, and it is encrypted before it leaves
+# the runner. See docs/backups.md for setup and for how to restore.
+
+on:
+  schedule:
+    - cron: "17 3 * * *" # 03:17 UTC nightly, off the hour to dodge the rush
+  workflow_dispatch: # lets you run it by hand from the Actions tab
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  dump:
+    # Never run from a fork: the secrets would be missing and the job would
+    # only produce noise.
+    if: github.repository == 'mdarbylab/workworth'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Install the Postgres 17 client
+        # The server is Postgres 17; pg_dump refuses to dump a newer server
+        # than itself, and the runner's stock client trails behind.
+        run: |
+          set -euo pipefail
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          pg_dump --version
+
+      - name: Dump the database
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_URL:-}" ]; then
+            echo "::error::SUPABASE_DB_URL is not set. See docs/backups.md."
+            exit 1
+          fi
+          # public holds the business data; auth holds the accounts. A dump of
+          # one without the other restores to something nobody can log in to.
+          pg_dump "$DB_URL" \
+            --schema=public \
+            --schema=auth \
+            --no-owner \
+            --no-privileges \
+            --quote-all-identifiers \
+            --file=dump.sql
+          gzip -9 dump.sql
+
+      - name: Check the dump looks real
+        # A truncated or empty dump that commits cleanly is worse than a failed
+        # job, because it looks like a backup until the day you need it.
+        run: |
+          set -euo pipefail
+          size=$(stat -c%s dump.sql.gz)
+          echo "Compressed dump: $size bytes"
+          if [ "$size" -lt 2048 ]; then
+            echo "::error::Dump is only $size bytes. Refusing to store it."
+            exit 1
+          fi
+          for table in organizations memberships jobs time_entries expenses; do
+            if ! zgrep -q "COPY \"public\".\"$table\"" dump.sql.gz; then
+              echo "::error::No COPY block for public.$table. Dump is incomplete."
+              exit 1
+            fi
+          done
+
+      - name: Encrypt it
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PASSPHRASE:-}" ]; then
+            echo "::error::BACKUP_PASSPHRASE is not set. See docs/backups.md."
+            exit 1
+          fi
+          printf '%s' "$PASSPHRASE" > /tmp/pass
+          gpg --batch --yes --symmetric \
+            --cipher-algo AES256 \
+            --passphrase-file /tmp/pass \
+            --output "dump.sql.gz.gpg" \
+            dump.sql.gz
+          shred -u /tmp/pass dump.sql.gz
+          ls -l dump.sql.gz.gpg
+
+      - name: Check out the private backup store
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.BACKUP_REPO }}
+          token: ${{ secrets.BACKUP_REPO_TOKEN }}
+          path: store
+
+      - name: Store it, and prune old ones
+        run: |
+          set -euo pipefail
+          today=$(date -u +%F)
+          mkdir -p store/dumps
+          mv dump.sql.gz.gpg "store/dumps/$today.sql.gz.gpg"
+
+          # Keep every dump from the last 30 days, and the 1st of each month
+          # forever. Anything else goes, so the repo does not grow without end.
+          cutoff=$(date -u -d '30 days ago' +%F)
+          for f in store/dumps/*.sql.gz.gpg; do
+            [ -e "$f" ] || continue
+            d=$(basename "$f" .sql.gz.gpg)
+            case "$d" in
+              *-01) continue ;;  # monthly keep
+            esac
+            if [[ "$d" < "$cutoff" ]]; then
+              echo "Pruning $d"
+              rm -f "$f"
+            fi
+          done
+
+          cd store
+          git config user.name "workworth-backup"
+          git config user.email "workworth-backup@users.noreply.github.com"
+          git add -A dumps
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "backup: database dump $today"
+          git push
