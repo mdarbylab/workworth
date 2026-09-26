@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-full flex-1 flex-col md:flex-row">
       <Identify userId={ctx.user.id} organizationId={ctx.organization.id} />
-      <Nav orgName={ctx.organization.name} avatar={<AvatarMenu email={ctx.user.email} />} />
+      <Nav orgName={ctx.organization.name} avatar={<AvatarMenu name={ctx.displayName} email={ctx.user.email} />} />
       <main className="flex-1 px-4 py-6 pb-24 md:px-8 md:py-8">
         <div className="mx-auto w-full max-w-3xl">{children}</div>
       </main>

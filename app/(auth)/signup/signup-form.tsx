@@ -20,6 +20,20 @@ export function SignupForm({ next = "/", defaultEmail = "" }: { next?: string; d
       <form action={action} className="space-y-4">
         <input type="hidden" name="next" value={next} />
         <div>
+          <label htmlFor="display_name" className="label">Your name</label>
+          <input
+            id="display_name"
+            name="display_name"
+            type="text"
+            autoComplete="name"
+            required
+            maxLength={80}
+            className="input"
+            placeholder="Alex Rivera"
+          />
+          <p className="mt-1 text-xs text-stone-500">This is how you appear to anyone you work with.</p>
+        </div>
+        <div>
           <label htmlFor="email" className="label">Email</label>
           <input
             id="email"

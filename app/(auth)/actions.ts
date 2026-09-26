@@ -39,6 +39,10 @@ export async function signUp(
   formData: FormData,
 ): Promise<AuthState> {
   const { email, password, next } = readCredentials(formData);
+  // Carried on the auth user until a membership exists to hold it, since
+  // signup happens before anyone belongs to a business (SPEC §5.7).
+  const displayName = String(formData.get("display_name") ?? "").trim().slice(0, 80);
+  if (!displayName) return { error: "Enter your name." };
   if (!email) return { error: "Enter your email." };
   if (password.length < 8) return { error: "Use at least 8 characters for your password." };
 
@@ -46,7 +50,7 @@ export async function signUp(
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: await callbackUrl(next) },
+    options: { emailRedirectTo: await callbackUrl(next), data: { display_name: displayName } },
   });
   if (error) return { error: error.message };
   if (data.user) track("signup", { userId: data.user.id }, { confirmed: !!data.session });

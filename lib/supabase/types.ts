@@ -332,6 +332,7 @@ export type Database = {
         Row: {
           accepted_at: string | null
           created_at: string
+          display_name: string | null
           id: string
           invite_token: string | null
           invited_email: string | null
@@ -344,6 +345,7 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           created_at?: string
+          display_name?: string | null
           id?: string
           invite_token?: string | null
           invited_email?: string | null
@@ -356,6 +358,7 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           created_at?: string
+          display_name?: string | null
           id?: string
           invite_token?: string | null
           invited_email?: string | null
@@ -521,6 +524,7 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { token: string }; Returns: string }
+      auth_is_creator: { Args: never; Returns: boolean }
       auth_is_owner: { Args: never; Returns: boolean }
       auth_org_id: { Args: never; Returns: string }
       create_organization: {

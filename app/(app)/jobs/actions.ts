@@ -120,7 +120,7 @@ export async function updateJob(_prev: JobFormState, formData: FormData): Promis
 
 async function setJobStatus(formData: FormData, status: "active" | "archived") {
   const ctx = await requireMembership();
-  if (ctx.membership.role !== "owner") return null;
+  if (!ctx.hasFullAccess) return null;
   const jobId = String(formData.get("job_id") ?? "");
   if (!jobId) return null;
 

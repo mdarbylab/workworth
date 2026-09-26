@@ -2,7 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./types";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/api/health"];
+// An invite link is a front door for people who have no account yet: it has to
+// render for a signed-out visitor so it can say who invited them and send them
+// to sign-up. The page itself decides what a visitor may see (SPEC §5.7).
+const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/api/health", "/invite/"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -39,8 +42,7 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublic && pathname !== "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    // Bring the person back to where they were headed (e.g. an invite link).
-    url.search = pathname.startsWith("/invite/") ? `?next=${encodeURIComponent(pathname)}` : "";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
