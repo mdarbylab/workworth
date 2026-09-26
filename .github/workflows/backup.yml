@@ -29,8 +29,10 @@ jobs:
 
     steps:
       - name: Install the Postgres 17 client
-        # The server is Postgres 17; pg_dump refuses to dump a newer server
-        # than itself, and the runner's stock client trails behind.
+        # The server is Postgres 17 and pg_dump refuses to dump a server newer
+        # than itself. The runner ships its own older client and puts it ahead
+        # on PATH, so this pins the absolute path to the 17 binary rather than
+        # trusting whichever pg_dump the shell happens to resolve.
         run: |
           set -euo pipefail
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
@@ -39,7 +41,19 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
-          pg_dump --version
+
+          PG_DUMP=/usr/lib/postgresql/17/bin/pg_dump
+          if [ ! -x "$PG_DUMP" ]; then
+            echo "::error::postgresql-client-17 did not install $PG_DUMP."
+            exit 1
+          fi
+          # Fail here rather than three steps later with a version mismatch.
+          "$PG_DUMP" --version | grep -q ' 17\.' || {
+            echo "::error::$PG_DUMP is not version 17: $("$PG_DUMP" --version)"
+            exit 1
+          }
+          echo "PG_DUMP=$PG_DUMP" >> "$GITHUB_ENV"
+          "$PG_DUMP" --version
 
       - name: Dump the database
         env:
@@ -52,7 +66,7 @@ jobs:
           fi
           # public holds the business data; auth holds the accounts. A dump of
           # one without the other restores to something nobody can log in to.
-          pg_dump "$DB_URL" \
+          "$PG_DUMP" "$DB_URL" \
             --schema=public \
             --schema=auth \
             --no-owner \
