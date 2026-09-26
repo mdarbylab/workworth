@@ -5,12 +5,19 @@ import { LoginForm } from "./login-form";
 export const metadata: Metadata = { title: "Sign in" };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  const { error, next, deleted } = await searchParams;
+  const { error, next, deleted, email } = await searchParams;
   const linkError =
     error === "link"
       ? "That sign-in link is invalid or has expired. Request a new one below."
       : undefined;
   const notice = deleted === "1" ? "Your account was deleted." : undefined;
 
-  return <LoginForm initialError={linkError} initialMessage={notice} next={safeNext(next)} />;
+  return (
+    <LoginForm
+      initialError={linkError}
+      initialMessage={notice}
+      next={safeNext(next)}
+      defaultEmail={typeof email === "string" ? email : ""}
+    />
+  );
 }

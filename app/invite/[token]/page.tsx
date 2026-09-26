@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { signOut } from "@/app/(auth)/actions";
@@ -13,11 +12,20 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export default async function InvitePage({ params }: PageProps<"/invite/[token]">) {
   const { token } = await params;
   const ctx = await getSessionContext();
-  if (!ctx) redirect(`/login?next=${encodeURIComponent(`/invite/${token}`)}`);
 
+  // invite_preview is security definer and granted to anon, so someone who has
+  // never had an account still gets told who invited them and to what.
   const supabase = await createClient();
   const { data } = UUID.test(token) ? await supabase.rpc("invite_preview", { token }) : { data: null };
   const invite = data?.[0] ?? null;
+
+  const next = `/invite/${token}`;
+  const signupHref = `/signup?next=${encodeURIComponent(next)}${
+    invite?.invited_email ? `&email=${encodeURIComponent(invite.invited_email)}` : ""
+  }`;
+  const loginHref = `/login?next=${encodeURIComponent(next)}${
+    invite?.invited_email ? `&email=${encodeURIComponent(invite.invited_email)}` : ""
+  }`;
 
   let body: React.ReactNode;
 
@@ -25,6 +33,32 @@ export default async function InvitePage({ params }: PageProps<"/invite/[token]"
     body = <p className="text-sm text-stone-600">This invite link isn&apos;t valid. Ask the person who invited you for a new one.</p>;
   } else if (invite.state === "cancelled") {
     body = <p className="text-sm text-stone-600">This invite to {invite.organization_name} was cancelled.</p>;
+  } else if (invite.state === "accepted" && !ctx) {
+    body = (
+      <>
+        <p className="text-sm text-stone-600">This invite has already been used. Sign in to reach {invite.organization_name}.</p>
+        <Link href={loginHref} className="btn-primary">Sign in</Link>
+      </>
+    );
+  } else if (!ctx) {
+    // The whole point of this page: an invitee with no account lands here, not
+    // on a bare login form they have to escape from.
+    body = (
+      <>
+        <p className="text-sm text-stone-600">
+          You&apos;ve been invited to join <strong>{invite.organization_name}</strong> on WorkWorth, to track
+          your time and expenses together.
+        </p>
+        <p className="text-sm text-stone-600">
+          Create your account with <strong>{invite.invited_email}</strong> — the address the invite was sent to
+          — and you&apos;ll come straight back here to join.
+        </p>
+        <Link href={signupHref} className="btn-primary">Create your account</Link>
+        <p className="text-center text-sm text-stone-500">
+          Already have one? <Link href={loginHref} className="font-medium text-emerald-800 hover:underline">Sign in</Link>
+        </p>
+      </>
+    );
   } else if (invite.state === "accepted") {
     body = ctx.organization?.name === invite.organization_name ? (
       <>
@@ -56,7 +90,7 @@ export default async function InvitePage({ params }: PageProps<"/invite/[token]"
       </>
     );
   } else {
-    body = <AcceptForm token={token} organizationName={invite.organization_name} />;
+    body = <AcceptForm token={token} organizationName={invite.organization_name} defaultName={ctx.displayName} />;
   }
 
   return (

@@ -23,12 +23,20 @@ export async function acceptInvite(_prev: AcceptState, formData: FormData): Prom
   const token = String(formData.get("token") ?? "");
   if (!UUID.test(token)) return { error: "This invite link isn't valid." };
 
+  const displayName = String(formData.get("display_name") ?? "").trim().slice(0, 80);
+  if (!displayName) return { error: "Enter the name your teammates will see." };
+
   const supabase = await createClient();
   const { data: orgId, error } = await supabase.rpc("accept_invite", { token });
   if (error) return { error: inviteErrorMessage(error.message) };
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (user) track("member_joined", { userId: user.id, organizationId: orgId });
+  if (user) {
+    // The membership row exists only once the invite is accepted, so the name
+    // lands here rather than in the RPC.
+    await supabase.from("memberships").update({ display_name: displayName }).eq("user_id", user.id);
+    track("member_joined", { userId: user.id, organizationId: orgId });
+  }
 
   revalidatePath("/", "layout");
   redirect("/today");

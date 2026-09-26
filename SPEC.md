@@ -104,12 +104,14 @@ Then a breakdown table by job. **Export CSV** for time entries and for expenses.
 
 ### 5.7 Auth & onboarding
 
-1. Sign up (email + password) or magic link.
-2. "What's your business called?" → creates the organization, user becomes owner.
+1. Sign up: name, email, password — or magic link. The name is required, because people are shown by name and never by email address.
+2. "What's your business called?" → creates the organization, user becomes its creator.
 3. "What are you working on first?" → creates first job.
 4. Lands on Today with the timer ready.
 
 Three screens, no tour.
+
+An invite link is its own front door. Someone who follows `/invite/<token>` without an account sees who invited them and to what, and goes straight to sign-up with their email filled in — never to a bare login form they have to find their way out of.
 
 ### 5.8 Client report
 
@@ -136,9 +138,12 @@ Rules:
 
 - **Organization** is the fundamental object. Every record belongs to an organization.
 - A user can belong to exactly one organization in v1.
-- Roles: `owner` (full access, business-level view) and `member` (own time and expenses, sees own activity only).
+- **On the free plan the two people are peers.** Both see all of the business's time, expenses and reports, both can edit jobs and business settings, and both can invite. Role separation is what an upgrade buys, not something the free plan withholds.
+- `role` still records who created the business. Two things stay with them: only they can remove someone, and only they can delete the business. Peers cannot evict each other.
+- On Pro, `owner` and `member` mean what they say, and a member sees only their own activity. Enforced in `auth_is_owner()`, which every org-scoped policy already calls.
 - Free plan = max 2 members. Enforced server-side on invite acceptance, not only in the UI.
 - Removing a member keeps their historical entries attributed to them.
+- Everyone has a **display name**, required at signup and when accepting an invite, editable in Settings. People are shown by name; email addresses are never used as a person's label.
 
 ---
 
@@ -149,7 +154,7 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 | Table | Purpose | Key columns |
 |---|---|---|
 | `organizations` | the business | name, timezone, currency, plan (`free`), seat_limit (2), address, contact_email, contact_phone (all three optional, letterhead only) |
-| `memberships` | user ↔ org | user_id, organization_id, role, invited_email, accepted_at, removed_at |
+| `memberships` | user ↔ org | user_id, organization_id, role, display_name, invited_email, accepted_at, removed_at |
 | `clients` | who the work is for | name, email, phone, notes |
 | `jobs` | unit of work | client_id, name, billing_type (`hourly`/`fixed`), hourly_rate_cents, fixed_price_cents, estimated_minutes, status (`active`/`archived`), notes |
 | `time_entries` | tracked time | job_id, user_id, started_at, stopped_at (null = running), duration_seconds (derived on stop), notes, source (`timer`/`manual`) |
@@ -193,7 +198,7 @@ Rules:
 
 **Free — $0 forever:** 2 people, unlimited jobs and time entries, expenses, dashboard, reports, CSV export.
 
-**Pro (later, ~$15/mo):** more people, invoicing, tax estimates, mileage, receipt storage, rounding rules, integrations.
+**Pro (later, ~$15/mo):** more people, **roles and permissions** (the free plan gives everyone the same access), invoicing, tax estimates, mileage, receipt storage, rounding rules, integrations.
 
 v1 builds only the free plan. The `plan` and `seat_limit` columns exist so Pro is a data change, not a rewrite.
 
@@ -233,7 +238,7 @@ v1 builds only the free plan. The `plan` and `seat_limit` columns exist so Pro i
 
 1. New user reaches a running timer within 60 seconds of landing on signup.
 2. Timer survives page refresh, tab close, and phone lock; elapsed time is correct.
-3. Two people in one org can each track time and expenses; owner sees both, member sees only their own.
+3. Two people in one org can each track time and expenses, and on the free plan each sees the whole business. Neither can remove the other; only the creator can delete the business, and neither can promote themselves.
 4. A third invite is refused server-side with a clear message.
 5. Job summary numbers match a hand calculation for one hourly job and one fixed job with expenses.
 6. Editing a time entry keeps the original visible in history.

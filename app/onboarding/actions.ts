@@ -40,7 +40,15 @@ export async function createOrganization(
   }
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (user) track("org_created", { userId: user.id, organizationId: orgId }, { timezone });
+  if (user) {
+    // Move the name from signup onto the membership, where teammates can read it.
+    const displayName =
+      typeof user.user_metadata?.display_name === "string" ? user.user_metadata.display_name.trim() : "";
+    if (displayName) {
+      await supabase.from("memberships").update({ display_name: displayName }).eq("user_id", user.id);
+    }
+    track("org_created", { userId: user.id, organizationId: orgId }, { timezone });
+  }
 
   redirect("/onboarding");
 }

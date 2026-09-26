@@ -68,8 +68,8 @@ const organizations = [
 ];
 
 const memberships = [
-  { id: "m-owner", organization_id: ORG, user_id: ME, role: "owner", invited_email: null, invite_token: randomUUID(), accepted_at: hoursAgo(500), removed_at: null, created_at: hoursAgo(500), updated_at: hoursAgo(500), organizations: organizations[0] },
-  { id: "m-member", organization_id: ORG, user_id: TEAMMATE, role: "member", invited_email: "sam@example.com", invite_token: randomUUID(), accepted_at: hoursAgo(300), removed_at: null, created_at: hoursAgo(310), updated_at: hoursAgo(300), organizations: organizations[0] },
+  { id: "m-owner", organization_id: ORG, user_id: ME, role: "owner", display_name: "Marta Rivera", invited_email: null, invite_token: randomUUID(), accepted_at: hoursAgo(500), removed_at: null, created_at: hoursAgo(500), updated_at: hoursAgo(500), organizations: organizations[0] },
+  { id: "m-member", organization_id: ORG, user_id: TEAMMATE, role: "member", display_name: "Sam Okafor", invited_email: "sam@example.com", invite_token: randomUUID(), accepted_at: hoursAgo(300), removed_at: null, created_at: hoursAgo(310), updated_at: hoursAgo(300), organizations: organizations[0] },
 ];
 
 const clients = [

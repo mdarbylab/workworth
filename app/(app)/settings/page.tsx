@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getSessionContext } from "@/lib/session";
+import { getSessionContext, nameFromEmail } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
 import { signOut } from "@/app/(auth)/actions";
@@ -8,6 +8,7 @@ import { ConfirmDelete } from "@/components/confirm-delete";
 import { FeedbackLink } from "@/components/feedback-link";
 import { UpgradeLink } from "./upgrade-link";
 import { BusinessForm } from "./business-form";
+import { NameForm } from "./name-form";
 import { InviteForm } from "./invite-form";
 import { CopyButton } from "./copy-button";
 import { PasswordForm } from "./password-form";
@@ -25,13 +26,16 @@ export default async function SettingsPage() {
   const ctx = await getSessionContext();
   if (!ctx?.organization || !ctx.membership) redirect("/onboarding");
   const org = ctx.organization;
-  const isOwner = ctx.membership.role === "owner";
+  // Free plan: both people are peers. Only the creator may remove anyone or
+  // delete the business (§6).
+  const canManage = ctx.hasFullAccess;
+  const isCreator = ctx.isCreator;
 
   const supabase = await createClient();
   const [{ data: members }, siteUrl] = await Promise.all([
     supabase
       .from("memberships")
-      .select("id, user_id, role, invited_email, invite_token, accepted_at")
+      .select("id, user_id, role, invited_email, invite_token, accepted_at, display_name")
       .eq("organization_id", org.id)
       .is("removed_at", null)
       .order("created_at"),
@@ -55,7 +59,7 @@ export default async function SettingsPage() {
 
       <section className="card space-y-4">
         <h2 className="font-semibold">Business</h2>
-        {isOwner ? (
+        {canManage ? (
           <BusinessForm
             name={org.name}
             timezone={org.timezone}
@@ -84,7 +88,9 @@ export default async function SettingsPage() {
           {people.map((m) => {
             const isMe = m.user_id === ctx.user.id;
             const pending = m.accepted_at === null;
-            const label = isMe ? (ctx.user.email ?? "You") : (m.invited_email ?? "Owner");
+            const label = isMe
+              ? ctx.displayName
+              : m.display_name?.trim() || nameFromEmail(m.invited_email);
             const inviteUrl = `${siteUrl}/invite/${m.invite_token}`;
             return (
               <li key={m.id} className="space-y-2 py-3">
@@ -94,10 +100,14 @@ export default async function SettingsPage() {
                       {label} {isMe && <span className="font-normal text-stone-400">(you)</span>}
                     </p>
                     <p className="text-xs text-stone-500">
-                      {m.role === "owner" ? "Owner" : "Member"} · {pending ? "Invited — hasn't joined yet" : "Active"}
+                      {m.role === "owner" ? "Created this business" : "Full access"} ·{" "}
+                      {pending ? "Invited — hasn't joined yet" : "Active"}
                     </p>
+                    {!isMe && m.invited_email && (
+                      <p className="truncate text-xs text-stone-400">{m.invited_email}</p>
+                    )}
                   </div>
-                  {isOwner && !isMe && (
+                  {isCreator && !isMe && (
                     <ConfirmDelete
                       action={removeMember}
                       id={m.id}
@@ -110,7 +120,7 @@ export default async function SettingsPage() {
                     />
                   )}
                 </div>
-                {isOwner && pending && m.invite_token && (
+                {canManage && pending && m.invite_token && (
                   <div className="rounded-lg bg-stone-50 p-3 text-xs">
                     <p className="mb-2 text-stone-600">Send this link to {m.invited_email}. They sign in with that email and tap Join.</p>
                     <div className="flex flex-wrap items-center gap-2">
@@ -130,13 +140,17 @@ export default async function SettingsPage() {
           })}
         </ul>
 
-        {isOwner && !seatsFull && <InviteForm />}
+        {canManage && !seatsFull && <InviteForm />}
       </section>
 
       <section className="card space-y-3">
         <h2 className="font-semibold">Plan</h2>
         <p className="text-sm text-stone-700">
           Free — {seatsUsed} of {org.seat_limit} seats used
+        </p>
+        <p className="text-sm text-stone-500">
+          Everyone on the free plan has the same access: you both see all of the business&apos;s time,
+          expenses and reports. Separate roles and permissions come with Pro.
         </p>
         {seatsFull && (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm">
@@ -165,6 +179,7 @@ export default async function SettingsPage() {
 
       <section className="card space-y-4">
         <h2 className="font-semibold">Account</h2>
+        <NameForm displayName={ctx.displayName} />
         <Row label="Email" value={ctx.user.email ?? "—"} />
         <PasswordForm />
         <form action={signOut}>
@@ -175,7 +190,7 @@ export default async function SettingsPage() {
       <section className="card space-y-3 border-red-200">
         <h2 className="font-semibold text-red-800">Delete account</h2>
         <p className="text-sm text-stone-600">
-          {isOwner
+          {isCreator
             ? people.length > 1
               ? "Remove the other people from your business first. Deleting your account then deletes the business and all its data."
               : "This deletes your account, your business, and all of its data. There is no undo."

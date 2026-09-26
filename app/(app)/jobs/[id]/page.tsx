@@ -46,7 +46,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
 
   const t = totals.get(job.id) ?? { seconds: 0, expensesCents: 0 };
   const summary = summarize(job, t.seconds, t.expensesCents);
-  const isOwner = ctx.membership.role === "owner";
+  const canManage = ctx.hasFullAccess;
   const isArchived = job.status === "archived";
   const showPerson = people.length > 1;
 
@@ -156,7 +156,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         )}
       </section>
 
-      {isOwner && (
+      {canManage && (
         <form action={isArchived ? unarchiveJob : archiveJob} className="pt-2">
           <input type="hidden" name="job_id" value={job.id} />
           <button type="submit" className="btn-secondary">

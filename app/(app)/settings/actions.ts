@@ -29,7 +29,8 @@ function validTimezone(tz: string): boolean {
 
 export async function updateBusiness(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
   const ctx = await requireMembership();
-  if (ctx.membership.role !== "owner") return { error: "Only the owner can change business settings." };
+  // On the free plan both people are peers, so both may edit the business (§6).
+  if (!ctx.hasFullAccess) return { error: "You don't have access to change business settings." };
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Give your business a name." };
@@ -64,7 +65,7 @@ export async function updateBusiness(_prev: SettingsState, formData: FormData): 
 
 export async function inviteMember(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
   const ctx = await requireMembership();
-  if (ctx.membership.role !== "owner") return { error: "Only the owner can invite people." };
+  if (!ctx.hasFullAccess) return { error: "You don't have access to invite people." };
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!EMAIL.test(email)) return { error: "Enter a valid email address." };
@@ -103,10 +104,15 @@ export async function inviteMember(_prev: SettingsState, formData: FormData): Pr
   return { message: `Invite created for ${email}. Share the link below.` };
 }
 
-/** Remove a member or cancel a pending invite. History stays attributed (§6). */
+/**
+ * Remove a member or cancel a pending invite. History stays attributed (§6).
+ *
+ * Peers cannot evict each other: only the person who created the business can
+ * remove anyone. The memberships_guard_update trigger enforces the same rule.
+ */
 export async function removeMember(formData: FormData) {
   const ctx = await requireMembership();
-  if (ctx.membership.role !== "owner") return;
+  if (!ctx.isCreator) return;
   const id = String(formData.get("id") ?? "");
   if (!id || id === ctx.membership.id) return;
 
@@ -119,6 +125,23 @@ export async function removeMember(formData: FormData) {
     .is("removed_at", null);
 
   revalidatePath("/", "layout");
+}
+
+/** Your own name, as your teammate sees it. Anyone can change their own. */
+export async function updateDisplayName(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  const ctx = await requireMembership();
+  const name = String(formData.get("display_name") ?? "").trim().slice(0, 80);
+  if (!name) return { error: "Enter the name your teammates should see." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("memberships")
+    .update({ display_name: name })
+    .eq("id", ctx.membership.id);
+  if (error) return { error: "Couldn't save your name. Please try again." };
+
+  revalidatePath("/", "layout");
+  return { message: "Saved." };
 }
 
 // ---------- Account ----------

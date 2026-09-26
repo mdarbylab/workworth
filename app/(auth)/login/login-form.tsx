@@ -6,9 +6,9 @@ import { sendMagicLink, signInWithPassword, type AuthState } from "../actions";
 
 const initial: AuthState = {};
 
-type Props = { initialError?: string; initialMessage?: string; next?: string };
+type Props = { initialError?: string; initialMessage?: string; next?: string; defaultEmail?: string };
 
-export function LoginForm({ initialError, initialMessage, next = "/" }: Props) {
+export function LoginForm({ initialError, initialMessage, next = "/", defaultEmail = "" }: Props) {
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [pwState, pwAction, pwPending] = useActionState(signInWithPassword, initial);
   const [mlState, mlAction, mlPending] = useActionState(sendMagicLink, initial);
@@ -18,7 +18,10 @@ export function LoginForm({ initialError, initialMessage, next = "/" }: Props) {
     ? { error: initialError, message: initialMessage }
     : mode === "password" ? pwState : mlState;
   const pending = mode === "password" ? pwPending : mlPending;
-  const signupHref = next === "/" ? "/signup" : `/signup?next=${encodeURIComponent(next)}`;
+  const signupHref =
+    next === "/"
+      ? "/signup"
+      : `/signup?next=${encodeURIComponent(next)}${defaultEmail ? `&email=${encodeURIComponent(defaultEmail)}` : ""}`;
 
   return (
     <div className="space-y-5">
@@ -34,6 +37,7 @@ export function LoginForm({ initialError, initialMessage, next = "/" }: Props) {
             type="email"
             autoComplete="email"
             required
+            defaultValue={defaultEmail}
             className="input"
             placeholder="you@example.com"
           />
