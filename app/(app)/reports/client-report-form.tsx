@@ -16,7 +16,7 @@ export function ClientReportForm({ clients, periodQuery, periodLabel }: Props) {
 
   if (clients.length === 0) {
     return (
-      <p className="card text-sm text-stone-500">
+      <p className="card text-sm text-slate-500">
         Add a client to a job first. Reports are grouped by who the work was for.
       </p>
     );
@@ -44,7 +44,7 @@ export function ClientReportForm({ clients, periodQuery, periodLabel }: Props) {
         </select>
       </div>
       <button type="submit" className="btn-primary w-auto px-4">Create report</button>
-      <p className="w-full text-xs text-stone-400">
+      <p className="w-full text-xs text-slate-400">
         Covers {periodLabel}. Shows hours and what was done, never your expenses or profit.
       </p>
     </form>

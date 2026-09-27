@@ -40,7 +40,7 @@ export function JobForm({ clientNames, action, defaults = empty, jobId, submitLa
 
       <div>
         <label htmlFor="client_name" className="label">
-          Client <span className="font-normal text-stone-400">(optional)</span>
+          Client <span className="font-normal text-slate-400">(optional)</span>
         </label>
         <input
           id="client_name"
@@ -63,7 +63,7 @@ export function JobForm({ clientNames, action, defaults = empty, jobId, submitLa
 
       <div>
         <label htmlFor="estimated_hours" className="label">
-          Estimated hours <span className="font-normal text-stone-400">(optional)</span>
+          Estimated hours <span className="font-normal text-slate-400">(optional)</span>
         </label>
         <input
           id="estimated_hours"
@@ -80,7 +80,7 @@ export function JobForm({ clientNames, action, defaults = empty, jobId, submitLa
 
       <div>
         <label htmlFor="notes" className="label">
-          Notes <span className="font-normal text-stone-400">(optional)</span>
+          Notes <span className="font-normal text-slate-400">(optional)</span>
         </label>
         <textarea id="notes" name="notes" rows={3} defaultValue={defaults.notes} className="input" />
       </div>

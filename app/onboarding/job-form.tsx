@@ -13,7 +13,7 @@ export function JobForm({ businessName }: { businessName: string }) {
     <form action={action} className="space-y-5">
       <div>
         <h1 className="text-xl font-semibold">What are you working on first?</h1>
-        <p className="mt-1 text-sm text-stone-500">
+        <p className="mt-1 text-sm text-slate-500">
           Your first job for {businessName}. You can add more anytime.
         </p>
       </div>

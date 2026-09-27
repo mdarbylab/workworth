@@ -19,15 +19,15 @@ export function StatementControls({ showMoney }: { showMoney: boolean }) {
   };
 
   return (
-    <div className="no-print mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-stone-200 bg-white p-3">
-      <Link href="/reports" className="text-sm text-stone-600 hover:underline">← Reports</Link>
+    <div className="no-print mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
+      <Link href="/reports" className="text-sm text-slate-600 hover:underline">← Reports</Link>
 
       <label className="flex items-center gap-2 text-sm font-medium">
         <input
           type="checkbox"
           checked={showMoney}
           onChange={toggleMoney}
-          className="h-4 w-4 accent-emerald-700"
+          className="h-4 w-4 accent-ink-700"
         />
         Show rates and amounts
       </label>

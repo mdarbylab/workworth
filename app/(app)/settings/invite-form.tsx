@@ -9,7 +9,7 @@ export function InviteForm() {
   const [state, action, pending] = useActionState(inviteMember, initial);
 
   return (
-    <form action={action} className="space-y-3 border-t border-stone-100 pt-4">
+    <form action={action} className="space-y-3 border-t border-slate-100 pt-4">
       <label htmlFor="invite_email" className="label">Invite someone</label>
       <div className="flex gap-2">
         <input

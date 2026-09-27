@@ -22,7 +22,7 @@ export function NameForm({ displayName }: { displayName: string }) {
           defaultValue={displayName}
           className="input"
         />
-        <p className="mt-1 text-xs text-stone-500">How you appear to everyone else in the business.</p>
+        <p className="mt-1 text-xs text-slate-500">How you appear to everyone else in the business.</p>
       </div>
       {state.error && <p className="error">{state.error}</p>}
       {state.message && <p className="notice">{state.message}</p>}

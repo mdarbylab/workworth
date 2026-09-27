@@ -36,15 +36,15 @@ export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
             const summary = summarize(job, t.seconds, t.expensesCents);
             return (
               <li key={job.id}>
-                <Link href={`/jobs/${job.id}`} className="card block space-y-3 hover:border-emerald-300">
+                <Link href={`/jobs/${job.id}`} className="card block space-y-3 hover:border-ink-300">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-semibold">{job.name}</p>
-                      <p className="truncate text-sm text-stone-500">
+                      <p className="truncate text-sm text-slate-500">
                         {job.clients?.name ?? "No client"}
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600">
+                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
                       {job.billing_type === "hourly" ? "Hourly" : "Fixed price"}
                     </span>
                   </div>
@@ -56,7 +56,7 @@ export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
         </ul>
       ) : (
         <div className="card space-y-3 text-center">
-          <p className="text-stone-600">
+          <p className="text-slate-600">
             {showArchived ? "No archived jobs." : "No active jobs yet."}
           </p>
           {!showArchived && (
@@ -69,9 +69,9 @@ export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
 
       <p className="text-center text-sm">
         {showArchived ? (
-          <Link href="/jobs" className="text-emerald-800 hover:underline">← Active jobs</Link>
+          <Link href="/jobs" className="text-ink-800 hover:underline">← Active jobs</Link>
         ) : (
-          <Link href="/jobs?show=archived" className="text-stone-500 hover:underline">Show archived jobs</Link>
+          <Link href="/jobs?show=archived" className="text-slate-500 hover:underline">Show archived jobs</Link>
         )}
       </p>
     </div>

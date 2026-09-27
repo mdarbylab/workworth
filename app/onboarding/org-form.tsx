@@ -19,7 +19,7 @@ export function OrgForm() {
     <form action={action} className="space-y-5">
       <div>
         <h1 className="text-xl font-semibold">What&apos;s your business called?</h1>
-        <p className="mt-1 text-sm text-stone-500">
+        <p className="mt-1 text-sm text-slate-500">
           You can change this later in Settings.
         </p>
       </div>

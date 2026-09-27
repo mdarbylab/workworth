@@ -7,7 +7,7 @@ export function JobSummaryBlock({ summary, compact = false }: { summary: JobSumm
     ["Time", formatDuration(summary.seconds)],
     ["Revenue", formatCents(summary.revenueCents)],
     ["Expenses", formatCents(summary.expensesCents)],
-    ["Profit", formatCents(summary.profitCents), summary.profitCents < 0 ? "text-red-700" : "text-emerald-800"],
+    ["Profit", formatCents(summary.profitCents), summary.profitCents < 0 ? "text-red-700" : "text-ink-800"],
     ["Effective rate", formatRate(summary.rateCents)],
   ];
 
@@ -16,7 +16,7 @@ export function JobSummaryBlock({ summary, compact = false }: { summary: JobSumm
       <dl className="grid grid-cols-3 gap-x-2 gap-y-3 text-center sm:grid-cols-5">
         {rows.map(([label, value, cls]) => (
           <div key={label} className="min-w-0">
-            <dt className="text-[11px] uppercase tracking-wide text-stone-500">
+            <dt className="text-[11px] uppercase tracking-wide text-slate-500">
               {label === "Effective rate" ? "Rate" : label}
             </dt>
             <dd className={`text-sm font-semibold tabular-nums ${cls ?? ""}`}>{value}</dd>
@@ -27,14 +27,14 @@ export function JobSummaryBlock({ summary, compact = false }: { summary: JobSumm
   }
 
   return (
-    <dl className="divide-y divide-stone-100">
+    <dl className="divide-y divide-slate-100">
       {rows.map(([label, value, cls]) => (
         <div key={label} className="flex items-center justify-between py-2">
-          <dt className="text-sm text-stone-600">{label}</dt>
+          <dt className="text-sm text-slate-600">{label}</dt>
           <dd className={`text-base font-semibold tabular-nums ${cls ?? ""}`}>{value}</dd>
         </div>
       ))}
-      <p className="pt-2 text-xs text-stone-400">Estimated — until invoicing exists.</p>
+      <p className="pt-2 text-xs text-slate-400">Estimated — until invoicing exists.</p>
     </dl>
   );
 }
