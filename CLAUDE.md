@@ -20,6 +20,15 @@ against each other.
 - **Monitoring**: UptimeRobot hits `/api/health` every 5 minutes. That endpoint
   runs a real query, so it also keeps the free-plan project from pausing after
   7 days of inactivity.
+- **Email**: Supabase Auth SMTP is Resend (`smtp.resend.com`, sender
+  `noreply@workworth.de`, no reply-to, no inbox). Domain verified with SPF,
+  DKIM and a `p=none` DMARC record at Spaceship. Confirmed end-to-end
+  2026-09-27: signup mail passes SPF/DKIM/DMARC and links to
+  `workworth.de/auth/callback`. The "Confirm sign up" and "Magic link or OTP"
+  templates are branded (WorkWorth mark, navy button); the others are
+  Supabase's stock templates because the app doesn't send them yet — invites
+  are a custom mailto link, and there's no `resetPasswordForEmail` call
+  (gap below).
 - **Analytics**: PostHog (product analytics + error tracking). Events are the
   §12 list; ids only, never emails or free text.
 
@@ -90,24 +99,27 @@ Supabase and Netlify MCP tools to read live state instead.
 ## Next up
 
 v1 is done; there is no active sprint. Before building Sprint 2 features, close
-the gaps found at the end of Sprint 1, in this order:
+the gaps found at the end of Sprint 1, in this order. Custom SMTP (was #1) is
+done — see "Where things stand" above.
 
-1. **Custom SMTP.** Supabase's built-in mail refuses to deliver to addresses
-   outside the project team, so no real beta user can finish signing up. This
-   blocks every other kind of growth.
-2. **Password reset.** No flow exists anywhere; `resetPasswordForEmail` is never
+1. **Password reset.** No flow exists anywhere; `resetPasswordForEmail` is never
    called. Magic link is the only recovery and nothing tells the user that.
-3. **Privacy policy, terms, Impressum.** None exist, on a `.de` domain that
+2. **Privacy policy, terms, Impressum.** None exist, on a `.de` domain that
    collects emails and runs analytics.
-4. **Enable leaked-password protection** in Supabase Auth.
-5. **`/api/health` swallows its own errors** — its bare `catch` reports
+3. **Enable leaked-password protection** in Supabase Auth.
+4. **`/api/health` swallows its own errors** — its bare `catch` reports
    "unreachable" for any failure, which made one real outage much harder to
    diagnose than it needed to be.
-6. **Revoke `guard_membership_update` from the API.** It is a trigger function
+5. **Revoke `guard_membership_update` from the API.** It is a trigger function
    and does not belong in the exposed RPC surface.
-7. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
+6. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
    `lib/periods.ts` and `lib/dates.ts` — pure functions where a silent bug costs
    a user real money.
+
+Also queued, pinned rather than fixed yet (see the `pinned-ux-fixes` memory
+for detail): the subminute effective-rate display (a ~4s entry can show
+`0m` alongside a `$90,000/hr` rate) and Today's profit mixing an hourly-only
+earnings figure with all-jobs expenses.
 
 Supabase's performance lints (unindexed foreign keys, per-row `auth.uid()`
 re-evaluation) are known and **deliberately deferred**: real at scale,
