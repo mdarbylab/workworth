@@ -64,7 +64,7 @@ export default function PrivacyPage() {
         <li><strong>Supabase</strong> (database and sign-in) — United States.</li>
         <li><strong>Netlify</strong> (hosting) — United States.</li>
         <li><strong>Resend</strong> (sending confirmation and sign-in emails) — European Union.</li>
-        <li><strong>PostHog</strong> (usage analytics, only once you&apos;ve accepted it) — see PostHog&apos;s own documentation for the hosting region of this account.</li>
+        <li><strong>PostHog</strong> (usage analytics, only once you&apos;ve accepted it) — United States.</li>
       </ul>
       <p>
         If you&apos;re in the European Economic Area, this means some of your
