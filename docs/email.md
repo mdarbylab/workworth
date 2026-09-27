@@ -28,27 +28,29 @@ not this one.
 
 ## Templates
 
-Supabase Authentication → Templates. Only two are wired up, because those
-are the only two auth emails the app actually sends:
+Supabase Authentication → Templates. Three are wired up, because those are
+the only auth emails the app actually sends:
 
 - **Confirm sign up** — used by `signUp()` in `app/(auth)/actions.ts`.
 - **Magic link or OTP** — used by `sendMagicLink()` in the same file.
+- **Reset password** — used by `requestPasswordReset()` in the same file,
+  via `resetPasswordForEmail()`. The link signs the browser into a recovery
+  session and lands on `/reset-password` (a top-level route, not under
+  `app/(auth)` — that layout bounces anyone with a session, which a
+  recovery link always creates). `/forgot-password` is public in
+  `lib/supabase/proxy.ts`'s `PUBLIC_PATHS`; `/reset-password` deliberately
+  isn't, since it needs that session.
 
-Both are branded: the WorkWorth mark (`https://workworth.de/icons/icon-192.png`,
+All three are branded: the WorkWorth mark (`https://workworth.de/icons/icon-192.png`,
 hosted, not embedded — email clients can't use local files), a navy/serif
 heading, and a navy button linking `{{ .ConfirmationURL }}`. Table-based
 layout with inline styles and system-font fallbacks, since Fraunces won't
 load in mail clients.
 
-The other templates in that list (Invite user, Reset password, Change email,
-MFA, etc.) are still Supabase's unbranded defaults, because nothing in the
-app calls them yet:
-
-- Invites are a custom mailto link (`app/(app)/settings/page.tsx`), not
-  Supabase's invite API.
-- Password reset doesn't exist (`resetPasswordForEmail` is never called —
-  see the gap list in `CLAUDE.md`). Brand the Reset password template when
-  that flow is built.
+The other templates in that list (Invite user, Change email, MFA, etc.) are
+still Supabase's unbranded defaults, because nothing in the app calls them
+yet — invites are a custom mailto link (`app/(app)/settings/page.tsx`), not
+Supabase's invite API.
 
 ## Verifying it still works
 

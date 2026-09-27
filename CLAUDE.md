@@ -99,20 +99,19 @@ Supabase and Netlify MCP tools to read live state instead.
 ## Next up
 
 v1 is done; there is no active sprint. Before building Sprint 2 features, close
-the gaps found at the end of Sprint 1, in this order. Custom SMTP (was #1) is
-done — see "Where things stand" above.
+the gaps found at the end of Sprint 1, in this order. Custom SMTP and
+password reset (were #1, #2) are done — see "Where things stand" above and
+SPEC §5.7.
 
-1. **Password reset.** No flow exists anywhere; `resetPasswordForEmail` is never
-   called. Magic link is the only recovery and nothing tells the user that.
-2. **Privacy policy, terms, Impressum.** None exist, on a `.de` domain that
+1. **Privacy policy, terms, Impressum.** None exist, on a `.de` domain that
    collects emails and runs analytics.
-3. **Enable leaked-password protection** in Supabase Auth.
-4. **`/api/health` swallows its own errors** — its bare `catch` reports
+2. **Enable leaked-password protection** in Supabase Auth.
+3. **`/api/health` swallows its own errors** — its bare `catch` reports
    "unreachable" for any failure, which made one real outage much harder to
    diagnose than it needed to be.
-5. **Revoke `guard_membership_update` from the API.** It is a trigger function
+4. **Revoke `guard_membership_update` from the API.** It is a trigger function
    and does not belong in the exposed RPC surface.
-6. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
+5. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
    `lib/periods.ts` and `lib/dates.ts` — pure functions where a silent bug costs
    a user real money.
 
