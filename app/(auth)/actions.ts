@@ -78,6 +78,24 @@ export async function sendMagicLink(
   return { message: `Check ${email} for a sign-in link.` };
 }
 
+export async function requestPasswordReset(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!email) return { error: "Enter your email." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: await callbackUrl("/reset-password"),
+  });
+  // Supabase never reveals whether the address has an account, on purpose —
+  // an error here is operational (rate limit, malformed address), not
+  // "no such user". Keep the message the same either way.
+  if (error) return { error: error.message };
+  return { message: `If an account exists for ${email}, we've sent a link to reset the password.` };
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();

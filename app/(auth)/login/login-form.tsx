@@ -45,7 +45,12 @@ export function LoginForm({ initialError, initialMessage, next = "/", defaultEma
 
         {mode === "password" && (
           <div>
-            <label htmlFor="password" className="label">Password</label>
+            <div className="flex items-baseline justify-between">
+              <label htmlFor="password" className="label">Password</label>
+              <Link href="/forgot-password" className="mb-1 text-xs text-ink-800 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
             <input
               id="password"
               name="password"

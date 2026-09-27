@@ -111,6 +111,12 @@ Then a breakdown table by job. **Export CSV** for time entries and for expenses.
 
 Three screens, no tour.
 
+Forgot password: the sign-in screen links to a page that asks for an email
+and sends a reset link if an account exists for it. The response is the same
+either way, so the flow can't be used to find out who has an account.
+Following the link signs the browser in and lands on a page to set a new
+password, then straight into the app — no separate sign-in step after.
+
 An invite link is its own front door. Someone who follows `/invite/<token>` without an account sees who invited them and to what, and goes straight to sign-up with their email filled in — never to a bare login form they have to find their way out of.
 
 ### 5.8 Client report
