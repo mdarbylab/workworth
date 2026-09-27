@@ -58,9 +58,11 @@ a healthy database as unreachable.
 - **Brand** (from the logo, a deer reaching for one apple): `ink-*` is the navy
   and is the whole interface; `slate-*` are the neutrals; `font-display`
   (Fraunces) is for `h1` and the wordmark, Geist for everything else. `apple`
-  (`bg-apple`) is a single tiny splash, like the fruit. It appears in the
-  logo and the running-timer dot. Do not use it for text, buttons or
-  backgrounds, and add a new use only deliberately. Errors and losses keep
+  (`bg-apple`) is a single tiny splash, like the fruit. It appears only as
+  small dots and hairlines: the logo, the running-timer dot, the active nav
+  dot, link underlines on hover, the text-selection tint, the loading dot.
+  Do not use it for text, buttons or backgrounds, and add a new use only
+  deliberately. Errors and losses keep
   Tailwind's `red-*`. The mark lives in `components/logo.tsx` (traced from the
   artwork; `public/brand/mark.svg` is the same drawing).
 - Secrets live in Netlify and GitHub, never in the repo. `.env*` is gitignored.
