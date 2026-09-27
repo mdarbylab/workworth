@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
+import { Wordmark } from "@/components/wordmark";
 import { OrgForm } from "./org-form";
 import { JobForm } from "./job-form";
 
@@ -26,8 +27,8 @@ export default async function OnboardingPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-4 py-10">
       <div className="mb-8 text-center">
-        <p className="text-2xl font-bold tracking-tight text-emerald-800">WorkWorth</p>
-        <p className="mt-1 text-sm text-stone-500">
+        <Wordmark stacked />
+        <p className="mt-1 text-sm text-slate-500">
           {step === "org" ? "Step 2 of 3" : "Step 3 of 3"}
         </p>
       </div>

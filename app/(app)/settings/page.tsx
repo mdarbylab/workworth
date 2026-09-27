@@ -81,10 +81,10 @@ export default async function SettingsPage() {
       <section className="card space-y-4">
         <div className="flex items-baseline justify-between">
           <h2 className="font-semibold">People</h2>
-          <span className="text-xs text-stone-500">{seatsUsed} of {org.seat_limit} seats</span>
+          <span className="text-xs text-slate-500">{seatsUsed} of {org.seat_limit} seats</span>
         </div>
 
-        <ul className="divide-y divide-stone-100">
+        <ul className="divide-y divide-slate-100">
           {people.map((m) => {
             const isMe = m.user_id === ctx.user.id;
             const pending = m.accepted_at === null;
@@ -97,14 +97,14 @@ export default async function SettingsPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                      {label} {isMe && <span className="font-normal text-stone-400">(you)</span>}
+                      {label} {isMe && <span className="font-normal text-slate-400">(you)</span>}
                     </p>
-                    <p className="text-xs text-stone-500">
+                    <p className="text-xs text-slate-500">
                       {m.role === "owner" ? "Created this business" : "Full access"} ·{" "}
                       {pending ? "Invited — hasn't joined yet" : "Active"}
                     </p>
                     {!isMe && m.invited_email && (
-                      <p className="truncate text-xs text-stone-400">{m.invited_email}</p>
+                      <p className="truncate text-xs text-slate-400">{m.invited_email}</p>
                     )}
                   </div>
                   {isCreator && !isMe && (
@@ -121,14 +121,14 @@ export default async function SettingsPage() {
                   )}
                 </div>
                 {canManage && pending && m.invite_token && (
-                  <div className="rounded-lg bg-stone-50 p-3 text-xs">
-                    <p className="mb-2 text-stone-600">Send this link to {m.invited_email}. They sign in with that email and tap Join.</p>
+                  <div className="rounded-lg bg-slate-50 p-3 text-xs">
+                    <p className="mb-2 text-slate-600">Send this link to {m.invited_email}. They sign in with that email and tap Join.</p>
                     <div className="flex flex-wrap items-center gap-2">
-                      <code className="min-w-0 flex-1 truncate rounded bg-white px-2 py-1 text-[11px] text-stone-700">{inviteUrl}</code>
+                      <code className="min-w-0 flex-1 truncate rounded bg-white px-2 py-1 text-[11px] text-slate-700">{inviteUrl}</code>
                       <CopyButton text={inviteUrl} />
                       <a
                         href={`mailto:${m.invited_email}?subject=${encodeURIComponent(`Join ${org.name} on WorkWorth`)}&body=${encodeURIComponent(`Join ${org.name} on WorkWorth to track your time and expenses:\n\n${inviteUrl}`)}`}
-                        className="rounded-md border border-stone-300 bg-white px-2 py-1 font-medium text-stone-700 hover:bg-stone-100"
+                        className="rounded-md border border-slate-300 bg-white px-2 py-1 font-medium text-slate-700 hover:bg-slate-100"
                       >
                         Email it
                       </a>
@@ -145,17 +145,17 @@ export default async function SettingsPage() {
 
       <section className="card space-y-3">
         <h2 className="font-semibold">Plan</h2>
-        <p className="text-sm text-stone-700">
+        <p className="text-sm text-slate-700">
           Free — {seatsUsed} of {org.seat_limit} seats used
         </p>
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-slate-500">
           Everyone on the free plan has the same access: you both see all of the business&apos;s time,
           expenses and reports. Separate roles and permissions come with Pro.
         </p>
         {seatsFull && (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm">
-            <p className="font-medium text-emerald-900">Add another person → upgrade</p>
-            <p className="mt-1 text-emerald-900/80">
+          <div className="rounded-lg border border-ink-200 bg-ink-50 p-3 text-sm">
+            <p className="font-medium text-ink-900">Add another person → upgrade</p>
+            <p className="mt-1 text-ink-900/80">
               Pro brings more people, invoicing, and tax estimates.{" "}
               {waitlistHref ? (
                 <UpgradeLink href={waitlistHref} seatLimit={org.seat_limit} />
@@ -170,7 +170,7 @@ export default async function SettingsPage() {
       {supportEmail && (
         <section className="card space-y-2">
           <h2 className="font-semibold">Feedback</h2>
-          <p className="text-sm text-stone-600">
+          <p className="text-sm text-slate-600">
             WorkWorth is in beta. Tell us what&apos;s missing or broken — it goes straight to us.
           </p>
           <FeedbackLink email={supportEmail} className="btn-secondary" />
@@ -189,7 +189,7 @@ export default async function SettingsPage() {
 
       <section className="card space-y-3 border-red-200">
         <h2 className="font-semibold text-red-800">Delete account</h2>
-        <p className="text-sm text-stone-600">
+        <p className="text-sm text-slate-600">
           {isCreator
             ? people.length > 1
               ? "Remove the other people from your business first. Deleting your account then deletes the business and all its data."
@@ -205,7 +205,7 @@ export default async function SettingsPage() {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4 text-sm">
-      <span className="text-stone-500">{label}</span>
+      <span className="text-slate-500">{label}</span>
       <span className="truncate font-medium">{value}</span>
     </div>
   );

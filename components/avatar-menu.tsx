@@ -27,24 +27,24 @@ export function AvatarMenu({ name, email }: { name: string; email: string | null
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-700 text-sm font-semibold text-white"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-ink-900 text-sm font-semibold text-white"
       >
         {initial}
       </button>
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-lg"
+          className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
         >
-          <div className="border-b border-stone-100 px-3 py-2">
-            <p className="truncate text-sm font-medium text-stone-800">{name}</p>
-            {email && <p className="truncate text-xs text-stone-500">{email}</p>}
+          <div className="border-b border-slate-100 px-3 py-2">
+            <p className="truncate text-sm font-medium text-slate-800">{name}</p>
+            {email && <p className="truncate text-xs text-slate-500">{email}</p>}
           </div>
           <Link
             href="/settings"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="block px-3 py-2 text-sm text-stone-800 hover:bg-stone-100"
+            className="block px-3 py-2 text-sm text-slate-800 hover:bg-slate-100"
           >
             Settings
           </Link>
@@ -52,7 +52,7 @@ export function AvatarMenu({ name, email }: { name: string; email: string | null
             <button
               type="submit"
               role="menuitem"
-              className="block w-full px-3 py-2 text-left text-sm text-stone-800 hover:bg-stone-100"
+              className="block w-full px-3 py-2 text-left text-sm text-slate-800 hover:bg-slate-100"
             >
               Sign out
             </button>

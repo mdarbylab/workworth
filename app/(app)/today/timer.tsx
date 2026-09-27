@@ -36,16 +36,19 @@ export function Timer({ jobs, running, defaultJobId }: Props) {
     <section className="card flex flex-col items-center gap-5 py-8 text-center">
       {running ? (
         <>
-          <p className="text-sm text-stone-500">Tracking</p>
+          <p className="flex items-center gap-2 text-sm text-slate-500">
+            <span aria-hidden className="h-2 w-2 rounded-full bg-apple motion-safe:animate-pulse" />
+            Tracking
+          </p>
           <p className="max-w-full truncate text-lg font-semibold">{running.jobName}</p>
-          <p className="font-mono text-6xl tabular-nums text-emerald-800" suppressHydrationWarning>
+          <p className="font-mono text-6xl tabular-nums text-ink-800" suppressHydrationWarning>
             {formatClock(elapsed)}
           </p>
           <form action={stopAction} className="w-full max-w-xs">
             <button
               type="submit"
               disabled={pending}
-              className="w-full rounded-2xl bg-red-600 py-5 text-2xl font-bold tracking-wide text-white transition hover:bg-red-700 disabled:opacity-60"
+              className="w-full rounded-2xl border-2 border-ink-900 bg-white py-5 text-2xl font-bold tracking-wide text-ink-900 transition hover:bg-ink-50 disabled:opacity-60"
             >
               STOP
             </button>
@@ -66,15 +69,15 @@ export function Timer({ jobs, running, defaultJobId }: Props) {
               ))}
             </select>
           ) : (
-            <p className="text-sm text-stone-600">
-              <Link href="/jobs/new" className="text-emerald-800 hover:underline">Create a job</Link> to start tracking.
+            <p className="text-sm text-slate-600">
+              <Link href="/jobs/new" className="text-ink-800 hover:underline">Create a job</Link> to start tracking.
             </p>
           )}
-          <p className="font-mono text-6xl tabular-nums text-stone-300">0:00:00</p>
+          <p className="font-mono text-6xl tabular-nums text-slate-300">0:00:00</p>
           <button
             type="submit"
             disabled={pending || jobs.length === 0}
-            className="w-full rounded-2xl bg-emerald-700 py-5 text-2xl font-bold tracking-wide text-white transition hover:bg-emerald-800 disabled:opacity-60"
+            className="w-full rounded-2xl bg-ink-900 py-5 text-2xl font-bold tracking-wide text-white transition hover:bg-ink-950 disabled:opacity-60"
           >
             START
           </button>

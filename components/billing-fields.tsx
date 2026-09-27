@@ -22,8 +22,8 @@ export function BillingFields({ defaultType = "hourly", defaultAmount = "", requ
               key={type}
               className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-sm font-medium ${
                 billingType === type
-                  ? "border-emerald-700 bg-emerald-50 text-emerald-900"
-                  : "border-stone-300 bg-white text-stone-700"
+                  ? "border-ink-700 bg-ink-50 text-ink-900"
+                  : "border-slate-300 bg-white text-slate-700"
               }`}
             >
               <input
@@ -43,10 +43,10 @@ export function BillingFields({ defaultType = "hourly", defaultAmount = "", requ
       <div>
         <label htmlFor="amount" className="label">
           {billingType === "hourly" ? "Hourly rate" : "Fixed price"}{" "}
-          {!required && <span className="font-normal text-stone-400">(optional)</span>}
+          {!required && <span className="font-normal text-slate-400">(optional)</span>}
         </label>
         <div className="relative">
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-stone-400">
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
             $
           </span>
           <input

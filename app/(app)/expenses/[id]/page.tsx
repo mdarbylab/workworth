@@ -93,15 +93,15 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
         <section className="card space-y-3">
           <h2 className="font-semibold">History</h2>
           <div>
-            <p className="text-xs uppercase tracking-wide text-stone-500">Original</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500">Original</p>
             <p className="text-sm">{describe(original)}</p>
           </div>
-          <ol className="space-y-2 border-t border-stone-100 pt-3">
+          <ol className="space-y-2 border-t border-slate-100 pt-3">
             {edits.map((e, i) => {
               const after = asSnapshot(e.after);
               return (
                 <li key={e.id} className="text-sm">
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs text-slate-500">
                     Edit {i + 1} · {formatDateTime(new Date(e.created_at), tz)}
                   </p>
                   {after && <p>{describe(after)}</p>}
@@ -109,7 +109,7 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
               );
             })}
           </ol>
-          <p className="text-xs text-stone-400">Nothing is overwritten — every change is kept.</p>
+          <p className="text-xs text-slate-400">Nothing is overwritten — every change is kept.</p>
         </section>
       )}
 

@@ -72,16 +72,16 @@ export function LoginForm({ initialError, initialMessage, next = "/", defaultEma
       <button
         type="button"
         onClick={() => setMode(mode === "password" ? "magic" : "password")}
-        className="w-full text-center text-sm text-emerald-800 hover:underline"
+        className="w-full text-center text-sm text-ink-800 hover:underline"
       >
         {mode === "password"
           ? "Use a magic link instead"
           : "Use a password instead"}
       </button>
 
-      <p className="text-center text-sm text-stone-600">
+      <p className="text-center text-sm text-slate-600">
         New here?{" "}
-        <Link href={signupHref} className="font-medium text-emerald-800 hover:underline">
+        <Link href={signupHref} className="font-medium text-ink-800 hover:underline">
           Create an account
         </Link>
       </p>

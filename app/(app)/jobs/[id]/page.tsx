@@ -54,9 +54,9 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link href="/jobs" className="text-sm text-stone-500 hover:underline">← Jobs</Link>
+          <Link href="/jobs" className="text-sm text-slate-500 hover:underline">← Jobs</Link>
           <h1 className="truncate text-2xl font-semibold">{job.name}</h1>
-          <p className="text-sm text-stone-500">
+          <p className="text-sm text-slate-500">
             {job.clients?.name ?? "No client"} ·{" "}
             {job.billing_type === "hourly"
               ? `Hourly${job.hourly_rate_cents !== null ? ` at ${formatCents(job.hourly_rate_cents)}/hr` : ""}`
@@ -65,9 +65,9 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <Link href={`/jobs/${job.id}/edit`} className="text-sm text-stone-600 hover:underline">Edit</Link>
+          <Link href={`/jobs/${job.id}/edit`} className="text-sm text-slate-600 hover:underline">Edit</Link>
           {isArchived ? (
-            <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs text-stone-700">Archived</span>
+            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700">Archived</span>
           ) : (
             <form action={startTimerFromJob}>
               <input type="hidden" name="job_id" value={job.id} />
@@ -83,7 +83,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
 
       {job.notes && (
         <section className="card">
-          <h2 className="mb-1 text-sm font-semibold text-stone-600">Notes</h2>
+          <h2 className="mb-1 text-sm font-semibold text-slate-600">Notes</h2>
           <p className="whitespace-pre-wrap text-sm">{job.notes}</p>
         </section>
       )}
@@ -92,30 +92,30 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Time entries</h2>
           {!isArchived && (
-            <Link href={`/time/new?job=${job.id}`} className="text-sm text-emerald-800 hover:underline">
+            <Link href={`/time/new?job=${job.id}`} className="text-sm text-ink-800 hover:underline">
               + Add time
             </Link>
           )}
         </div>
         {entries?.length ? (
-          <ul className="card divide-y divide-stone-100 p-0">
+          <ul className="card divide-y divide-slate-100 p-0">
             {entries.map((e) => {
               const start = new Date(e.started_at);
               const running = e.stopped_at === null;
               return (
                 <li key={e.id}>
-                  <Link href={`/time/${e.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-stone-50">
+                  <Link href={`/time/${e.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
                     <div className="min-w-0">
                       <p className="text-sm font-medium">
                         {formatDate(start, tz)} · {formatTime(start, tz)}
                         {e.stopped_at ? ` – ${formatTime(new Date(e.stopped_at), tz)}` : ""}
                       </p>
-                      <p className="truncate text-xs text-stone-500">
+                      <p className="truncate text-xs text-slate-500">
                         {showPerson && `${personLabel(people, e.user_id)}${e.notes ? " · " : ""}`}
                         {e.notes}
                       </p>
                     </div>
-                    <span className={`shrink-0 text-sm font-semibold tabular-nums ${running ? "text-emerald-700" : ""}`}>
+                    <span className={`shrink-0 text-sm font-semibold tabular-nums ${running ? "text-ink-700" : ""}`}>
                       {running ? "Running" : formatDuration(e.duration_seconds ?? 0)}
                     </span>
                   </Link>
@@ -124,7 +124,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             })}
           </ul>
         ) : (
-          <p className="card text-sm text-stone-500">No time tracked on this job yet.</p>
+          <p className="card text-sm text-slate-500">No time tracked on this job yet.</p>
         )}
       </section>
 
@@ -132,19 +132,19 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Expenses</h2>
           {!isArchived && (
-            <Link href={`/expenses/new?job=${job.id}`} className="text-sm text-emerald-800 hover:underline">
+            <Link href={`/expenses/new?job=${job.id}`} className="text-sm text-ink-800 hover:underline">
               + Add expense
             </Link>
           )}
         </div>
         {expenses?.length ? (
-          <ul className="card divide-y divide-stone-100 p-0">
+          <ul className="card divide-y divide-slate-100 p-0">
             {expenses.map((x) => (
               <li key={x.id}>
-                <Link href={`/expenses/${x.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-stone-50">
+                <Link href={`/expenses/${x.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{x.description || CATEGORY_LABELS[x.category]}</p>
-                    <p className="truncate text-xs text-stone-500">{CATEGORY_LABELS[x.category]} · {formatDayHeading(x.spent_on, tz)}</p>
+                    <p className="truncate text-xs text-slate-500">{CATEGORY_LABELS[x.category]} · {formatDayHeading(x.spent_on, tz)}</p>
                   </div>
                   <span className="shrink-0 text-sm font-semibold tabular-nums">{formatCents(x.amount_cents)}</span>
                 </Link>
@@ -152,7 +152,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             ))}
           </ul>
         ) : (
-          <p className="card text-sm text-stone-500">No expenses on this job yet.</p>
+          <p className="card text-sm text-slate-500">No expenses on this job yet.</p>
         )}
       </section>
 
@@ -163,7 +163,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             {isArchived ? "Restore job" : "Archive job"}
           </button>
           {!isArchived && (
-            <p className="mt-2 text-center text-xs text-stone-500">
+            <p className="mt-2 text-center text-xs text-slate-500">
               Archived jobs are hidden from pickers but still count in reports.
             </p>
           )}

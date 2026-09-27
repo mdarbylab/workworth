@@ -31,18 +31,18 @@ export function BusinessForm({ name, timezone, timezones, currency, address, con
             <option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-stone-500">Days and reports are grouped in this timezone.</p>
+        <p className="mt-1 text-xs text-slate-500">Days and reports are grouped in this timezone.</p>
       </div>
       <div>
         <label htmlFor="currency" className="label">Currency</label>
-        <input id="currency" type="text" value={currency} readOnly className="input bg-stone-50 text-stone-500" />
+        <input id="currency" type="text" value={currency} readOnly className="input bg-slate-50 text-slate-500" />
       </div>
 
-      <fieldset className="space-y-4 border-t border-stone-100 pt-4">
+      <fieldset className="space-y-4 border-t border-slate-100 pt-4">
         <legend className="label">
-          On client reports <span className="font-normal text-stone-400">(all optional)</span>
+          On client reports <span className="font-normal text-slate-400">(all optional)</span>
         </legend>
-        <p className="-mt-2 text-xs text-stone-500">
+        <p className="-mt-2 text-xs text-slate-500">
           These appear at the top of a report you hand to a client. Blank ones are left off.
         </p>
         <div>

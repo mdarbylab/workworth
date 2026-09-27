@@ -34,7 +34,7 @@ export function ExpenseForm({ jobs, defaults, action, expenseId, submitLabel, ca
       <div>
         <label htmlFor="amount" className="label">Amount</label>
         <div className="relative">
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-stone-400">$</span>
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">$</span>
           <input
             id="amount"
             name="amount"
@@ -66,7 +66,7 @@ export function ExpenseForm({ jobs, defaults, action, expenseId, submitLabel, ca
 
       <div>
         <label htmlFor="job_id" className="label">
-          Job <span className="font-normal text-stone-400">(optional)</span>
+          Job <span className="font-normal text-slate-400">(optional)</span>
         </label>
         <select id="job_id" name="job_id" defaultValue={defaults.jobId} className="input">
           <option value="">No job — general business expense</option>
@@ -80,7 +80,7 @@ export function ExpenseForm({ jobs, defaults, action, expenseId, submitLabel, ca
 
       <div>
         <label htmlFor="description" className="label">
-          Description <span className="font-normal text-stone-400">(optional)</span>
+          Description <span className="font-normal text-slate-400">(optional)</span>
         </label>
         <input id="description" name="description" type="text" defaultValue={defaults.description} className="input" placeholder="e.g. Drywall and screws" />
       </div>

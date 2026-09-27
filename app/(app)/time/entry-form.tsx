@@ -71,7 +71,7 @@ export function EntryForm({ jobs, defaults, action, entryId, submitLabel, cancel
             <label
               key={m}
               className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-sm font-medium ${
-                mode === m ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-stone-300 bg-white text-stone-700"
+                mode === m ? "border-ink-700 bg-ink-50 text-ink-900" : "border-slate-300 bg-white text-slate-700"
               }`}
             >
               <input type="radio" name="mode" value={m} checked={mode === m} onChange={() => setMode(m)} className="sr-only" />
@@ -101,7 +101,7 @@ export function EntryForm({ jobs, defaults, action, entryId, submitLabel, cancel
 
       <div>
         <label htmlFor="notes" className="label">
-          Notes <span className="font-normal text-stone-400">(optional)</span>
+          Notes <span className="font-normal text-slate-400">(optional)</span>
         </label>
         <textarea id="notes" name="notes" rows={2} defaultValue={defaults.notes} className="input" />
       </div>

@@ -61,14 +61,14 @@ export default async function ExpensesPage() {
       </div>
 
       <div className="card flex items-baseline justify-between">
-        <span className="text-sm text-stone-600">{formatMonth(monthKey)}</span>
+        <span className="text-sm text-slate-600">{formatMonth(monthKey)}</span>
         <span className="text-2xl font-semibold tabular-nums">{formatCents(monthTotal)}</span>
       </div>
 
       {groups.size === 0 ? (
         <div className="card space-y-2 text-center">
-          <p className="text-stone-600">No expenses yet.</p>
-          <p className="text-sm text-stone-500">Materials, fuel, tools — anything you spend to do the work.</p>
+          <p className="text-slate-600">No expenses yet.</p>
+          <p className="text-sm text-slate-500">Materials, fuel, tools — anything you spend to do the work.</p>
         </div>
       ) : (
         Array.from(groups.entries()).map(([key, list]) => {
@@ -77,12 +77,12 @@ export default async function ExpensesPage() {
             <section key={key} className="space-y-2">
               <div className="flex items-baseline justify-between">
                 <h2 className="font-semibold">{formatDayHeading(key, tz)}</h2>
-                <span className="text-sm tabular-nums text-stone-500">{formatCents(dayTotal)}</span>
+                <span className="text-sm tabular-nums text-slate-500">{formatCents(dayTotal)}</span>
               </div>
-              <ul className="card divide-y divide-stone-100 p-0">
+              <ul className="card divide-y divide-slate-100 p-0">
                 {list.map((x) => (
                   <li key={x.id}>
-                    <Link href={`/expenses/${x.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-stone-50">
+                    <Link href={`/expenses/${x.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
                       <div className="min-w-0">
                         <p className="flex items-center gap-2 text-sm font-medium">
                           <span className="truncate">{x.description || CATEGORY_LABELS[x.category]}</span>
@@ -90,7 +90,7 @@ export default async function ExpensesPage() {
                             <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">Edited</span>
                           )}
                         </p>
-                        <p className="truncate text-xs text-stone-500">
+                        <p className="truncate text-xs text-slate-500">
                           {CATEGORY_LABELS[x.category]}
                           {x.jobs?.name ? ` · ${x.jobs.name}` : " · No job"}
                           {showPerson && ` · ${personLabel(people, x.user_id)}`}

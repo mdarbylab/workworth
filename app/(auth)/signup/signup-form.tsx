@@ -14,7 +14,7 @@ export function SignupForm({ next = "/", defaultEmail = "" }: { next?: string; d
     <div className="space-y-5">
       <div>
         <h1 className="text-xl font-semibold">Create your account</h1>
-        <p className="mt-1 text-sm text-stone-500">Free for up to 2 people. No trial, no card.</p>
+        <p className="mt-1 text-sm text-slate-500">Free for up to 2 people. No trial, no card.</p>
       </div>
 
       <form action={action} className="space-y-4">
@@ -31,7 +31,7 @@ export function SignupForm({ next = "/", defaultEmail = "" }: { next?: string; d
             className="input"
             placeholder="Alex Rivera"
           />
-          <p className="mt-1 text-xs text-stone-500">This is how you appear to anyone you work with.</p>
+          <p className="mt-1 text-xs text-slate-500">This is how you appear to anyone you work with.</p>
         </div>
         <div>
           <label htmlFor="email" className="label">Email</label>
@@ -68,9 +68,9 @@ export function SignupForm({ next = "/", defaultEmail = "" }: { next?: string; d
         </button>
       </form>
 
-      <p className="text-center text-sm text-stone-600">
+      <p className="text-center text-sm text-slate-600">
         Already have an account?{" "}
-        <Link href={loginHref} className="font-medium text-emerald-800 hover:underline">
+        <Link href={loginHref} className="font-medium text-ink-800 hover:underline">
           Sign in
         </Link>
       </p>

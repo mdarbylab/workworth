@@ -89,7 +89,7 @@ export default async function TodayPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">{greeting(hour)}</h1>
-        <p className="text-stone-500">{dateLabel}</p>
+        <p className="text-slate-500">{dateLabel}</p>
       </div>
 
       <Timer
@@ -105,13 +105,13 @@ export default async function TodayPage() {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Today</h2>
-          <Link href="/time/new" className="text-sm text-emerald-800 hover:underline">+ Add time</Link>
+          <Link href="/time/new" className="text-sm text-ink-800 hover:underline">+ Add time</Link>
         </div>
 
         {byJob.size === 0 ? (
-          <p className="card text-sm text-stone-500">Nothing tracked yet today.</p>
+          <p className="card text-sm text-slate-500">Nothing tracked yet today.</p>
         ) : (
-          <ul className="card divide-y divide-stone-100 p-0">
+          <ul className="card divide-y divide-slate-100 p-0">
             {Array.from(byJob.entries()).map(([jobId, g]) => (
               <li key={jobId} className="px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
@@ -122,7 +122,7 @@ export default async function TodayPage() {
                   {(entries ?? [])
                     .filter((e) => e.job_id === jobId)
                     .map((e) => (
-                      <li key={e.id} className="flex items-center justify-between text-xs text-stone-500">
+                      <li key={e.id} className="flex items-center justify-between text-xs text-slate-500">
                         <Link href={`/time/${e.id}`} className="hover:underline">
                           {formatTime(new Date(e.started_at), tz)} – {formatTime(new Date(e.stopped_at!), tz)}
                         </Link>
@@ -142,10 +142,10 @@ export default async function TodayPage() {
           <Stat
             label="Est. profit"
             value={formatCents(earnings - spent)}
-            className={earnings - spent < 0 ? "text-red-700" : "text-emerald-800"}
+            className={earnings - spent < 0 ? "text-red-700" : "text-ink-800"}
           />
         </dl>
-        <p className="text-xs text-stone-400">Earnings count hourly jobs only. Fixed-price jobs show on their job page.</p>
+        <p className="text-xs text-slate-400">Earnings count hourly jobs only. Fixed-price jobs show on their job page.</p>
       </section>
     </div>
   );
@@ -154,7 +154,7 @@ export default async function TodayPage() {
 function Stat({ label, value, className = "" }: { label: string; value: string; className?: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-stone-500">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-slate-500">{label}</dt>
       <dd className={`text-lg font-semibold tabular-nums ${className}`}>{value}</dd>
     </div>
   );

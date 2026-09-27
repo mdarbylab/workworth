@@ -11,14 +11,14 @@ export function PasswordForm() {
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="text-sm text-emerald-800 hover:underline">
+      <button type="button" onClick={() => setOpen(true)} className="text-sm text-ink-800 hover:underline">
         Change password
       </button>
     );
   }
 
   return (
-    <form action={action} className="space-y-3 rounded-lg bg-stone-50 p-3">
+    <form action={action} className="space-y-3 rounded-lg bg-slate-50 p-3">
       <div>
         <label htmlFor="new_password" className="label">New password</label>
         <input id="new_password" name="password" type="password" autoComplete="new-password" minLength={8} required className="input" />
