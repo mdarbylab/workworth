@@ -112,6 +112,15 @@
 
 .statement .sheet-foot { @apply mt-8 border-t border-slate-200 pt-3 text-xs text-slate-500; }
 
+/* ---------- Legal pages (privacy, terms, impressum) ---------- */
+
+.legal h2 { @apply mt-8 text-lg font-semibold text-ink-900; }
+.legal h2:first-of-type { @apply mt-0; }
+.legal p, .legal li { @apply text-sm leading-relaxed text-slate-700; }
+.legal ul { @apply list-disc space-y-1.5 pl-5; }
+.legal a { @apply font-medium text-ink-800 underline underline-offset-2; }
+.legal strong { @apply font-semibold text-slate-900; }
+
 @media print {
   @page { margin: 16mm; }
 

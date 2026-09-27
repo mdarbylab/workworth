@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionContext, nameFromEmail } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
@@ -6,6 +7,7 @@ import { getSiteUrl } from "@/lib/site-url";
 import { signOut } from "@/app/(auth)/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { FeedbackLink } from "@/components/feedback-link";
+import { CookiePreferencesButton } from "@/components/cookie-preferences-button";
 import { UpgradeLink } from "./upgrade-link";
 import { BusinessForm } from "./business-form";
 import { NameForm } from "./name-form";
@@ -176,6 +178,16 @@ export default async function SettingsPage() {
           <FeedbackLink email={supportEmail} className="btn-secondary" />
         </section>
       )}
+
+      <section className="card space-y-2">
+        <h2 className="font-semibold">Legal</h2>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          <Link href="/privacy" className="text-ink-800 hover:underline">Privacy Policy</Link>
+          <Link href="/terms" className="text-ink-800 hover:underline">Terms of Service</Link>
+          <Link href="/impressum" className="text-ink-800 hover:underline">Impressum</Link>
+        </div>
+        <CookiePreferencesButton />
+      </section>
 
       <section className="card space-y-4">
         <h2 className="font-semibold">Account</h2>

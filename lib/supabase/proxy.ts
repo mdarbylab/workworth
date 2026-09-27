@@ -5,7 +5,17 @@ import type { Database } from "./types";
 // An invite link is a front door for people who have no account yet: it has to
 // render for a signed-out visitor so it can say who invited them and send them
 // to sign-up. The page itself decides what a visitor may see (SPEC §5.7).
-const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/auth", "/api/health", "/invite/"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/auth",
+  "/api/health",
+  "/invite/",
+  "/privacy",
+  "/terms",
+  "/impressum",
+];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

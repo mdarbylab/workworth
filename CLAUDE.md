@@ -27,10 +27,22 @@ against each other.
   `workworth.de/auth/callback`. The "Confirm sign up" and "Magic link or OTP"
   templates are branded (WorkWorth mark, navy button); the others are
   Supabase's stock templates because the app doesn't send them yet — invites
-  are a custom mailto link, and there's no `resetPasswordForEmail` call
-  (gap below).
+  are a custom mailto link. Password reset (`/forgot-password` →
+  `/reset-password`) is live and its template is branded too.
 - **Analytics**: PostHog (product analytics + error tracking). Events are the
-  §12 list; ids only, never emails or free text.
+  §12 list; ids only, never emails or free text. The browser SDK only starts
+  after the visitor accepts the cookie banner (`components/cookie-banner.tsx`);
+  server-side events in `lib/analytics/server.ts` are unaffected, since
+  they're keyed to the account id directly and set no cookie.
+- **Legal**: `/privacy`, `/terms`, `/impressum` are public, linked from
+  Settings and every signed-out screen. Operator is Michael Darbyshire, an
+  individual in the United States — the Impressum is a good-faith notice
+  rather than a claim of strict German-law compliance, since whether that
+  law applies to a non-EU individual not targeting the German market is a
+  genuinely open question. A lawyer (or a service like e-recht24.de) should
+  still review before treating any of this as final. Public contact is
+  `hello@workworth.de`, forwarding to the owner's inbox — confirm that
+  forwarding is actually live before relying on it.
 
 ## Database
 
@@ -99,19 +111,17 @@ Supabase and Netlify MCP tools to read live state instead.
 ## Next up
 
 v1 is done; there is no active sprint. Before building Sprint 2 features, close
-the gaps found at the end of Sprint 1, in this order. Custom SMTP and
-password reset (were #1, #2) are done — see "Where things stand" above and
-SPEC §5.7.
+the gaps found at the end of Sprint 1, in this order. Custom SMTP, password
+reset and the legal pages (were #1–#3) are done — see "Where things stand"
+above and SPEC §5.7/§11.
 
-1. **Privacy policy, terms, Impressum.** None exist, on a `.de` domain that
-   collects emails and runs analytics.
-2. **Enable leaked-password protection** in Supabase Auth.
-3. **`/api/health` swallows its own errors** — its bare `catch` reports
+1. **Enable leaked-password protection** in Supabase Auth.
+2. **`/api/health` swallows its own errors** — its bare `catch` reports
    "unreachable" for any failure, which made one real outage much harder to
    diagnose than it needed to be.
-4. **Revoke `guard_membership_update` from the API.** It is a trigger function
+3. **Revoke `guard_membership_update` from the API.** It is a trigger function
    and does not belong in the exposed RPC surface.
-5. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
+4. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
    `lib/periods.ts` and `lib/dates.ts` — pure functions where a silent bug costs
    a user real money.
 

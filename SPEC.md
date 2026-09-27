@@ -101,6 +101,8 @@ Then a breakdown table by job. **Export CSV** for time entries and for expenses.
 - People: list of members (max 2 on free). **Invite** by email. Remove member.
 - Account: email, password, delete account.
 - Plan: shows "Free — 2 of 2 seats used" and, when both seats are used, the only upsell in the product: *Add another person → upgrade.* (Upgrade is a waitlist link in v1, not a checkout.)
+- Legal: links to the Privacy Policy, Terms of Service and Impressum, plus a
+  control to revisit the cookie-analytics choice.
 
 ### 5.7 Auth & onboarding
 
@@ -229,6 +231,10 @@ v1 builds only the free plan. The `plan` and `seat_limit` columns exist so Pro i
 - Secrets in Netlify/Supabase env vars, never in the repo. `.env*` is gitignored from commit one.
 - Supabase daily backups on. Point-in-time recovery when there are paying customers.
 - No selling or sharing of user data. Minimal personal data collected (email only).
+- Browser analytics only run after the visitor accepts the cookie banner; a
+  decline (or no answer) means the PostHog client never loads. `/privacy`,
+  `/terms` and `/impressum` are public pages, linked from Settings and from
+  every signed-out screen.
 
 ---
 

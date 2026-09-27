@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/session";
 import { Wordmark } from "@/components/wordmark";
+import { LegalFooter } from "@/components/legal-footer";
 
 export default async function AuthLayout({ children }: LayoutProps<"/">) {
   const ctx = await getSessionContext();
@@ -15,6 +16,7 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
         </p>
       </div>
       <div className="card w-full max-w-sm">{children}</div>
+      <LegalFooter />
     </main>
   );
 }
