@@ -27,6 +27,13 @@
   body {
     @apply bg-slate-50 text-slate-900;
   }
+  ::selection {
+    background: color-mix(in srgb, var(--color-apple) 22%, transparent);
+  }
+  a {
+    text-decoration-color: var(--color-apple);
+    text-underline-offset: 3px;
+  }
   h1 {
     font-family: var(--font-display);
     letter-spacing: -0.01em;

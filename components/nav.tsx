@@ -42,6 +42,7 @@ export function Nav({ orgName, avatar }: { orgName: string; avatar: ReactNode })
             >
               <Icon className="h-5 w-5" />
               {label}
+              {isActive(href) && <span aria-hidden className="ml-auto h-1.5 w-1.5 rounded-full bg-apple" />}
             </Link>
           ))}
         </nav>
@@ -63,12 +64,13 @@ export function Nav({ orgName, avatar }: { orgName: string; avatar: ReactNode })
             key={href}
             href={href}
             aria-current={isActive(href) ? "page" : undefined}
-            className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
+            className={`relative flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
               isActive(href) ? "text-ink-800" : "text-slate-500"
             }`}
           >
             <Icon className="h-6 w-6" />
             {label}
+            {isActive(href) && <span aria-hidden className="absolute top-1 h-1 w-1 rounded-full bg-apple" />}
           </Link>
         ))}
       </nav>
