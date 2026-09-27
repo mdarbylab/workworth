@@ -4,11 +4,18 @@ import posthog from "posthog-js";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { analyticsEnabled, posthogHost, posthogKey, type EventName, type EventProps } from "@/lib/analytics/events";
+import { getConsent, onConsentChange } from "@/lib/consent";
 
 let initialized = false;
 
+// The browser SDK sets a cookie (see lib/consent.ts), so it only starts once
+// the visitor has accepted analytics — never on load, never on a decline.
+function analyticsReady() {
+  return analyticsEnabled && getConsent() === "granted";
+}
+
 function ensureInit() {
-  if (initialized || !analyticsEnabled || typeof window === "undefined") return;
+  if (initialized || !analyticsReady() || typeof window === "undefined") return;
   posthog.init(posthogKey, {
     api_host: posthogHost,
     capture_pageview: false, // we capture on route change below
@@ -20,9 +27,9 @@ function ensureInit() {
   initialized = true;
 }
 
-/** Fire a §12 event from the browser (e.g. a click). No-op without a key. */
+/** Fire a §12 event from the browser (e.g. a click). No-op without consent. */
 export function trackClient(event: EventName, props?: EventProps) {
-  if (!analyticsEnabled) return;
+  if (!analyticsReady()) return;
   ensureInit();
   posthog.capture(event, props);
 }
@@ -31,19 +38,27 @@ function PageViews() {
   const pathname = usePathname();
   const search = useSearchParams();
   useEffect(() => {
-    if (!analyticsEnabled) return;
+    if (!analyticsReady()) return;
     ensureInit();
     posthog.capture("$pageview", { $current_url: window.location.href });
   }, [pathname, search]);
   return null;
 }
 
-/** Mount once in the root layout. */
+/** Mount once in the root layout, alongside <CookieBanner />. */
 export function Analytics() {
   useEffect(() => {
-    ensureInit();
+    if (analyticsReady()) ensureInit();
+    // A visitor who accepts mid-session should start being tracked
+    // immediately, without waiting for their next navigation.
+    return onConsentChange((value) => {
+      if (value !== "granted") return;
+      ensureInit();
+      posthog.capture("$pageview", { $current_url: window.location.href });
+    });
   }, []);
-  if (!analyticsEnabled) return null;
+
+  if (!analyticsEnabled) return null; // no PostHog key configured at all
   return (
     <Suspense>
       <PageViews />
@@ -54,7 +69,7 @@ export function Analytics() {
 /** Ties browser events to the signed-in user and their business (ids only). */
 export function Identify({ userId, organizationId }: { userId: string; organizationId?: string | null }) {
   useEffect(() => {
-    if (!analyticsEnabled) return;
+    if (!analyticsReady()) return;
     ensureInit();
     posthog.identify(userId);
     if (organizationId) posthog.group("organization", organizationId);
@@ -74,7 +89,7 @@ export function TrackOnMount({ event, props }: { event: EventName; props?: Event
 
 /** Report a client-side error to PostHog (used by app/error.tsx). */
 export function captureException(error: Error) {
-  if (!analyticsEnabled) return;
+  if (!analyticsReady()) return;
   ensureInit();
   posthog.captureException(error);
 }

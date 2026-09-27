@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { Wordmark } from "@/components/wordmark";
+import { LegalFooter } from "@/components/legal-footer";
 import { signOut } from "@/app/(auth)/actions";
 import { AcceptForm } from "./accept-form";
 
@@ -105,6 +106,7 @@ export default async function InvitePage({ params }: PageProps<"/invite/[token]"
         </h1>
         {body}
       </div>
+      <LegalFooter />
     </main>
   );
 }
