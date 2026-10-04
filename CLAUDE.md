@@ -112,16 +112,18 @@ Supabase and Netlify MCP tools to read live state instead.
 
 v1 is done; there is no active sprint. Before building Sprint 2 features, close
 the gaps found at the end of Sprint 1, in this order. Custom SMTP, password
-reset and the legal pages (were #1–#3) are done — see "Where things stand"
-above and SPEC §5.7/§11.
+reset, the legal pages and `/api/health`'s error handling (were #1–#4) are
+done — see "Where things stand" above and SPEC §5.7/§11.
+`/api/health` now returns `db: "ok" | "error" | "timeout" | "unreachable"`,
+distinguishing a real Postgres error (with its SQLSTATE `code`, safe to
+expose) from a connectivity failure, from the service's own 5s timeout. The
+raw error message only goes to the server log and PostHog, never the public
+response.
 
 1. **Enable leaked-password protection** in Supabase Auth.
-2. **`/api/health` swallows its own errors** — its bare `catch` reports
-   "unreachable" for any failure, which made one real outage much harder to
-   diagnose than it needed to be.
-3. **Revoke `guard_membership_update` from the API.** It is a trigger function
+2. **Revoke `guard_membership_update` from the API.** It is a trigger function
    and does not belong in the exposed RPC surface.
-4. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
+3. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
    `lib/periods.ts` and `lib/dates.ts` — pure functions where a silent bug costs
    a user real money.
 
