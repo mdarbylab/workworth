@@ -1,5 +1,60 @@
 import { describe, expect, it } from "vitest";
-import { effectiveRateCents, formatDuration, formatRate } from "./calc";
+import { effectiveRateCents, formatDuration, formatRate, profitCents, revenueCents } from "./calc";
+
+describe("revenueCents", () => {
+  it("computes hourly revenue as hours times rate, unrounded hours", () => {
+    // $75/hr for 2h 30m (9000s) = $187.50 -> 18750 cents.
+    expect(revenueCents({ billing_type: "hourly", hourly_rate_cents: 7_500, fixed_price_cents: null }, 9_000)).toBe(
+      18_750,
+    );
+  });
+
+  it("rounds hourly revenue to the nearest cent", () => {
+    // $100/hr for 1234 seconds = 100 * 1234/3600 = $34.2777... -> 3428 cents.
+    expect(revenueCents({ billing_type: "hourly", hourly_rate_cents: 10_000, fixed_price_cents: null }, 1_234)).toBe(
+      3_428,
+    );
+  });
+
+  it("is zero for hourly work with no seconds tracked", () => {
+    expect(revenueCents({ billing_type: "hourly", hourly_rate_cents: 7_500, fixed_price_cents: null }, 0)).toBe(0);
+  });
+
+  it("treats a null hourly rate as zero", () => {
+    expect(revenueCents({ billing_type: "hourly", hourly_rate_cents: null, fixed_price_cents: null }, 3_600)).toBe(0);
+  });
+
+  it("returns the fixed price regardless of seconds tracked", () => {
+    expect(revenueCents({ billing_type: "fixed", hourly_rate_cents: null, fixed_price_cents: 50_000 }, 1)).toBe(
+      50_000,
+    );
+    expect(revenueCents({ billing_type: "fixed", hourly_rate_cents: null, fixed_price_cents: 50_000 }, 999_999)).toBe(
+      50_000,
+    );
+  });
+
+  it("treats a null fixed price as zero", () => {
+    expect(revenueCents({ billing_type: "fixed", hourly_rate_cents: null, fixed_price_cents: null }, 3_600)).toBe(0);
+  });
+});
+
+describe("profitCents", () => {
+  it("subtracts expenses from revenue", () => {
+    expect(profitCents(10_000, 4_000)).toBe(6_000);
+  });
+
+  it("can go negative when expenses exceed revenue", () => {
+    expect(profitCents(1_000, 5_000)).toBe(-4_000);
+  });
+
+  it("is zero when revenue equals expenses", () => {
+    expect(profitCents(3_000, 3_000)).toBe(0);
+  });
+
+  it("equals revenue when there are no expenses", () => {
+    expect(profitCents(7_500, 0)).toBe(7_500);
+  });
+});
 
 describe("effectiveRateCents", () => {
   it("is null at zero seconds", () => {

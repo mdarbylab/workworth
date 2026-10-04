@@ -106,13 +106,16 @@ a healthy database as unreachable.
 
 ## Verifying changes
 
-There's still no CI, and the only tests so far are `lib/calc.test.ts`
-(vitest — `npm test`) — nothing else in the gap's "start with the money math
-in `lib/calc.ts`, `lib/periods.ts` and `lib/dates.ts`" is covered yet. A
-green build proves only that the code compiles. Before claiming something
-works:
+`npm run verify` chains `tsc --noEmit`, `eslint .`, `vitest run` and
+`next build` — run it before claiming something works. `.github/workflows/ci.yml`
+runs the same command on every push and PR, so this is no longer "no CI
+beyond Netlify's build". Tests live beside the module they cover:
+`lib/calc.test.ts`, `lib/dates.test.ts`, `lib/periods.test.ts`
+(`vitest run`, aliased via `vitest.config.mts` so `@/` imports resolve the
+same as in the app). A green build proves only that the code compiles —
+still:
 
-- `npx tsc --noEmit`, `npx eslint .`, `npx next build`, `npm test`.
+- `npx tsc --noEmit`, `npx eslint .`, `npx next build`, `npm test` (or just `npm run verify`).
 - Exercise the real screen. `scripts/mock-supabase.mjs` stands in for Supabase
   Auth + PostgREST so the UI can be driven without network access:
   `node scripts/mock-supabase.mjs` then
@@ -136,13 +139,9 @@ expose) from a connectivity failure, from the service's own 5s timeout. The
 raw error message only goes to the server log and PostHog, never the public
 response.
 
-1. **Tests, CI and a verify script.** `lib/calc.test.ts` (vitest, `npm test`)
-   is the first slice — `effectiveRateCents`'s subminute-suppression bug (see
-   below) needed real regression coverage to fix honestly, so that's where
-   the test runner started. `lib/periods.ts` and `lib/dates.ts` are still
-   uncovered, and there's no CI step running `npm test` yet, no `npm run
-   verify` script, and no coverage of `revenueCents`/`profitCents` beyond
-   what `calc.test.ts` exercises indirectly.
+Gap list is now closed — see "Where things stand" and "Verifying changes"
+above for the testing/CI setup that resulted. No active sprint; the next
+work is Sprint 2 features from SPEC.
 
 **Not actually doable on the free plan**: "Prevent use of leaked passwords"
 (Authentication → Sign In / Providers → Email → Attack Protection) is a
@@ -179,6 +178,19 @@ adding a temporary fixed-price expense to `scripts/mock-supabase.mjs` (not
 committed) and confirming Expenses grew while Est. profit stayed identical;
 checked at 375px too. Both pinned fixes are now closed; the
 `pinned-ux-fixes` memory is stale and can be deleted next time it's seen.
+
+Also done, 2026-10-04: tests, CI and a verify script — the last gap-list
+item. `lib/dates.test.ts` (25 tests) and `lib/periods.test.ts` (16 tests)
+now cover both modules, including the real 2026 `America/New_York` DST
+transitions (spring forward 2026-03-08, fall back 2026-11-01) rather than
+guessed offsets; `lib/calc.test.ts` gained direct `revenueCents`/
+`profitCents` tests (hourly rounding, fixed-price, zero/null rates,
+negative profit) on top of the existing `effectiveRateCents` coverage.
+Needed a `vitest.config.mts` (didn't exist before) so vitest resolves the
+app's `@/*` path alias the same way Next.js does. `npm run verify` chains
+`tsc --noEmit && eslint . && vitest run && next build`, and
+`.github/workflows/ci.yml` runs it on every push/PR — confirmed green
+against a clean `npm ci` (no `.env.local`), matching how Netlify builds.
 
 Supabase's performance lints (unindexed foreign keys, per-row `auth.uid()`
 re-evaluation) are known and **deliberately deferred**: real at scale,
