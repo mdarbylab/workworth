@@ -1,0 +1,28 @@
+name: CI
+
+# Runs the same checks `npm run verify` runs locally — type-check, lint,
+# tests, build — on every push and PR. This is the first CI step the project
+# has had beyond Netlify's own build of `main`.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions: {}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run verify
