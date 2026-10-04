@@ -23,6 +23,20 @@ against each other.
   (Netlify functions run `nodejs22.x`) — found by reproducing Netlify's
   `npm ci` locally (`npm install --legacy-peer-deps` had been silently
   masking a real peer conflict that `npm ci` rejects outright).
+- **Billing**: Pro plan ($15/mo or $150/yr, 14-day trial) is live via Stripe
+  Checkout + Customer Portal (Sprint 3, 2026-10-04). Flat fee per org, not
+  per-seat. The Stripe webhook (`app/api/webhooks/stripe`) is the only
+  writer of `subscriptions`/`organizations.plan` — it verifies the Stripe
+  signature, then calls `apply_stripe_subscription_event` (security-definer,
+  granted to `anon` since the webhook has no user session, same pattern as
+  `auth_org_id()`). Flipping `plan` to `pro` is the entire feature on the
+  app side: `auth_is_owner()` already gives real owner/member role
+  separation once that happens, so no new role UI was needed. Billing
+  (upgrade/manage) is creator-only. `seat_limit` is unchanged by this —
+  still 2 on every plan; raising it for Pro is future work. Needs
+  `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`,
+  `STRIPE_PRICE_ANNUAL` in Netlify env (see `.env.example`); not yet
+  verified end-to-end against live Stripe test mode — see "Next up".
 - **Supabase** project `workworth` (ref `btfmiviujsftuxzxslwt`, us-east-1, free plan).
 - **Netlify** site `merry-biscuit-d35e20`, building from `main`. Production deploys
   on merge. Hosting is Netlify, not Vercel.
@@ -133,19 +147,34 @@ Supabase and Netlify MCP tools to read live state instead.
 
 ## Next up
 
-v1 is done; there is no active sprint. Before building Sprint 2 features, close
-the gaps found at the end of Sprint 1, in this order. Custom SMTP, password
-reset, the legal pages and `/api/health`'s error handling (were #1–#4) are
-done — see "Where things stand" above and SPEC §5.7/§11.
-`/api/health` now returns `db: "ok" | "error" | "timeout" | "unreachable"`,
-distinguishing a real Postgres error (with its SQLSTATE `code`, safe to
-expose) from a connectivity failure, from the service's own 5s timeout. The
-raw error message only goes to the server log and PostHog, never the public
-response.
+The v1 gap list is closed (see "Verifying changes" above for the
+tests/CI/verify-script work that closed the last item).
 
-Gap list is now closed — see "Where things stand" and "Verifying changes"
-above for the testing/CI setup that resulted. No active sprint; the next
-work is Sprint 2 features from SPEC.
+**Sprint 3 (Stripe billing) is code-complete but not yet live-verified.**
+Everything in "Billing" above is written, migrated, and passing
+`npm run verify`, but nobody has run a real checkout through Stripe test
+mode yet — this sandbox can't reach Stripe or Supabase over HTTPS, so that
+step is yours:
+1. Create a Stripe account (test mode), one Product ("WorkWorth Pro") with
+   two Prices — monthly $15, annual $150 (two months free; adjust in
+   Stripe's dashboard if you want a different number, no code change
+   needed).
+2. `stripe listen --forward-to localhost:3000/api/webhooks/stripe` for a
+   local webhook during testing; put the test secret key, that listen
+   command's webhook signing secret, and both price ids into `.env.local`
+   (see `.env.example`).
+3. Run a real test-mode checkout against `npm run dev` (needs the live
+   Supabase project, not the mock server, since the webhook writes to
+   `subscriptions`/`organizations.plan` for real) and confirm the org's
+   `plan` flips to `pro`, the Settings page shows the right status, and
+   `createPortalSession` opens a real Stripe portal.
+4. Only after that passes: live-mode keys, product, prices and webhook
+   endpoint (pointing at `workworth.de/api/webhooks/stripe`), added to
+   Netlify env.
+
+After that's verified, the rest of what SPEC §9 calls Pro — more seats,
+invoicing, tax estimates, mileage, receipt storage, rounding rules,
+integrations — is unscoped future work, not part of Sprint 3.
 
 **Not actually doable on the free plan**: "Prevent use of leaked passwords"
 (Authentication → Sign In / Providers → Email → Attack Protection) is a

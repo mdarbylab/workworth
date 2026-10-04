@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   "/forgot-password",
   "/auth",
   "/api/health",
+  "/api/webhooks/",
   "/invite/",
   "/privacy",
   "/terms",
