@@ -10,6 +10,15 @@ v1 is **live at https://workworth.de** and the launch checklist is closed. All
 seven sprints in SPEC §14 are built, and two real accounts have been tested
 against each other.
 
+- **Dependencies**: `next` pinned to `16.3.8` (patched a critical RCE in
+  `next/og` present in `16.2.0–16.3.5`, GHSA-vcvr-r3jv-pc5j — found 2026-10-04
+  while installing an unrelated dev dependency, not something anyone was
+  tracking). `eslint-config-next` kept in lockstep at the same version, as it
+  already was. One remaining `npm audit` finding — `braces` via
+  `eslint-config-next`'s own `fast-glob`/`@next/eslint-plugin-next` chain —
+  is deliberately deferred: lint-tooling only, never runs in the deployed
+  app, and the only fix path is a breaking downgrade to
+  `eslint-config-next@14`.
 - **Supabase** project `workworth` (ref `btfmiviujsftuxzxslwt`, us-east-1, free plan).
 - **Netlify** site `merry-biscuit-d35e20`, building from `main`. Production deploys
   on merge. Hosting is Netlify, not Vercel.
