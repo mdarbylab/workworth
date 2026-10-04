@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { dateKey, formatTime, startOfDay } from "@/lib/dates";
-import { formatCents, formatDuration, revenueCents } from "@/lib/calc";
+import { formatCents, formatDuration, profitCents, revenueCents } from "@/lib/calc";
 import { Timer } from "./timer";
 
 export const metadata: Metadata = { title: "Today" };
@@ -58,7 +58,7 @@ export default async function TodayPage() {
       .order("started_at", { ascending: false }),
     supabase
       .from("expenses")
-      .select("amount_cents")
+      .select("amount_cents, job_id, jobs(billing_type)")
       .eq("user_id", me)
       .eq("spent_on", todayKey),
   ]);
@@ -83,7 +83,17 @@ export default async function TodayPage() {
   }
   const totalSeconds = Array.from(byJob.values()).reduce((s, g) => s + g.seconds, 0);
   const earnings = Array.from(byJob.values()).reduce((s, g) => s + g.earningsCents, 0);
+  // The Expenses tile shows everything spent today, any job type — that's a
+  // real, honest total. But Est. profit subtracts from earnings, which only
+  // ever counts hourly jobs, so only hourly-job (or unassigned) expenses
+  // belong in that one subtraction. A fixed-price job's cost today would
+  // otherwise make profit look negative on a day that was actually fine —
+  // that job's own profit already shows on its job page.
   const spent = (expenses ?? []).reduce((s, x) => s + x.amount_cents, 0);
+  const hourlyScopedSpent = (expenses ?? [])
+    .filter((x) => !x.job_id || x.jobs?.billing_type === "hourly")
+    .reduce((s, x) => s + x.amount_cents, 0);
+  const profit = profitCents(earnings, hourlyScopedSpent);
 
   return (
     <div className="space-y-6">
@@ -141,11 +151,13 @@ export default async function TodayPage() {
           <Stat label="Expenses" value={formatCents(spent)} />
           <Stat
             label="Est. profit"
-            value={formatCents(earnings - spent)}
-            className={earnings - spent < 0 ? "text-red-700" : "text-ink-800"}
+            value={formatCents(profit)}
+            className={profit < 0 ? "text-red-700" : "text-ink-800"}
           />
         </dl>
-        <p className="text-xs text-slate-400">Earnings count hourly jobs only. Fixed-price jobs show on their job page.</p>
+        <p className="text-xs text-slate-400">
+          Earnings and profit count hourly jobs only. Expenses above include everything spent today — a fixed-price job&apos;s costs show on that job&apos;s own page.
+        </p>
       </section>
     </div>
   );
