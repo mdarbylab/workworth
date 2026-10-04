@@ -58,6 +58,11 @@ Navigation is a bottom bar on phone and a left rail on desktop. Five items:
 - Job picker (defaults to the last-used job).
 - Big timer. One button: **START** / **STOP**.
 - Below the line: today's entries grouped by job, total time, estimated earnings, expenses, estimated profit.
+  Expenses shown is everything spent today, any job. Earnings and profit
+  count hourly jobs only (§8.2: fixed-price revenue isn't earned per day) —
+  so profit subtracts only the hourly-job (or unassigned) share of today's
+  expenses, never a fixed-price job's cost. That job's own profit, including
+  today's expense against it, shows on its job page.
 - If a timer is running when the app opens, the screen shows it running with elapsed time — never a blank state.
 
 ### 5.2 Jobs

@@ -167,9 +167,18 @@ with no visible denominator (`effectiveRateCents` in `lib/calc.ts`, SPEC
 §8.3). Verified the fix is real by reverting it and watching 3 of the 10
 new tests fail exactly as expected, then confirmed visually against
 `scripts/mock-supabase.mjs` (temporarily, not committed) on the Reports
-page. Still queued (see the `pinned-ux-fixes` memory): Today's profit
-mixing an hourly-only earnings figure with all-jobs expenses — that one
-needs a product decision before touching it.
+page.
+
+Also done, 2026-10-04: Today's profit asymmetry — the other pinned fix.
+Decision was "split scope": the **Expenses** tile still shows everything
+spent today, any job (honest, unchanged); **Est. profit** now subtracts
+only hourly-job/unassigned expenses from hourly earnings, so a fixed-price
+job's cost logged today no longer drags profit negative on an otherwise
+fine day — that job's own profit already shows on its job page. Verified by
+adding a temporary fixed-price expense to `scripts/mock-supabase.mjs` (not
+committed) and confirming Expenses grew while Est. profit stayed identical;
+checked at 375px too. Both pinned fixes are now closed; the
+`pinned-ux-fixes` memory is stale and can be deleted next time it's seen.
 
 Supabase's performance lints (unindexed foreign keys, per-row `auth.uid()`
 re-evaluation) are known and **deliberately deferred**: real at scale,
