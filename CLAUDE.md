@@ -121,11 +121,20 @@ raw error message only goes to the server log and PostHog, never the public
 response.
 
 1. **Enable leaked-password protection** in Supabase Auth.
-2. **Revoke `guard_membership_update` from the API.** It is a trigger function
-   and does not belong in the exposed RPC surface.
-3. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
+2. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
    `lib/periods.ts` and `lib/dates.ts` — pure functions where a silent bug costs
    a user real money.
+
+Also done, 2026-10-04: `guard_membership_update` is revoked from the API —
+and four siblings turned out to have the same unintended grant
+(`enforce_invite_limit`, `enforce_seat_limit`, `set_updated_at`,
+`time_entries_set_duration`). All five now match `write_audit_event`, which
+was already configured correctly: EXECUTE revoked from `public`, `anon` and
+`authenticated`. Not an exploitable hole — Postgres refuses to call a
+trigger function outside trigger context regardless of grants — but it was
+needless API surface, and the linter now reports it clean. Confirmed the 9
+triggers across 5 tables are all still attached and enabled after the
+revoke. See `supabase/migrations/20261004000000_lock_down_trigger_functions.sql`.
 
 Also queued, pinned rather than fixed yet (see the `pinned-ux-fixes` memory
 for detail): the subminute effective-rate display (a ~4s entry can show
