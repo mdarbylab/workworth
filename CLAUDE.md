@@ -120,10 +120,15 @@ expose) from a connectivity failure, from the service's own 5s timeout. The
 raw error message only goes to the server log and PostHog, never the public
 response.
 
-1. **Enable leaked-password protection** in Supabase Auth.
-2. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
+1. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
    `lib/periods.ts` and `lib/dates.ts` — pure functions where a silent bug costs
    a user real money.
+
+**Not actually doable on the free plan**: "Prevent use of leaked passwords"
+(Authentication → Sign In / Providers → Email → Attack Protection) is a
+Supabase **Pro-plan feature** — the toggle doesn't respond on this project.
+Confirmed 2026-10-04, not just an unflipped switch. Revisit if/when the
+project upgrades; until then this isn't a thing to keep retrying.
 
 Also done, 2026-10-04: `guard_membership_update` is revoked from the API —
 and four siblings turned out to have the same unintended grant
