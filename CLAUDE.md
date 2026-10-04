@@ -106,8 +106,12 @@ a healthy database as unreachable.
 
 ## Verifying changes
 
-`npm run verify` chains `tsc --noEmit`, `eslint .`, `vitest run` and
-`next build` — run it before claiming something works. `.github/workflows/ci.yml`
+`npm run verify` chains `next typegen`, `tsc --noEmit`, `eslint .`,
+`vitest run` and `next build` — run it before claiming something works.
+(`next typegen` has to come first: `tsc` depends on the route-level
+`PageProps`/`LayoutProps` types Next.js generates into `.next/types`, which
+don't exist yet on a clean checkout — CI caught this the first time, since
+a local run already had a stale `.next` lying around.) `.github/workflows/ci.yml`
 runs the same command on every push and PR, so this is no longer "no CI
 beyond Netlify's build". Tests live beside the module they cover:
 `lib/calc.test.ts`, `lib/dates.test.ts`, `lib/periods.test.ts`
