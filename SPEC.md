@@ -192,6 +192,11 @@ Rules:
 ### 8.3 Profit and rate
 - `profit = revenue − sum(expenses on that job)`
 - `effective_rate = profit ÷ hours`. If hours = 0, show "—", never divide by zero.
+  Also "—" under one minute of tracked time: the duration display itself
+  rounds anything under a minute to "0m" (§8.1), so a rate shown next to it
+  would have no visible denominator behind it — a few seconds of tracked
+  time could otherwise show as a wildly inflated rate alongside "0m". This
+  doesn't round the stored duration, only suppresses the rate display.
 - Reports: org-level totals sum the same numbers across jobs. Expenses with no job count toward the org total but no job.
 - Everything is labeled "estimated" until invoicing exists.
 

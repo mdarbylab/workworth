@@ -102,10 +102,13 @@ a healthy database as unreachable.
 
 ## Verifying changes
 
-There is no test suite and no CI beyond Netlify's build, so a green build
-proves only that the code compiles. Before claiming something works:
+There's still no CI, and the only tests so far are `lib/calc.test.ts`
+(vitest — `npm test`) — nothing else in the gap's "start with the money math
+in `lib/calc.ts`, `lib/periods.ts` and `lib/dates.ts`" is covered yet. A
+green build proves only that the code compiles. Before claiming something
+works:
 
-- `npx tsc --noEmit`, `npx eslint .`, `npx next build`.
+- `npx tsc --noEmit`, `npx eslint .`, `npx next build`, `npm test`.
 - Exercise the real screen. `scripts/mock-supabase.mjs` stands in for Supabase
   Auth + PostgREST so the UI can be driven without network access:
   `node scripts/mock-supabase.mjs` then
@@ -129,9 +132,13 @@ expose) from a connectivity failure, from the service's own 5s timeout. The
 raw error message only goes to the server log and PostHog, never the public
 response.
 
-1. **Tests, CI and a verify script.** Start with the money math in `lib/calc.ts`,
-   `lib/periods.ts` and `lib/dates.ts` — pure functions where a silent bug costs
-   a user real money.
+1. **Tests, CI and a verify script.** `lib/calc.test.ts` (vitest, `npm test`)
+   is the first slice — `effectiveRateCents`'s subminute-suppression bug (see
+   below) needed real regression coverage to fix honestly, so that's where
+   the test runner started. `lib/periods.ts` and `lib/dates.ts` are still
+   uncovered, and there's no CI step running `npm test` yet, no `npm run
+   verify` script, and no coverage of `revenueCents`/`profitCents` beyond
+   what `calc.test.ts` exercises indirectly.
 
 **Not actually doable on the free plan**: "Prevent use of leaked passwords"
 (Authentication → Sign In / Providers → Email → Attack Protection) is a
@@ -150,10 +157,15 @@ needless API surface, and the linter now reports it clean. Confirmed the 9
 triggers across 5 tables are all still attached and enabled after the
 revoke. See `supabase/migrations/20261004000000_lock_down_trigger_functions.sql`.
 
-Also queued, pinned rather than fixed yet (see the `pinned-ux-fixes` memory
-for detail): the subminute effective-rate display (a ~4s entry can show
-`0m` alongside a `$90,000/hr` rate) and Today's profit mixing an hourly-only
-earnings figure with all-jobs expenses.
+Also done, 2026-10-04: the subminute effective-rate display. A job/period
+whose entire tracked time is under a minute now shows "—" instead of a rate
+with no visible denominator (`effectiveRateCents` in `lib/calc.ts`, SPEC
+§8.3). Verified the fix is real by reverting it and watching 3 of the 10
+new tests fail exactly as expected, then confirmed visually against
+`scripts/mock-supabase.mjs` (temporarily, not committed) on the Reports
+page. Still queued (see the `pinned-ux-fixes` memory): Today's profit
+mixing an hourly-only earnings figure with all-jobs expenses — that one
+needs a product decision before touching it.
 
 Supabase's performance lints (unindexed foreign keys, per-row `auth.uid()`
 re-evaluation) are known and **deliberately deferred**: real at scale,

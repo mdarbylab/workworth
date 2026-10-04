@@ -20,9 +20,14 @@ export function profitCents(revenue: number, expenses: number): number {
   return revenue - expenses;
 }
 
-/** §8.3: profit ÷ hours, or null when hours = 0 (render "—"). */
+/** §8.3: profit ÷ hours, or null when hours = 0 (render "—"). Also null
+ * under a minute of tracked time: formatDuration rounds that to "0m", so a
+ * rate rendered next to it has no visible denominator behind it — a 4-second
+ * entry could otherwise show $90,000/hr alongside "0m". This doesn't round
+ * the stored duration itself (§8.1: no rounding in v1), only suppresses the
+ * rate display for durations too short to show. */
 export function effectiveRateCents(profit: number, seconds: number): number | null {
-  if (seconds <= 0) return null;
+  if (seconds < 60) return null;
   return Math.round(profit / (seconds / 3600));
 }
 
