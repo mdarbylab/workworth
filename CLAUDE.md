@@ -18,7 +18,11 @@ against each other.
   `eslint-config-next`'s own `fast-glob`/`@next/eslint-plugin-next` chain —
   is deliberately deferred: lint-tooling only, never runs in the deployed
   app, and the only fix path is a breaking downgrade to
-  `eslint-config-next@14`.
+  `eslint-config-next@14`. `@types/node` bumped `^20` → `^22` to match
+  vitest's peer requirement and the Node 22 runtime this already deploys on
+  (Netlify functions run `nodejs22.x`) — found by reproducing Netlify's
+  `npm ci` locally (`npm install --legacy-peer-deps` had been silently
+  masking a real peer conflict that `npm ci` rejects outright).
 - **Supabase** project `workworth` (ref `btfmiviujsftuxzxslwt`, us-east-1, free plan).
 - **Netlify** site `merry-biscuit-d35e20`, building from `main`. Production deploys
   on merge. Hosting is Netlify, not Vercel.
