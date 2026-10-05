@@ -9,6 +9,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
@@ -124,7 +126,7 @@ export type Database = {
           receipt_path?: string | null
           spent_on?: string
           updated_at?: string
-          user_id: string | null
+          user_id?: string | null
         }
         Update: {
           amount_cents?: number
@@ -422,30 +424,36 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          cancel_at_period_end: boolean
           created_at: string
           current_period_end: string | null
           id: string
           organization_id: string
+          price_interval: string | null
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
         }
         Insert: {
+          cancel_at_period_end?: boolean
           created_at?: string
           current_period_end?: string | null
           id?: string
           organization_id: string
+          price_interval?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
         }
         Update: {
+          cancel_at_period_end?: boolean
           created_at?: string
           current_period_end?: string | null
           id?: string
           organization_id?: string
+          price_interval?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -455,7 +463,7 @@ export type Database = {
           {
             foreignKeyName: "subscriptions_organization_id_fkey"
             columns: ["organization_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -486,7 +494,7 @@ export type Database = {
           started_at: string
           stopped_at?: string | null
           updated_at?: string
-          user_id: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -524,6 +532,18 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { token: string }; Returns: string }
+      apply_stripe_subscription_event: {
+        Args: {
+          p_cancel_at_period_end?: boolean
+          p_current_period_end?: string
+          p_organization_id?: string
+          p_price_interval?: string
+          p_status: string
+          p_stripe_customer_id: string
+          p_stripe_subscription_id: string
+        }
+        Returns: undefined
+      }
       auth_is_creator: { Args: never; Returns: boolean }
       auth_is_owner: { Args: never; Returns: boolean }
       auth_org_id: { Args: never; Returns: string }
@@ -535,8 +555,8 @@ export type Database = {
       invite_preview: {
         Args: { token: string }
         Returns: {
-          organization_name: string
           invited_email: string
+          organization_name: string
           state: string
         }[]
       }

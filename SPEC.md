@@ -166,7 +166,7 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 
 | Table | Purpose | Key columns |
 |---|---|---|
-| `organizations` | the business | name, timezone, currency, plan (`free`), seat_limit (2), address, contact_email, contact_phone (all three optional, letterhead only) |
+| `organizations` | the business | name, timezone, currency, plan (`free`/`pro`), seat_limit (2), address, contact_email, contact_phone (all three optional, letterhead only) |
 | `memberships` | user ↔ org | user_id, organization_id, role, display_name, invited_email, accepted_at, removed_at |
 | `clients` | who the work is for | name, email, phone, notes |
 | `jobs` | unit of work | client_id, name, billing_type (`hourly`/`fixed`), hourly_rate_cents, fixed_price_cents, estimated_minutes, status (`active`/`archived`), notes |
@@ -174,12 +174,16 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 | `expenses` | money out | job_id (nullable), user_id, amount_cents, spent_on (date), category, description, receipt_path (unused in v1) |
 | `audit_events` | change history | actor_user_id, table_name, record_id, action, before (jsonb), after (jsonb) |
 | `invoices`, `invoice_lines` | **created empty in v1** for later | — |
-| `subscriptions` | **created empty in v1** for later | stripe ids, status |
+| `subscriptions` | Pro billing (Sprint 3) | organization_id (unique), stripe_customer_id (unique), stripe_subscription_id, status (`trialing`/`active`/`past_due`/`canceled`/`incomplete`/`incomplete_expired`/`unpaid`), current_period_end, cancel_at_period_end, price_interval (`month`/`year`) |
 
 Rules:
 - Money is stored in integer cents. Never floats.
 - Timestamps are `timestamptz` in UTC. Day grouping uses the organization's timezone.
 - One running timer per user (partial unique index on `user_id where stopped_at is null`).
+- `subscriptions` and `organizations.plan` are written only by the Stripe
+  webhook (`apply_stripe_subscription_event`, security-definer, granted to
+  `anon` since the webhook has no user session). App code never writes
+  either directly.
 
 ---
 
@@ -216,9 +220,25 @@ Rules:
 
 **Free — $0 forever:** 2 people, unlimited jobs and time entries, expenses, dashboard, reports, CSV export.
 
-**Pro (later, ~$15/mo):** more people, **roles and permissions** (the free plan gives everyone the same access), invoicing, tax estimates, mileage, receipt storage, rounding rules, integrations.
+**Pro — $15/mo or $150/yr, 14-day free trial, self-serve via Stripe Checkout
+(Sprint 3, 2026-10-04):** real **roles and permissions** — `auth_is_owner()`
+already splits owner/member once `plan = 'pro'`, so this activates the
+moment a checkout completes, with no separate UI to build. Still just a data
+change for everything else Pro is meant to unlock later: more seats,
+invoicing, tax estimates, mileage, receipt storage, rounding rules,
+integrations — `seat_limit` stays at 2 for Pro orgs for now; raising it is
+future work, not part of Sprint 3.
 
-v1 builds only the free plan. The `plan` and `seat_limit` columns exist so Pro is a data change, not a rewrite.
+Billing (upgrade, cancel, payment method) is restricted to the person who
+created the business (`role = 'owner'`) — the same "only the creator"
+bucket as deleting the business or removing a member. Peers on free, and
+non-creator members on Pro, see the plan/seat info read-only. Stripe's
+hosted Customer Portal handles cancellation, payment-method changes and
+invoice history; there's no custom UI for any of that.
+
+v1 built only the free plan; Sprint 3 added Pro billing. The `plan` and
+`seat_limit` columns on `organizations`, and the `subscriptions` table,
+exist exactly so this was a data/webhook change, not a rewrite — see §7.
 
 ---
 
@@ -227,7 +247,7 @@ v1 builds only the free plan. The `plan` and `seat_limit` columns exist so Pro i
 - **Frontend:** Next.js (App Router) + TypeScript + Tailwind. Responsive web app; installable as a PWA. No native apps.
 - **Backend/DB/Auth:** Supabase (Postgres, Auth, Row Level Security). Email/password + magic link. Google/Apple sign-in later.
 - **Hosting:** Netlify (already connected). Preview deploys per branch.
-- **Payments:** Stripe, not until Pro exists.
+- **Payments:** Stripe Checkout (subscriptions) + Stripe Customer Portal, live as of Sprint 3.
 - **Analytics:** PostHog free tier (or Plausible). Events listed in §12.
 - **Repo:** github.com/<darby>/workworth (private).
 
@@ -250,7 +270,7 @@ v1 builds only the free plan. The `plan` and `seat_limit` columns exist so Pro i
 
 ## 12. Analytics events
 
-`signup`, `org_created`, `job_created`, `timer_started`, `timer_stopped`, `time_entry_manual`, `time_entry_edited`, `expense_added`, `report_viewed`, `client_report_viewed`, `csv_exported`, `member_invited`, `member_joined`, `seat_limit_hit`, `upgrade_clicked`.
+`signup`, `org_created`, `job_created`, `timer_started`, `timer_stopped`, `time_entry_manual`, `time_entry_edited`, `expense_added`, `report_viewed`, `client_report_viewed`, `csv_exported`, `member_invited`, `member_joined`, `seat_limit_hit`, `checkout_started`, `checkout_completed`.
 
 **North-star metric for v1:** % of new users who track time on 3 different days in their first 2 weeks. If this is bad, we fix the product before adding features.
 

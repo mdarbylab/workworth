@@ -4,17 +4,20 @@ import { redirect } from "next/navigation";
 import { getSessionContext, nameFromEmail } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
+import { subscriptionStatusLabel, type SubscriptionStatus } from "@/lib/billing";
 import { signOut } from "@/app/(auth)/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { FeedbackLink } from "@/components/feedback-link";
 import { CookiePreferencesButton } from "@/components/cookie-preferences-button";
-import { UpgradeLink } from "./upgrade-link";
+import { TrackOnMount } from "@/components/analytics";
 import { BusinessForm } from "./business-form";
 import { NameForm } from "./name-form";
 import { InviteForm } from "./invite-form";
 import { CopyButton } from "./copy-button";
 import { PasswordForm } from "./password-form";
 import { DeleteAccountForm } from "./delete-account-form";
+import { UpgradeForm } from "./upgrade-form";
+import { ManageBillingButton } from "./manage-billing-button";
 import { removeMember } from "./actions";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -24,7 +27,11 @@ function timezoneOptions(current: string): string[] {
   return list.includes(current) ? list : [current, ...list];
 }
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const ctx = await getSessionContext();
   if (!ctx?.organization || !ctx.membership) redirect("/onboarding");
   const org = ctx.organization;
@@ -34,26 +41,26 @@ export default async function SettingsPage() {
   const isCreator = ctx.isCreator;
 
   const supabase = await createClient();
-  const [{ data: members }, siteUrl] = await Promise.all([
+  const [{ data: members }, { data: subscription }, siteUrl, params] = await Promise.all([
     supabase
       .from("memberships")
       .select("id, user_id, role, invited_email, invite_token, accepted_at, display_name")
       .eq("organization_id", org.id)
       .is("removed_at", null)
       .order("created_at"),
+    supabase
+      .from("subscriptions")
+      .select("status, current_period_end, cancel_at_period_end")
+      .eq("organization_id", org.id)
+      .maybeSingle(),
     getSiteUrl(),
+    searchParams,
   ]);
 
   const people = members ?? [];
   const seatsUsed = people.length; // pending invites hold a seat (§6)
   const seatsFull = seatsUsed >= org.seat_limit;
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
-  // Prefer a real waitlist page; fall back to emailing support.
-  const waitlistHref =
-    process.env.NEXT_PUBLIC_WAITLIST_URL ||
-    (supportEmail
-      ? `mailto:${supportEmail}?subject=${encodeURIComponent("WorkWorth Pro waitlist")}`
-      : "");
 
   return (
     <div className="space-y-6">
@@ -147,27 +154,40 @@ export default async function SettingsPage() {
 
       <section className="card space-y-3">
         <h2 className="font-semibold">Plan</h2>
-        <p className="text-sm text-slate-700">
-          Free — {seatsUsed} of {org.seat_limit} seats used
-        </p>
-        <p className="text-sm text-slate-500">
-          Everyone on the free plan has the same access: you both see all of the business&apos;s time,
-          expenses and reports. Separate roles and permissions come with Pro.
-        </p>
-        {seatsFull && (
-          <div className="rounded-lg border border-ink-200 bg-ink-50 p-3 text-sm">
-            <p className="font-medium text-ink-900">Add another person → upgrade</p>
-            <p className="mt-1 text-ink-900/80">
-              Pro brings more people, invoicing, and tax estimates.{" "}
-              {waitlistHref ? (
-                <UpgradeLink href={waitlistHref} seatLimit={org.seat_limit} />
-              ) : (
-                <span>Waitlist opening soon.</span>
+        {org.plan === "pro" ? (
+          <>
+            <p className="text-sm text-slate-700">
+              {subscriptionStatusLabel(
+                (subscription?.status as SubscriptionStatus | undefined) ?? null,
+                subscription?.current_period_end ?? null,
+                subscription?.cancel_at_period_end ?? false,
+                org.timezone,
               )}
             </p>
-          </div>
+            {isCreator && <ManageBillingButton />}
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-slate-700">
+              Free — {seatsUsed} of {org.seat_limit} seats used
+            </p>
+            <p className="text-sm text-slate-500">
+              Everyone on the free plan has the same access: you both see all of the business&apos;s time,
+              expenses and reports. Separate roles and permissions, more seats, invoicing and tax
+              estimates come with Pro.
+            </p>
+            {isCreator ? (
+              <div className="flex flex-wrap gap-2">
+                <UpgradeForm interval="month" label="Upgrade — $15/mo" />
+                <UpgradeForm interval="year" label="Upgrade — $150/yr" />
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">Ask the business owner to upgrade to Pro.</p>
+            )}
+          </>
         )}
       </section>
+      {params.upgraded === "1" && <TrackOnMount event="checkout_completed" />}
 
       {supportEmail && (
         <section className="card space-y-2">
