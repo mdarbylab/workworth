@@ -35,8 +35,24 @@ against each other.
   (upgrade/manage) is creator-only. `seat_limit` is unchanged by this —
   still 2 on every plan; raising it for Pro is future work. Needs
   `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`,
-  `STRIPE_PRICE_ANNUAL` in Netlify env (see `.env.example`); not yet
-  verified end-to-end against live Stripe test mode — see "Next up".
+  `STRIPE_PRICE_ANNUAL` in Netlify env (see `.env.example`).
+  **Verified end-to-end in Stripe test mode 2026-10-06** via `stripe
+  listen` against a real checkout — caught and fixed a real bug in the
+  process: `apply_stripe_subscription_event`'s `case when ... then 'pro'
+  else 'free' end` defaulted to `text`, which Postgres won't implicitly
+  cast to the `plan_type` enum on assignment, so every webhook call
+  failed 500 with Postgres error 42804. The failure was easy to miss —
+  most *other* forwarded event types (customer.created,
+  invoice.payment_succeeded, etc.) returned 200 since the webhook just
+  no-ops on event types it doesn't act on, which buried the one 500 that
+  mattered (`checkout.session.completed`) in the noise. Fixed with an
+  explicit `::plan_type` cast
+  (`supabase/migrations/20261005220000_fix_stripe_plan_cast.sql`),
+  confirmed by resending the originally-failed Stripe event
+  (`stripe events resend <event_id>`) and reading the resulting
+  `subscriptions` row and `organizations.plan` directly. Still only
+  tested in Stripe test mode — going live needs a live Product/Prices/
+  webhook endpoint and live keys in Netlify; see "Next up".
 - **Supabase** project `workworth` (ref `btfmiviujsftuxzxslwt`, us-east-1, free plan).
 - **Netlify** site `merry-biscuit-d35e20`, building from `main`. Production deploys
   on merge. Hosting is Netlify, not Vercel.
@@ -150,27 +166,30 @@ Supabase and Netlify MCP tools to read live state instead.
 The v1 gap list is closed (see "Verifying changes" above for the
 tests/CI/verify-script work that closed the last item).
 
-**Sprint 3 (Stripe billing) is code-complete but not yet live-verified.**
-Everything in "Billing" above is written, migrated, and passing
-`npm run verify`, but nobody has run a real checkout through Stripe test
-mode yet — this sandbox can't reach Stripe or Supabase over HTTPS, so that
-step is yours:
-1. Create a Stripe account (test mode), one Product ("WorkWorth Pro") with
-   two Prices — monthly $15, annual $150 (two months free; adjust in
-   Stripe's dashboard if you want a different number, no code change
-   needed).
-2. `stripe listen --forward-to localhost:3000/api/webhooks/stripe` for a
-   local webhook during testing; put the test secret key, that listen
-   command's webhook signing secret, and both price ids into `.env.local`
-   (see `.env.example`).
-3. Run a real test-mode checkout against `npm run dev` (needs the live
-   Supabase project, not the mock server, since the webhook writes to
-   `subscriptions`/`organizations.plan` for real) and confirm the org's
-   `plan` flips to `pro`, the Settings page shows the right status, and
-   `createPortalSession` opens a real Stripe portal.
-4. Only after that passes: live-mode keys, product, prices and webhook
-   endpoint (pointing at `workworth.de/api/webhooks/stripe`), added to
-   Netlify env.
+**Sprint 3 (Stripe billing) is code-complete and verified in Stripe test
+mode** (checkout → webhook → `organizations.plan`/`subscriptions`, see
+"Billing" above). Not yet tested: the Stripe Customer Portal button
+(`createPortalSession`) and a cancellation actually flipping `plan` back
+to `free`. Going live:
+1. In the Stripe dashboard, switch out of test mode (or use a second,
+   live-mode Stripe account if you prefer keeping them separate) and
+   recreate the Product ("WorkWorth Pro") with its two Prices — monthly
+   $15, annual $150 (two months free; adjust in Stripe's dashboard if you
+   want a different number, no code change needed). Test-mode and
+   live-mode objects are entirely separate in Stripe; the test ids won't
+   carry over.
+2. Add a live webhook endpoint in the Stripe dashboard pointing at
+   `https://workworth.de/api/webhooks/stripe`, listening for at least
+   `checkout.session.completed`, `customer.subscription.updated`,
+   `customer.subscription.deleted`. Copy its signing secret.
+3. In Netlify's env vars for the site, set `STRIPE_SECRET_KEY` (live),
+   `STRIPE_WEBHOOK_SECRET` (the live endpoint's secret from step 2),
+   `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL` (live price ids). Trigger
+   a redeploy so the functions pick up the new env.
+4. Do one real, low-stakes live checkout (e.g. your own card, cancel
+   immediately after confirming it works) before treating this as done —
+   the test-mode pass caught a real bug (see "Billing" above) that a
+   confident-looking code review alone would have missed.
 
 After that's verified, the rest of what SPEC §9 calls Pro — more seats,
 invoicing, tax estimates, mileage, receipt storage, rounding rules,
