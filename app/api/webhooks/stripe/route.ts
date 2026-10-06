@@ -74,7 +74,7 @@ async function applyEvent(
     p_stripe_subscription_id: subscription.id,
     p_status: subscription.status,
     p_current_period_end: item ? new Date(item.current_period_end * 1000).toISOString() : undefined,
-    p_cancel_at_period_end: subscription.cancel_at_period_end,
+    p_cancel_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : undefined,
     p_price_interval: item?.price.recurring?.interval,
     ...(organizationId ? { p_organization_id: organizationId } : {}),
   });

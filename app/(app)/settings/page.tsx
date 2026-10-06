@@ -50,7 +50,7 @@ export default async function SettingsPage({
       .order("created_at"),
     supabase
       .from("subscriptions")
-      .select("status, current_period_end, cancel_at_period_end")
+      .select("status, current_period_end, cancel_at")
       .eq("organization_id", org.id)
       .maybeSingle(),
     getSiteUrl(),
@@ -160,7 +160,7 @@ export default async function SettingsPage({
               {subscriptionStatusLabel(
                 (subscription?.status as SubscriptionStatus | undefined) ?? null,
                 subscription?.current_period_end ?? null,
-                subscription?.cancel_at_period_end ?? false,
+                subscription?.cancel_at ?? null,
                 org.timezone,
               )}
             </p>
