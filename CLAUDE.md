@@ -50,9 +50,27 @@ against each other.
   (`supabase/migrations/20261005220000_fix_stripe_plan_cast.sql`),
   confirmed by resending the originally-failed Stripe event
   (`stripe events resend <event_id>`) and reading the resulting
-  `subscriptions` row and `organizations.plan` directly. Still only
-  tested in Stripe test mode — going live needs a live Product/Prices/
-  webhook endpoint and live keys in Netlify; see "Next up".
+  `subscriptions` row and `organizations.plan` directly.
+
+  Testing the Customer Portal + cancellation path caught a second real bug,
+  2026-10-06: canceling a **trialing** subscription through the portal
+  schedules the cancellation via Stripe's general `cancel_at` timestamp, not
+  the `cancel_at_period_end` boolean the webhook was reading — the portal
+  correctly showed "canceled"; our DB and the Settings page both missed it.
+  Confirmed via `stripe subscriptions retrieve` directly against Stripe's
+  API: `cancel_at_period_end` was `false`, `cancel_at` was set to the
+  trial's end. `cancel_at` is strictly more general (whenever
+  `cancel_at_period_end` would've been `true`, `cancel_at` already equals
+  `current_period_end`), so `subscriptions.cancel_at_period_end` (boolean)
+  was replaced outright with `subscriptions.cancel_at` (nullable
+  timestamp) rather than keeping both
+  (`supabase/migrations/20261006030000_stripe_cancel_at.sql`). Also
+  re-confirmed by resend-and-read-the-DB.
+
+  **Both checkout/trial and portal/cancellation are now verified
+  end-to-end in Stripe test mode.** Still not done: going live needs a
+  live Product/Prices/webhook endpoint and live keys in Netlify; see
+  "Next up".
 - **Supabase** project `workworth` (ref `btfmiviujsftuxzxslwt`, us-east-1, free plan).
 - **Netlify** site `merry-biscuit-d35e20`, building from `main`. Production deploys
   on merge. Hosting is Netlify, not Vercel.
@@ -167,10 +185,16 @@ The v1 gap list is closed (see "Verifying changes" above for the
 tests/CI/verify-script work that closed the last item).
 
 **Sprint 3 (Stripe billing) is code-complete and verified in Stripe test
-mode** (checkout → webhook → `organizations.plan`/`subscriptions`, see
-"Billing" above). Not yet tested: the Stripe Customer Portal button
-(`createPortalSession`) and a cancellation actually flipping `plan` back
-to `free`. Going live:
+mode** — checkout → trial, and the Customer Portal → scheduling a
+cancellation, both confirmed end-to-end against real webhook events and
+the resulting DB rows (see "Billing" above; caught and fixed two real
+bugs in the process). The one thing that hasn't actually fired yet is
+`customer.subscription.deleted` itself — the write path is the same
+function, already proven correct for every other event type, but nothing
+has forced a subscription to actually *end* yet (that's ~14 days out for
+the test org, or triggerable sooner with `stripe trigger
+customer.subscription.deleted` if you want to see it before going live).
+Going live:
 1. In the Stripe dashboard, switch out of test mode (or use a second,
    live-mode Stripe account if you prefer keeping them separate) and
    recreate the Product ("WorkWorth Pro") with its two Prices — monthly
@@ -188,7 +212,7 @@ to `free`. Going live:
    a redeploy so the functions pick up the new env.
 4. Do one real, low-stakes live checkout (e.g. your own card, cancel
    immediately after confirming it works) before treating this as done —
-   the test-mode pass caught a real bug (see "Billing" above) that a
+   the test-mode pass caught two real bugs (see "Billing" above) that a
    confident-looking code review alone would have missed.
 
 After that's verified, the rest of what SPEC §9 calls Pro — more seats,
