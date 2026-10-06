@@ -174,7 +174,7 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 | `expenses` | money out | job_id (nullable), user_id, amount_cents, spent_on (date), category, description, receipt_path (unused in v1) |
 | `audit_events` | change history | actor_user_id, table_name, record_id, action, before (jsonb), after (jsonb) |
 | `invoices`, `invoice_lines` | **created empty in v1** for later | — |
-| `subscriptions` | Pro billing (Sprint 3) | organization_id (unique), stripe_customer_id (unique), stripe_subscription_id, status (`trialing`/`active`/`past_due`/`canceled`/`incomplete`/`incomplete_expired`/`unpaid`), current_period_end, cancel_at_period_end, price_interval (`month`/`year`) |
+| `subscriptions` | Pro billing (Sprint 3) | organization_id (unique), stripe_customer_id (unique), stripe_subscription_id, status (`trialing`/`active`/`past_due`/`canceled`/`incomplete`/`incomplete_expired`/`unpaid`), current_period_end, cancel_at (nullable — Stripe's own cancellation-scheduled timestamp; not always equal to current_period_end, e.g. a trial cancels at the trial's end), price_interval (`month`/`year`) |
 
 Rules:
 - Money is stored in integer cents. Never floats.

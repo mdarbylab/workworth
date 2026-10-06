@@ -424,7 +424,7 @@ export type Database = {
       }
       subscriptions: {
         Row: {
-          cancel_at_period_end: boolean
+          cancel_at: string | null
           created_at: string
           current_period_end: string | null
           id: string
@@ -436,7 +436,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          cancel_at_period_end?: boolean
+          cancel_at?: string | null
           created_at?: string
           current_period_end?: string | null
           id?: string
@@ -448,7 +448,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          cancel_at_period_end?: boolean
+          cancel_at?: string | null
           created_at?: string
           current_period_end?: string | null
           id?: string
@@ -534,7 +534,7 @@ export type Database = {
       accept_invite: { Args: { token: string }; Returns: string }
       apply_stripe_subscription_event: {
         Args: {
-          p_cancel_at_period_end?: boolean
+          p_cancel_at?: string
           p_current_period_end?: string
           p_organization_id?: string
           p_price_interval?: string
