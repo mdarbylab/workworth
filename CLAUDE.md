@@ -67,10 +67,34 @@ against each other.
   (`supabase/migrations/20261006030000_stripe_cancel_at.sql`). Also
   re-confirmed by resend-and-read-the-DB.
 
-  **Both checkout/trial and portal/cancellation are now verified
-  end-to-end in Stripe test mode.** Still not done: going live needs a
-  live Product/Prices/webhook endpoint and live keys in Netlify; see
-  "Next up".
+  **Live as of 2026-10-06.** Live Product + two Prices, a live webhook
+  endpoint (`workworth-billing`, same 3 events), and a properly scoped live
+  secret key (`Checkout Sessions`/`Customer Portal`: write,
+  `Subscriptions`: read only — not blanket access) are all set up in
+  Stripe, with the four `STRIPE_*` vars in Netlify's **production**
+  context only (never deploy-preview/branch-deploy, so a PR build can
+  never run with live keys). Confirmed with a real live checkout on a real
+  card: `organizations.plan` flipped to `pro`, status `trialing`; then a
+  real cancellation through the portal correctly set `cancel_at` to the
+  trial's end without an immediate plan flip (both bugs above, re-verified
+  against live data, not just test mode). The trial runs through
+  2026-10-20; `customer.subscription.deleted` firing when it ends is the
+  one event type still unexercised anywhere, live or test — same code
+  path as everything else already proven correct, so low risk.
+
+  One more bug the live test surfaced, 2026-10-06: `createPortalSession`
+  swallowed any Stripe API error silently (`catch { return; }`, no message)
+  — surfaced as "the Manage billing button does nothing" when stale
+  test-mode data (`stripe_customer_id` from before go-live) got passed to
+  the live API key. The stale data was a one-off (cleaned up directly in
+  the DB), but the silent failure was real and would hit any genuine
+  transient error the same way. Fixed to return `BillingState` like
+  `createCheckoutSession` does, surfaced in `ManageBillingButton` via
+  `useActionState` the same way `UpgradeForm` already worked.
+
+  **Sprint 3 is done.** What's left is the unscoped future work SPEC §9
+  calls Pro: more seats, invoicing, tax estimates, mileage, receipt
+  storage, rounding rules, integrations.
 - **Supabase** project `workworth` (ref `btfmiviujsftuxzxslwt`, us-east-1, free plan).
 - **Netlify** site `merry-biscuit-d35e20`, building from `main`. Production deploys
   on merge. Hosting is Netlify, not Vercel.
@@ -184,40 +208,15 @@ Supabase and Netlify MCP tools to read live state instead.
 The v1 gap list is closed (see "Verifying changes" above for the
 tests/CI/verify-script work that closed the last item).
 
-**Sprint 3 (Stripe billing) is code-complete and verified in Stripe test
-mode** — checkout → trial, and the Customer Portal → scheduling a
-cancellation, both confirmed end-to-end against real webhook events and
-the resulting DB rows (see "Billing" above; caught and fixed two real
-bugs in the process). The one thing that hasn't actually fired yet is
-`customer.subscription.deleted` itself — the write path is the same
-function, already proven correct for every other event type, but nothing
-has forced a subscription to actually *end* yet (that's ~14 days out for
-the test org, or triggerable sooner with `stripe trigger
-customer.subscription.deleted` if you want to see it before going live).
-Going live:
-1. In the Stripe dashboard, switch out of test mode (or use a second,
-   live-mode Stripe account if you prefer keeping them separate) and
-   recreate the Product ("WorkWorth Pro") with its two Prices — monthly
-   $15, annual $150 (two months free; adjust in Stripe's dashboard if you
-   want a different number, no code change needed). Test-mode and
-   live-mode objects are entirely separate in Stripe; the test ids won't
-   carry over.
-2. Add a live webhook endpoint in the Stripe dashboard pointing at
-   `https://workworth.de/api/webhooks/stripe`, listening for at least
-   `checkout.session.completed`, `customer.subscription.updated`,
-   `customer.subscription.deleted`. Copy its signing secret.
-3. In Netlify's env vars for the site, set `STRIPE_SECRET_KEY` (live),
-   `STRIPE_WEBHOOK_SECRET` (the live endpoint's secret from step 2),
-   `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL` (live price ids). Trigger
-   a redeploy so the functions pick up the new env.
-4. Do one real, low-stakes live checkout (e.g. your own card, cancel
-   immediately after confirming it works) before treating this as done —
-   the test-mode pass caught two real bugs (see "Billing" above) that a
-   confident-looking code review alone would have missed.
+**Sprint 3 (Stripe billing) is done and live** — see "Billing" above for
+the full verification trail (test mode, then a real live checkout on a
+real card, three real bugs found and fixed along the way). Nothing left
+to do to call this shipped.
 
-After that's verified, the rest of what SPEC §9 calls Pro — more seats,
-invoicing, tax estimates, mileage, receipt storage, rounding rules,
-integrations — is unscoped future work, not part of Sprint 3.
+The rest of what SPEC §9 calls Pro — more seats, invoicing, tax
+estimates, mileage, receipt storage, rounding rules, integrations — is
+unscoped future work, not part of Sprint 3. Pick up whichever of those
+(or something else) when ready to start the next piece of work.
 
 **Not actually doable on the free plan**: "Prevent use of leaked passwords"
 (Authentication → Sign In / Providers → Email → Attack Protection) is a

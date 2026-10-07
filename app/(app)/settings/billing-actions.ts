@@ -51,9 +51,9 @@ export async function createCheckoutSession(_prev: BillingState, formData: FormD
   redirect(url);
 }
 
-export async function createPortalSession(): Promise<void> {
+export async function createPortalSession(_prev: BillingState): Promise<BillingState> {
   const ctx = await requireCreator();
-  if ("error" in ctx) return;
+  if ("error" in ctx) return ctx;
 
   const supabase = await createClient();
   const { data: subscription } = await supabase
@@ -61,10 +61,14 @@ export async function createPortalSession(): Promise<void> {
     .select("stripe_customer_id")
     .eq("organization_id", ctx.organization.id)
     .maybeSingle();
-  if (!subscription?.stripe_customer_id) return;
+  if (!subscription?.stripe_customer_id) {
+    return { error: "No billing account found yet. Try refreshing the page." };
+  }
 
   const siteUrl = await getSiteUrl();
 
+  // redirect() throws to unwind the request; see createCheckoutSession above
+  // for why it must stay outside the try.
   let url: string | null;
   try {
     const portalSession = await stripe().billingPortal.sessions.create({
@@ -74,7 +78,7 @@ export async function createPortalSession(): Promise<void> {
     url = portalSession.url;
   } catch (err) {
     trackException(err, { source: "create-portal-session" });
-    return;
+    return { error: "Couldn't open billing. Please try again." };
   }
 
   redirect(url);
