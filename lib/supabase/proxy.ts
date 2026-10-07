@@ -16,6 +16,9 @@ const PUBLIC_PATHS = [
   "/privacy",
   "/terms",
   "/impressum",
+  "/opengraph-image",
+  "/robots.txt",
+  "/sitemap.xml",
 ];
 
 export async function updateSession(request: NextRequest) {

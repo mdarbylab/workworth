@@ -19,10 +19,13 @@ const fraunces = Fraunces({
   subsets: ["latin"],
 });
 
+const description =
+  "Know where your time goes, what you earned, and what you actually made. Time tracking and profit for independent contractors and small service businesses.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://workworth.de"),
   title: { default: "WorkWorth", template: "%s · WorkWorth" },
-  description:
-    "Know where your time goes, what you earned, and what you actually made.",
+  description,
   applicationName: "WorkWorth",
   manifest: "/manifest.webmanifest",
   icons: {
@@ -33,6 +36,18 @@ export const metadata: Metadata = {
     apple: "/icons/apple-touch-icon.png",
   },
   appleWebApp: { capable: true, title: "WorkWorth", statusBarStyle: "default" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "WorkWorth",
+    title: "WorkWorth",
+    description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WorkWorth",
+    description,
+  },
 };
 
 export const viewport: Viewport = {

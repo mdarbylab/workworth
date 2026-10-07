@@ -48,6 +48,17 @@ A feature ships only if it answers yes to: *Does this make it easier for a small
 
 ## 5. Screens
 
+### 5.0 Signed-out landing (Sprint 4, 2026-10-06)
+
+A visitor with no session who hits `/` sees a real marketing page, not a
+bare login form. Header (wordmark, Sign in / Get started) · hero (the
+promise from the top of this doc, two CTAs) · the §2 "aha moment" example,
+rendered as a real card, not a screenshot · the core loop as a step row ·
+who it's for (§1's target-user list) · pricing (§9's real numbers, Free vs
+Pro) · the legal footer. `/login` and `/signup` stay directly reachable and
+unchanged; a signed-in visitor hitting `/` still redirects straight to
+`/today` as before — this only changes what a signed-out visitor sees.
+
 Navigation is a bottom bar on phone and a left rail on desktop. Five items:
 
 `Today · Jobs · Time · Expenses · Reports` (Settings lives under the avatar).
