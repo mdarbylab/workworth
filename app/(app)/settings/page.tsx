@@ -179,7 +179,7 @@ export default async function SettingsPage({
             {isCreator ? (
               <div className="flex flex-wrap gap-2">
                 <UpgradeForm interval="month" label="Upgrade — $15/mo" />
-                <UpgradeForm interval="year" label="Upgrade — $150/yr" />
+                <UpgradeForm interval="year" label="Upgrade — $150/yr ($12.50/mo)" />
               </div>
             ) : (
               <p className="text-sm text-slate-500">Ask the business owner to upgrade to Pro.</p>

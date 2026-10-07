@@ -124,11 +124,12 @@ export function LandingPage() {
             <div className="card border-ink-200">
               <h3 className="font-display text-xl font-semibold text-ink-900">Pro</h3>
               <p className="mt-1 text-3xl font-semibold tabular-nums text-ink-900">
-                $15 <span className="text-base font-normal text-slate-500">/mo, or $150/yr</span>
+                $12.50 <span className="text-base font-normal text-slate-500">/mo</span>
               </p>
+              <p className="text-sm text-slate-500">Billed annually at $150/yr — or $15/mo billed monthly.</p>
               <ul className="mt-4 space-y-2 text-sm text-slate-700">
                 <li>Everything in Free</li>
-                <li>Real roles and permissions</li>
+                <li>Set what each person can see and do</li>
                 <li>14-day free trial</li>
               </ul>
               <Link href="/signup" className="btn-secondary mt-6 w-auto px-4 py-2">Start free trial</Link>
