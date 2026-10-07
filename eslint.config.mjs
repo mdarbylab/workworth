@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Claude Code background-task worktrees are full nested checkouts
+    // (their own .next, node_modules, etc.) at an unanchored depth the
+    // patterns above don't reach -- exclude the whole tree outright.
+    ".claude/worktrees/**",
   ]),
 ]);
 
