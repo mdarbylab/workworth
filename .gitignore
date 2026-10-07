@@ -19,6 +19,10 @@ next-env.d.ts
 .netlify/
 .vercel
 
+# Claude Code background-task worktrees — full nested checkouts that must
+# never be scanned by tsc/eslint run from this one, or tracked in git.
+.claude/worktrees/
+
 # misc
 .DS_Store
 *.pem
