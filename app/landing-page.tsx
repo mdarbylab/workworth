@@ -129,6 +129,7 @@ export function LandingPage() {
               <p className="text-sm text-slate-500">Billed annually at $240/yr — or $25/mo billed monthly.</p>
               <ul className="mt-4 space-y-2 text-sm text-slate-700">
                 <li>Everything in Free</li>
+                <li>Up to 10 people</li>
                 <li>Set what each person can see and do</li>
                 <li>14-day free trial</li>
               </ul>

@@ -173,7 +173,7 @@ export default async function SettingsPage({
             </p>
             <p className="text-sm text-slate-500">
               Everyone on the free plan has the same access: you both see all of the business&apos;s time,
-              expenses and reports. Separate roles and permissions, more seats, invoicing and tax
+              expenses and reports. Up to 10 people, separate roles and permissions, invoicing and tax
               estimates come with Pro.
             </p>
             {isCreator ? (

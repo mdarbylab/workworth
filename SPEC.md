@@ -165,7 +165,12 @@ Rules:
 - **On the free plan the two people are peers.** Both see all of the business's time, expenses and reports, both can edit jobs and business settings, and both can invite. Role separation is what an upgrade buys, not something the free plan withholds.
 - `role` still records who created the business. Two things stay with them: only they can remove someone, and only they can delete the business. Peers cannot evict each other.
 - On Pro, `owner` and `member` mean what they say, and a member sees only their own activity. Enforced in `auth_is_owner()`, which every org-scoped policy already calls.
-- Free plan = max 2 members. Enforced server-side on invite acceptance, not only in the UI.
+- Seat limit is per-org (`organizations.seat_limit`): Free = max 2 members
+  (duos); Pro = max 10, matching §1's stated target market. Enforced
+  server-side on invite and on acceptance, not only in the UI. A Pro org
+  with more than 2 active members that downgrades keeps everyone — no
+  forced removal — but can't invite past 2 again until back under the
+  free limit.
 - Removing a member keeps their historical entries attributed to them.
 - Everyone has a **display name**, required at signup and when accepting an invite, editable in Settings. People are shown by name; email addresses are never used as a person's label.
 
@@ -236,10 +241,11 @@ self-serve via Stripe Checkout (Sprint 3, 2026-10-04; repriced 2026-10-07
 — see "Where things stand" in CLAUDE.md for the reasoning):** real **roles
 and permissions** — `auth_is_owner()` already splits owner/member once
 `plan = 'pro'`, so this activates the moment a checkout completes, with no
-separate UI to build. Still just a data change for everything else Pro is
-meant to unlock later: more seats, invoicing, tax estimates, mileage,
-receipt storage, rounding rules, integrations — `seat_limit` stays at 2 for
-Pro orgs for now; raising it is the next scoped sprint (2026-10-07).
+separate UI to build. **Up to 10 people** (Sprint 5, 2026-10-07) — §6 has
+the enforcement detail. A tier for teams past 10 is a deliberate later
+decision, not named or priced here. Still just a data change for
+everything else Pro is meant to unlock later: invoicing, tax estimates,
+mileage, receipt storage, rounding rules, integrations.
 
 Billing (upgrade, cancel, payment method) is restricted to the person who
 created the business (`role = 'owner'`) — the same "only the creator"
