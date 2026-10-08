@@ -94,7 +94,8 @@ export async function inviteMember(_prev: SettingsState, formData: FormData): Pr
       track("seat_limit_hit", { userId: ctx.user.id, organizationId: ctx.organization.id }, {
         seat_limit: ctx.organization.seat_limit,
       });
-      return { error: `The free plan includes ${ctx.organization.seat_limit} people. Remove someone to free a seat, or upgrade.` };
+      const upgradeHint = ctx.organization.plan === "free" ? " Remove someone to free a seat, or upgrade." : " Remove someone to free a seat.";
+      return { error: `Your plan includes ${ctx.organization.seat_limit} people.${upgradeHint}` };
     }
     return { error: "Couldn't create the invite. Please try again." };
   }
