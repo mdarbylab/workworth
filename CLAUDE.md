@@ -33,8 +33,9 @@ against each other.
   `auth_org_id()`). Flipping `plan` to `pro` is the entire feature on the
   app side: `auth_is_owner()` already gives real owner/member role
   separation once that happens, so no new role UI was needed. Billing
-  (upgrade/manage) is creator-only. `seat_limit` is unchanged by this —
-  still 2 on every plan; raising it for Pro is future work. Needs
+  (upgrade/manage) is creator-only. `seat_limit` was unchanged by Sprint 3
+  — still 2 on every plan at that point; raised to 10 for Pro in Sprint 5
+  (see below). Needs
   `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`,
   `STRIPE_PRICE_ANNUAL` in Netlify env (see `.env.example`).
   **Verified end-to-end in Stripe test mode 2026-10-06** via `stripe
@@ -111,6 +112,40 @@ against each other.
   so no grandfathering needed. Explicit decision: fill out Pro's actual
   feature list at this price before scoping any higher tier — see "Next
   up".
+
+  **Sprint 5 (2026-10-07, merged as [#28](https://github.com/mdarbylab/workworth/pull/28)):**
+  raised the Pro seat cap from 2 to 10, matching SPEC §1's own stated
+  target market ("1–10 people"); Free stays at 2 (duos). Turned out to be
+  a smaller change than the open questions in the prior "Next up" entry
+  assumed: direct inspection of the live DB (`pg_get_functiondef`) showed
+  `enforce_invite_limit()` and `enforce_seat_limit()` already read
+  `organizations.seat_limit` dynamically — neither had the hardcoded `2`
+  the prior note worried about. The only actually-hardcoded thing was the
+  *value*, which nothing ever wrote after org creation. So the real change
+  was just teaching `apply_stripe_subscription_event` (already the sole
+  writer of `plan`) to also write `seat_limit` — 10 for `pro`, 2 for
+  `free` — plus a one-time backfill for the org already on Pro from
+  testing (`supabase/migrations/20261007100000_pro_seat_limit.sql`,
+  applied live and confirmed via direct SQL: the Pro org backfilled to
+  10, both free orgs stayed at 2). Pricing model is unchanged — still
+  flat-fee-per-org, not per-seat; a higher tier for teams past 10 is a
+  deliberate later decision, not named or priced here.
+
+  Also fixed a real bug found while tracing the enforcement path: the
+  seat-limit-hit error message in `app/(app)/settings/actions.ts`
+  hardcoded "the free plan" regardless of actual plan — a Pro org hitting
+  its own 10-seat cap would have nonsensically been told "the free plan
+  includes 10 people." Now branches on `ctx.organization.plan`.
+
+  Landing page Pro card and the Settings free-plan description were
+  updated to advertise the real number. Verified via `npm run verify`
+  (142 tests) and the mock server at both desktop and 375px.
+
+  **Real multi-user/multi-org testing against the new 10-seat cap is
+  still open** — inviting real accounts up to 10 on the live Pro org and
+  confirming the 11th is refused needs real email accounts the sandbox
+  can't create, so it's the user's own next action, not something done in
+  this session.
 - **Landing page** (Sprint 4, 2026-10-06): root `/` used to unconditionally
   redirect a signed-out visitor to `/login` with zero marketing content —
   confirmed live, it really was just a bare login form. Replaced with a
@@ -237,31 +272,19 @@ Supabase and Netlify MCP tools to read live state instead.
 The v1 gap list is closed (see "Verifying changes" above for the
 tests/CI/verify-script work that closed the last item).
 
-**Sprint 3 (Stripe billing)** and **Sprint 4 (landing page)** are both done
-and live — see "Billing" and "Landing page" above.
+**Sprint 3 (Stripe billing)**, **Sprint 4 (landing page)**, and **Sprint 5
+(10-person seat cap for Pro)** are all done and live — see "Billing" and
+"Landing page" above.
 
-**Sprint 5, next up, scoped 2026-10-07: raise the seat limit for Pro and
-support larger teams.** Explicit decision, following the 2026-10-07
-repricing: fill out Pro's real feature list at the new price before
-scoping any higher tier, and this is the first piece — "larger teams" is
-also something to actually market once built, not just ship quietly. Not
-yet planned in detail; open questions to resolve before implementation:
-- What's the new seat cap for Pro? SPEC §1's own target is "1–10 people,"
-  which is a natural ceiling to consider rather than unlimited.
-- Still flat-fee-per-org at the new price, or per-seat billing past some
-  included count? SPEC §9 currently says "flat fee per org, not per-seat"
-  as a deliberate simplicity choice — revisit or keep.
-- `enforce_seat_limit` (a trigger on `memberships`, EXECUTE already
-  revoked from direct API access per the entry below) currently enforces
-  a hardcoded ceiling of 2 regardless of plan — needs to read the org's
-  actual `seat_limit` instead.
-- User explicitly wants **real multi-user/multi-org testing** this time,
-  not just solo mock-server verification — this sprint is the one to
-  actually set that up (a second real test account, not just fixtures).
+**Open from Sprint 5**: real multi-user/multi-org testing against the new
+10-seat cap — inviting real accounts up to 10 on the live Pro org and
+confirming the 11th is correctly refused. Needs the user's own
+participation (real email accounts), not something the sandbox can do.
 
 The rest of what SPEC §9 calls Pro beyond seats — invoicing, tax
 estimates, mileage, receipt storage, rounding rules, integrations — stays
-unscoped future work after that.
+unscoped future work. Pick up whichever of those (or something else) once
+the Sprint 5 multi-user test is done.
 
 **Not actually doable on the free plan**: "Prevent use of leaked passwords"
 (Authentication → Sign In / Providers → Email → Attack Protection) is a
