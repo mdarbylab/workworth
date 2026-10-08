@@ -23,7 +23,8 @@ against each other.
   (Netlify functions run `nodejs22.x`) — found by reproducing Netlify's
   `npm ci` locally (`npm install --legacy-peer-deps` had been silently
   masking a real peer conflict that `npm ci` rejects outright).
-- **Billing**: Pro plan ($15/mo or $150/yr, 14-day trial) is live via Stripe
+- **Billing**: Pro plan ($25/mo or $240/yr — $20/mo billed annually — 14-day
+  trial) is live via Stripe
   Checkout + Customer Portal (Sprint 3, 2026-10-04). Flat fee per org, not
   per-seat. The Stripe webhook (`app/api/webhooks/stripe`) is the only
   writer of `subscriptions`/`organizations.plan` — it verifies the Stripe
@@ -92,9 +93,37 @@ against each other.
   `createCheckoutSession` does, surfaced in `ManageBillingButton` via
   `useActionState` the same way `UpgradeForm` already worked.
 
-  **Sprint 3 is done.** What's left is the unscoped future work SPEC §9
-  calls Pro: more seats, invoicing, tax estimates, mileage, receipt
-  storage, rounding rules, integrations.
+  **Sprint 3 is done.**
+
+  **Repriced 2026-10-07**: $15/mo or $150/yr → **$25/mo or $240/yr
+  ($20/mo billed annually)**. The original number was picked without real
+  grounding; this one is value-based — conservative math on admin time
+  saved (≈1hr/week × $50–75/hr billed, the midpoint of what SPEC §1's
+  target trades actually charge clients, per BLS wage data and several
+  trade-pricing sources) priced at the standard ~10% SaaS value-capture
+  rate lands at $21.50–32.50/mo, and the closest direct competitor
+  (BusyBusy, $9.99–14.99/user/mo) costs $20–30/mo for an equivalent 2
+  seats — both independently pointed at the same range. New live Stripe
+  Prices (`price_1UO52fELrJ03FflRgfAArEdT` monthly,
+  `price_1UO52tELrJ03FflR6gj1mmZV` yearly) replace the old ones in
+  Netlify's env; the one existing (already-canceled) trial subscription
+  on the old price just lapses naturally — no real paying customers yet,
+  so no grandfathering needed. Explicit decision: fill out Pro's actual
+  feature list at this price before scoping any higher tier — see "Next
+  up".
+- **Landing page** (Sprint 4, 2026-10-06): root `/` used to unconditionally
+  redirect a signed-out visitor to `/login` with zero marketing content —
+  confirmed live, it really was just a bare login form. Replaced with a
+  real public page (`app/landing-page.tsx`) grounded entirely in SPEC
+  wording — hero is SPEC's own promise, the "aha moment" card is SPEC
+  §2's own numbers, pricing is SPEC §9's real numbers — so it can't drift
+  into overclaiming. Added SEO that didn't exist at all before:
+  `metadataBase` + Open Graph/Twitter metadata, a branded OG image via
+  `next/og`'s `ImageResponse`, `robots.ts`, `sitemap.ts`. Caught in testing:
+  the new `/opengraph-image`, `/robots.txt`, `/sitemap.xml` routes were
+  being redirected to `/login` by the auth middleware, same as any other
+  protected route — added to `lib/supabase/proxy.ts`'s public-path
+  allowlist. See SPEC §5.0.
 - **Supabase** project `workworth` (ref `btfmiviujsftuxzxslwt`, us-east-1, free plan).
 - **Netlify** site `merry-biscuit-d35e20`, building from `main`. Production deploys
   on merge. Hosting is Netlify, not Vercel.
@@ -208,15 +237,31 @@ Supabase and Netlify MCP tools to read live state instead.
 The v1 gap list is closed (see "Verifying changes" above for the
 tests/CI/verify-script work that closed the last item).
 
-**Sprint 3 (Stripe billing) is done and live** — see "Billing" above for
-the full verification trail (test mode, then a real live checkout on a
-real card, three real bugs found and fixed along the way). Nothing left
-to do to call this shipped.
+**Sprint 3 (Stripe billing)** and **Sprint 4 (landing page)** are both done
+and live — see "Billing" and "Landing page" above.
 
-The rest of what SPEC §9 calls Pro — more seats, invoicing, tax
-estimates, mileage, receipt storage, rounding rules, integrations — is
-unscoped future work, not part of Sprint 3. Pick up whichever of those
-(or something else) when ready to start the next piece of work.
+**Sprint 5, next up, scoped 2026-10-07: raise the seat limit for Pro and
+support larger teams.** Explicit decision, following the 2026-10-07
+repricing: fill out Pro's real feature list at the new price before
+scoping any higher tier, and this is the first piece — "larger teams" is
+also something to actually market once built, not just ship quietly. Not
+yet planned in detail; open questions to resolve before implementation:
+- What's the new seat cap for Pro? SPEC §1's own target is "1–10 people,"
+  which is a natural ceiling to consider rather than unlimited.
+- Still flat-fee-per-org at the new price, or per-seat billing past some
+  included count? SPEC §9 currently says "flat fee per org, not per-seat"
+  as a deliberate simplicity choice — revisit or keep.
+- `enforce_seat_limit` (a trigger on `memberships`, EXECUTE already
+  revoked from direct API access per the entry below) currently enforces
+  a hardcoded ceiling of 2 regardless of plan — needs to read the org's
+  actual `seat_limit` instead.
+- User explicitly wants **real multi-user/multi-org testing** this time,
+  not just solo mock-server verification — this sprint is the one to
+  actually set that up (a second real test account, not just fixtures).
+
+The rest of what SPEC §9 calls Pro beyond seats — invoicing, tax
+estimates, mileage, receipt storage, rounding rules, integrations — stays
+unscoped future work after that.
 
 **Not actually doable on the free plan**: "Prevent use of leaked passwords"
 (Authentication → Sign In / Providers → Email → Attack Protection) is a

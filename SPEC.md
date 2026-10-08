@@ -231,14 +231,15 @@ Rules:
 
 **Free — $0 forever:** 2 people, unlimited jobs and time entries, expenses, dashboard, reports, CSV export.
 
-**Pro — $15/mo or $150/yr, 14-day free trial, self-serve via Stripe Checkout
-(Sprint 3, 2026-10-04):** real **roles and permissions** — `auth_is_owner()`
-already splits owner/member once `plan = 'pro'`, so this activates the
-moment a checkout completes, with no separate UI to build. Still just a data
-change for everything else Pro is meant to unlock later: more seats,
-invoicing, tax estimates, mileage, receipt storage, rounding rules,
-integrations — `seat_limit` stays at 2 for Pro orgs for now; raising it is
-future work, not part of Sprint 3.
+**Pro — $25/mo or $240/yr ($20/mo billed annually), 14-day free trial,
+self-serve via Stripe Checkout (Sprint 3, 2026-10-04; repriced 2026-10-07
+— see "Where things stand" in CLAUDE.md for the reasoning):** real **roles
+and permissions** — `auth_is_owner()` already splits owner/member once
+`plan = 'pro'`, so this activates the moment a checkout completes, with no
+separate UI to build. Still just a data change for everything else Pro is
+meant to unlock later: more seats, invoicing, tax estimates, mileage,
+receipt storage, rounding rules, integrations — `seat_limit` stays at 2 for
+Pro orgs for now; raising it is the next scoped sprint (2026-10-07).
 
 Billing (upgrade, cancel, payment method) is restricted to the person who
 created the business (`role = 'owner'`) — the same "only the creator"
