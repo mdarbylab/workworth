@@ -34,6 +34,27 @@ export async function GET() {
     const elapsed = Date.now() - startedAt;
 
     if (!error) {
+      // Independent of enforce_invite_limit/enforce_seat_limit (the DB
+      // triggers that make exceeding seat_limit impossible through the
+      // app, SPEC §6): confirms those triggers are still attached and
+      // enabled, so this still catches a bypass (a bad migration, a
+      // manual SQL slip) even if the triggers themselves had a bug.
+      // Doesn't check *counts* — a Pro org that downgrades legitimately
+      // keeps members over its new, lower limit (no forced removal), so
+      // that alone isn't a fault condition.
+      const { data: seatLimitOk, error: seatLimitError } = await supabase.rpc("seat_limit_enforcement_ok");
+      if (seatLimitError || seatLimitOk === false) {
+        console.error("health check: seat limit enforcement disabled", seatLimitError?.message);
+        trackException(new Error("health check: seat limit enforcement disabled"), {
+          source: "health-check",
+          code: seatLimitError?.code || null,
+        });
+        return Response.json(
+          { ok: false, db: "ok", seatLimitEnforcement: "disabled" },
+          { status: 503, headers: { "Cache-Control": "no-store" } },
+        );
+      }
+
       return Response.json(
         { ok: true, db: "ok", latencyMs: elapsed },
         { headers: { "Cache-Control": "no-store" } },

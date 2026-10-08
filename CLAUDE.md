@@ -166,9 +166,24 @@ against each other.
   encrypts it, and pushes it to the private `workworth-backups` repo. See
   `docs/backups.md` to restore. The free plan has no automated backups; this is
   the substitute.
-- **Monitoring**: UptimeRobot hits `/api/health` every 5 minutes. That endpoint
-  runs a real query, so it also keeps the free-plan project from pausing after
-  7 days of inactivity.
+- **Monitoring**: UptimeRobot hits `/api/health` every 5 minutes (contact:
+  `mrdarbyshire@gmail.com`). That endpoint runs a real query, so it also
+  keeps the free-plan project from pausing after 7 days of inactivity.
+  Since Sprint 5 (2026-10-08) it also calls
+  `public.seat_limit_enforcement_ok()`, a security-definer RPC granted to
+  `anon` that checks the `enforce_invite_limit`/`enforce_seat_limit`
+  triggers on `memberships` are still attached and enabled, and fails the
+  check (503) if not — the one realistic way the seat cap could ever be
+  bypassed (a bad migration, a manual SQL slip), since Postgres triggers
+  otherwise fire regardless of role/privilege. Deliberately does **not**
+  alert on an org simply being over its `seat_limit` — a Pro org that
+  downgrades keeps members over its new, lower limit by design (§6, no
+  forced removal), so that state alone isn't a fault. Verified live: the
+  RPC returns `true` against the real triggers, and the same
+  catalog-query shape was separately proven to flip to "not detected"
+  against a disabled trigger on a throwaway temp table (never against the
+  real triggers — disabling live enforcement, even temporarily, is
+  correctly refused by the auto-mode security classifier).
 - **Email**: Supabase Auth SMTP is Resend (`smtp.resend.com`, sender
   `noreply@workworth.de`, no reply-to, no inbox). Domain verified with SPF,
   DKIM and a `p=none` DMARC record at Spaceship. Confirmed end-to-end
