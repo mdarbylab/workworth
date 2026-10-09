@@ -36,9 +36,9 @@ Effective rate: $105.80/hr
 
 ## 3. What v1 is NOT
 
-Not in v1: invoicing, tax estimates, mileage, receipt scanning, payments, scheduling, payroll, HR, CRM, native mobile apps, integrations, AI features, multiple businesses per user, roles beyond owner/member.
+Not in v1: tax estimates, mileage, receipt scanning, payments, scheduling, payroll, HR, CRM, native mobile apps, integrations, AI features, multiple businesses per user, roles beyond owner/member. Invoicing shipped in Sprint 6 (§5.9) — the rest of this list stays deferred.
 
-The schema is designed so invoicing and tax estimates can be added without migration pain (see §7), but no code is written for them in v1. The client report (§5.8) is not an invoice: it has no invoice number, no payment terms, no tax, and nothing is marked paid.
+The schema was designed so invoicing and tax estimates could be added without migration pain (see §7); invoicing used that room in Sprint 6, tax estimates still haven't. The client report (§5.8) is still not an invoice: it has no invoice number, no payment terms, no tax, and nothing is marked paid — that's what §5.9 is for.
 
 ## 4. The rule for adding anything
 
@@ -156,6 +156,44 @@ Rules:
 - Work on a job with no rate or price set is excluded from the total, and the screen warns about it. The warning does not print.
 - Output is the browser's print-to-PDF. No PDF library in v1.
 
+### 5.9 Invoices (Sprint 6, 2026-10-09, Pro only)
+
+Created from a client report, not a separate form: on the Client report
+screen, **Save as invoice** turns the statement's job breakdown into a
+real, numbered invoice (`INV-0001`, sequential per business). One line
+per priced job — hourly jobs bill the hours actually tracked, fixed jobs
+bill the agreed price once. A job with no rate or price set is skipped
+the same way it's excluded from the client report's total.
+
+**Status:** `draft → sent → paid`, or `void` from `draft` or `sent`.
+Never backward. A `draft` is freely editable — lines can be added,
+changed, or removed, and the whole thing can be deleted. **Marking it
+sent locks it**: the only way to fix a sent invoice is to void it and
+create a replacement, the same "nothing silently overwritten" principle
+as edited time entries (§8.4) — a document the client already has
+shouldn't quietly change out from under them. Marking sent stamps the
+issue date and a 14-day due date; marking paid is a plain record, not a
+payment collection — WorkWorth doesn't take payments.
+
+**Hours are only billed once.** An hourly job's tracked time is marked as
+belonging to the invoice that billed it; a later invoice for the same
+client correctly offers only the hours not yet billed, and the save
+screen says so when some are skipped for this reason. A fixed-price job
+bills its whole price the first time any of its hours are invoiced, so a
+later invoice never re-offers it. Voiding an invoice frees its hours to
+be billed correctly on a replacement.
+
+The invoice list and each invoice's detail/print view live under
+Reports, not a new nav item — SPEC §5.0's five-item nav is unchanged. The
+detail view reuses the client report's printable layout exactly
+(business letterhead, totals, no app chrome) via **Print or save as
+PDF** — no PDF library here either.
+
+Only the business's full-access person (same bar as Settings → Business)
+can create, edit, or change an invoice's status — not just any member.
+Invoicing itself is Pro only (§9); a free-plan business doesn't see the
+"Save as invoice" control.
+
 ---
 
 ## 6. Two-person model
@@ -182,14 +220,15 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 
 | Table | Purpose | Key columns |
 |---|---|---|
-| `organizations` | the business | name, timezone, currency, plan (`free`/`pro`), seat_limit (2), address, contact_email, contact_phone (all three optional, letterhead only) |
+| `organizations` | the business | name, timezone, currency, plan (`free`/`pro`), seat_limit (2), invoice_seq (Sprint 6, per-org invoice counter), address, contact_email, contact_phone (all three optional, letterhead only) |
 | `memberships` | user ↔ org | user_id, organization_id, role, display_name, invited_email, accepted_at, removed_at |
 | `clients` | who the work is for | name, email, phone, notes |
 | `jobs` | unit of work | client_id, name, billing_type (`hourly`/`fixed`), hourly_rate_cents, fixed_price_cents, estimated_minutes, status (`active`/`archived`), notes |
-| `time_entries` | tracked time | job_id, user_id, started_at, stopped_at (null = running), duration_seconds (derived on stop), notes, source (`timer`/`manual`) |
+| `time_entries` | tracked time | job_id, user_id, started_at, stopped_at (null = running), duration_seconds (derived on stop), notes, source (`timer`/`manual`), invoiced_in_invoice_id (Sprint 6, nullable — which invoice, if any, billed this entry's hours) |
 | `expenses` | money out | job_id (nullable), user_id, amount_cents, spent_on (date), category, description, receipt_path (unused in v1) |
 | `audit_events` | change history | actor_user_id, table_name, record_id, action, before (jsonb), after (jsonb) |
-| `invoices`, `invoice_lines` | **created empty in v1** for later | — |
+| `invoices` | a billed document for a client (§5.9, Sprint 6) | organization_id, client_id (nullable), number (`INV-0001`, sequential per org), status (`draft`/`sent`/`paid`/`void`), issued_on, due_on, total_cents (derived — see invoice_lines) |
+| `invoice_lines` | one invoice's line items | organization_id, invoice_id, job_id (nullable, traceability only), description, quantity, unit_cents, total_cents (`invoices.total_cents` is a trigger-maintained sum of these, never written directly by app code) |
 | `subscriptions` | Pro billing (Sprint 3) | organization_id (unique), stripe_customer_id (unique), stripe_subscription_id, status (`trialing`/`active`/`past_due`/`canceled`/`incomplete`/`incomplete_expired`/`unpaid`), current_period_end, cancel_at (nullable — Stripe's own cancellation-scheduled timestamp; not always equal to current_period_end, e.g. a trial cancels at the trial's end), price_interval (`month`/`year`) |
 
 Rules:
@@ -243,8 +282,9 @@ and permissions** — `auth_is_owner()` already splits owner/member once
 `plan = 'pro'`, so this activates the moment a checkout completes, with no
 separate UI to build. **Up to 10 people** (Sprint 5, 2026-10-07) — §6 has
 the enforcement detail. A tier for teams past 10 is a deliberate later
-decision, not named or priced here. Still just a data change for
-everything else Pro is meant to unlock later: invoicing, tax estimates,
+decision, not named or priced here. **Invoicing** (Sprint 6, 2026-10-09)
+— §5.9 has the detail; a free-plan business doesn't see the "Save as
+invoice" control. What's still unscoped future work: tax estimates,
 mileage, receipt storage, rounding rules, integrations.
 
 Billing (upgrade, cancel, payment method) is restricted to the person who
@@ -288,7 +328,7 @@ exist exactly so this was a data/webhook change, not a rewrite — see §7.
 
 ## 12. Analytics events
 
-`signup`, `org_created`, `job_created`, `timer_started`, `timer_stopped`, `time_entry_manual`, `time_entry_edited`, `expense_added`, `report_viewed`, `client_report_viewed`, `csv_exported`, `member_invited`, `member_joined`, `seat_limit_hit`, `checkout_started`, `checkout_completed`.
+`signup`, `org_created`, `job_created`, `timer_started`, `timer_stopped`, `time_entry_manual`, `time_entry_edited`, `expense_added`, `report_viewed`, `client_report_viewed`, `csv_exported`, `member_invited`, `member_joined`, `seat_limit_hit`, `checkout_started`, `checkout_completed`, `invoice_created`, `invoice_sent`, `invoice_paid`, `invoice_voided`.
 
 **North-star metric for v1:** % of new users who track time on 3 different days in their first 2 weeks. If this is bad, we fix the product before adding features.
 

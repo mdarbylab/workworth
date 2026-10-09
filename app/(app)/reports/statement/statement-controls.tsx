@@ -1,15 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { useActionState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createInvoiceFromStatement, type InvoiceFormState } from "../invoices/actions";
+
+const initialInvoiceState: InvoiceFormState = {};
 
 /**
  * The on-screen control bar. Hidden when printing so it never lands on the
  * document the client receives.
  */
-export function StatementControls({ showMoney }: { showMoney: boolean }) {
+export function StatementControls({
+  showMoney,
+  clientId,
+  periodKey,
+  fromKey,
+  toKey,
+  canInvoice,
+}: {
+  showMoney: boolean;
+  clientId: string;
+  periodKey: string;
+  fromKey: string;
+  toKey: string;
+  canInvoice: boolean;
+}) {
   const router = useRouter();
   const params = useSearchParams();
+  const [invoiceState, invoiceAction, invoicePending] = useActionState(
+    createInvoiceFromStatement,
+    initialInvoiceState,
+  );
 
   const toggleMoney = () => {
     const next = new URLSearchParams(params.toString());
@@ -31,6 +53,19 @@ export function StatementControls({ showMoney }: { showMoney: boolean }) {
         />
         Show rates and amounts
       </label>
+
+      {showMoney && canInvoice && (
+        <form action={invoiceAction} className="flex items-center gap-2">
+          <input type="hidden" name="client_id" value={clientId} />
+          <input type="hidden" name="period" value={periodKey} />
+          <input type="hidden" name="from" value={fromKey} />
+          <input type="hidden" name="to" value={toKey} />
+          <button type="submit" disabled={invoicePending} className="btn-secondary w-auto px-3 py-2 text-sm">
+            {invoicePending ? "Saving…" : "Save as invoice"}
+          </button>
+          {invoiceState.error && <p className="error">{invoiceState.error}</p>}
+        </form>
+      )}
 
       <button
         type="button"

@@ -121,6 +121,13 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
           periodQuery={q}
           periodLabel={period.label}
         />
+        {ctx.organization.plan === "pro" ? (
+          <Link href="/reports/invoices" className="text-sm text-ink-800 hover:underline">
+            View invoices →
+          </Link>
+        ) : (
+          <p className="text-xs text-slate-400">Save a client report as an invoice — comes with Pro.</p>
+        )}
       </section>
 
       <section className="space-y-2">

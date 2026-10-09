@@ -9,6 +9,10 @@ export type StatementLine = {
   dayKey: string;
   seconds: number;
   notes: string | null;
+  /** Set once this entry's hours are on an invoice (Sprint 6). Purely a
+   * passthrough here -- the plain client report ignores it and keeps
+   * showing every entry, invoiced or not; only invoice creation reads it. */
+  invoicedInvoiceId: string | null;
 };
 
 export type StatementJob = {
@@ -53,7 +57,9 @@ export async function buildStatement(clientId: string, period: Period): Promise<
 
   const { data: entries } = await supabase
     .from("time_entries")
-    .select("id, job_id, started_at, duration_seconds, notes, jobs!inner(id, name, billing_type, hourly_rate_cents, fixed_price_cents, client_id)")
+    .select(
+      "id, job_id, started_at, duration_seconds, notes, invoiced_in_invoice_id, jobs!inner(id, name, billing_type, hourly_rate_cents, fixed_price_cents, client_id)",
+    )
     .eq("jobs.client_id", clientId)
     .not("stopped_at", "is", null)
     .gte("started_at", period.from.toISOString())
@@ -85,6 +91,7 @@ export async function buildStatement(clientId: string, period: Period): Promise<
       dayKey: dateKey(new Date(e.started_at), org.timezone),
       seconds,
       notes: e.notes,
+      invoicedInvoiceId: e.invoiced_in_invoice_id,
     });
   }
 

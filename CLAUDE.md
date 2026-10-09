@@ -159,6 +159,64 @@ against each other.
   being redirected to `/login` by the auth middleware, same as any other
   protected route — added to `lib/supabase/proxy.ts`'s public-path
   allowlist. See SPEC §5.0.
+- **Invoicing** (Sprint 6, 2026-10-09, Pro only — SPEC §5.9): created from
+  a client report, not a separate form — "Save as invoice" on the
+  statement page turns `buildStatement()`'s job breakdown directly into a
+  numbered, trackable `invoices`/`invoice_lines` pair, reusing the
+  statement's own revenue math (`revenueCents()`) rather than a second
+  calculation path.
+
+  The `invoices`/`invoice_lines` tables existed live since v1 ("created
+  empty... for later") but had never been written into a tracked
+  migration — closed with a reconciliation migration
+  (`supabase/migrations/20261009000000_invoices_schema_reconciliation.sql`)
+  that also converted `status` from plain `text` (no check constraint,
+  the one holdout against every other status-like column in this schema
+  being a proper enum) to a real `invoice_status` enum, and added the
+  INSERT/UPDATE/DELETE RLS policies that never existed before (so nothing
+  could write to these tables until this sprint).
+
+  Numbering (`INV-0001`, sequential per org) is a security-definer RPC,
+  `next_invoice_number()`, incrementing `organizations.invoice_seq` via
+  `update ... returning` for atomicity under concurrent creates — same
+  shape as `apply_stripe_subscription_event`. Verified live (not just
+  reasoned about): simulated a real authenticated session via
+  `set_config('request.jwt.claims', ...)` inside a transaction, confirmed
+  two sequential calls return `INV-0001`/`INV-0002` with no collision,
+  confirmed the wrong-org case is correctly rejected, then rolled back so
+  nothing persisted. That same test caught a real Postgres gotcha before
+  it became a bug: inserting the invoice and its lines in a single
+  multi-statement CTE fails RLS, because a data-modifying CTE's sibling
+  writes aren't visible to another CTE's RLS subquery in the same
+  statement — confirmed the real server action must do two separate
+  round-trips (which the natural Next.js server-action code already
+  does), not one clever combined query.
+
+  A minimal double-billing guard: `time_entries.invoiced_in_invoice_id`
+  marks which invoice billed an entry's hours, so a second invoice for
+  the same client correctly offers only the not-yet-billed remainder (and
+  a fixed-price job, once any of its hours are billed, is never
+  re-offered at all — the whole price was already captured). Voiding an
+  invoice frees its hours back up. `invoices.total_cents` is trigger-
+  maintained from `invoice_lines` (`invoice_lines_set_total`), never
+  written by app code.
+
+  Caught and fixed via the mock-server visual pass, not left as a latent
+  bug: `deriveInvoiceLines()` originally checked `invoicedInvoiceId ===
+  null` with strict equality; the mock fixture's hand-written rows simply
+  omitted the column (`undefined`, not `null`), which would have silently
+  treated every entry as "already billed" the first time this ran against
+  real Postgres data shaped slightly differently than expected. Fixed at
+  the root (the mock's `entry()` helper now sets the field explicitly,
+  matching what PostgREST always sends), not papered over with a loose
+  equality check that would have masked the same class of bug later.
+
+  Sent invoices lock (SPEC §8.4's "nothing silently overwritten"
+  principle) — fixing one means voiding and creating a replacement, not
+  editing in place. Verified end-to-end via the mock server: created an
+  invoice from a real statement, marked it sent (confirmed the 14-day due
+  date and that line-editing controls disappeared), marked it paid
+  (confirmed terminal — no further status actions render).
 - **Supabase** project `workworth` (ref `btfmiviujsftuxzxslwt`, us-east-1, free plan).
 - **Netlify** site `merry-biscuit-d35e20`, building from `main`. Production deploys
   on merge. Hosting is Netlify, not Vercel.
@@ -287,19 +345,26 @@ Supabase and Netlify MCP tools to read live state instead.
 The v1 gap list is closed (see "Verifying changes" above for the
 tests/CI/verify-script work that closed the last item).
 
-**Sprint 3 (Stripe billing)**, **Sprint 4 (landing page)**, and **Sprint 5
-(10-person seat cap for Pro)** are all done and live — see "Billing" and
-"Landing page" above.
+**Sprint 3 (Stripe billing)**, **Sprint 4 (landing page)**, **Sprint 5
+(10-person seat cap for Pro, plus the seat-limit-enforcement monitoring
+alert that followed it)**, and **Sprint 6 (invoicing)** are all done and
+live — see "Billing", "Landing page" and "Invoicing" above.
 
-**Open from Sprint 5**: real multi-user/multi-org testing against the new
-10-seat cap — inviting real accounts up to 10 on the live Pro org and
-confirming the 11th is correctly refused. Needs the user's own
-participation (real email accounts), not something the sandbox can do.
+**Backlog (needs Michael, not blocking anything):** real multi-user/
+multi-org testing against the 10-seat cap — invite real plus-addressed
+accounts (`mrdarbyshire+seatN@gmail.com`) up to 10 on the live Pro org,
+confirm each accepts, then confirm the 11th is correctly refused with the
+plan-aware error message. Deliberately not a blocker on anything after
+it: the live DB-level boundary test (2026-10-07, see "Billing" above)
+already proved the actual Postgres enforcement is correct; this would
+only additionally confirm the invite/signup/accept UI path, which hasn't
+changed. The sandbox can't do this — production account creation and
+sign-in are both off-limits to Claude — so it sits here until Michael has
+a spare minute.
 
-The rest of what SPEC §9 calls Pro beyond seats — invoicing, tax
-estimates, mileage, receipt storage, rounding rules, integrations — stays
-unscoped future work. Pick up whichever of those (or something else) once
-the Sprint 5 multi-user test is done.
+The rest of what SPEC §9 calls Pro — tax estimates, mileage, receipt
+storage, rounding rules, integrations — stays unscoped future work. Pick
+up whichever of those (or something else) when ready for the next sprint.
 
 **Not actually doable on the free plan**: "Prevent use of leaked passwords"
 (Authentication → Sign In / Providers → Email → Attack Protection) is a
