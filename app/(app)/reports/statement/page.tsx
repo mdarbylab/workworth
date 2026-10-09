@@ -50,7 +50,14 @@ export default async function StatementPage({
         props={{ period: period.key, money: showMoney }}
       />
       <Suspense>
-        <StatementControls showMoney={showMoney} />
+        <StatementControls
+          showMoney={showMoney}
+          clientId={clientId}
+          periodKey={period.key}
+          fromKey={period.fromKey}
+          toKey={period.toKey}
+          canInvoice={ctx.organization.plan === "pro" && ctx.hasFullAccess}
+        />
       </Suspense>
 
       <article className="sheet">

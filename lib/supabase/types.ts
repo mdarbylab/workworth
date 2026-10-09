@@ -164,6 +164,7 @@ export type Database = {
           description: string
           id: string
           invoice_id: string
+          job_id: string | null
           organization_id: string
           quantity: number
           total_cents: number
@@ -174,6 +175,7 @@ export type Database = {
           description: string
           id?: string
           invoice_id: string
+          job_id?: string | null
           organization_id: string
           quantity?: number
           total_cents?: number
@@ -184,6 +186,7 @@ export type Database = {
           description?: string
           id?: string
           invoice_id?: string
+          job_id?: string | null
           organization_id?: string
           quantity?: number
           total_cents?: number
@@ -195,6 +198,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
           {
@@ -216,7 +226,7 @@ export type Database = {
           job_id: string | null
           number: string | null
           organization_id: string
-          status: string
+          status: Database["public"]["Enums"]["invoice_status"]
           total_cents: number
           updated_at: string
         }
@@ -229,7 +239,7 @@ export type Database = {
           job_id?: string | null
           number?: string | null
           organization_id: string
-          status?: string
+          status?: Database["public"]["Enums"]["invoice_status"]
           total_cents?: number
           updated_at?: string
         }
@@ -242,7 +252,7 @@ export type Database = {
           job_id?: string | null
           number?: string | null
           organization_id?: string
-          status?: string
+          status?: Database["public"]["Enums"]["invoice_status"]
           total_cents?: number
           updated_at?: string
         }
@@ -388,6 +398,7 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          invoice_seq: number
           name: string
           plan: Database["public"]["Enums"]["plan_type"]
           seat_limit: number
@@ -401,6 +412,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          invoice_seq?: number
           name: string
           plan?: Database["public"]["Enums"]["plan_type"]
           seat_limit?: number
@@ -414,6 +426,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          invoice_seq?: number
           name?: string
           plan?: Database["public"]["Enums"]["plan_type"]
           seat_limit?: number
@@ -474,6 +487,7 @@ export type Database = {
           created_at: string
           duration_seconds: number | null
           id: string
+          invoiced_in_invoice_id: string | null
           job_id: string
           notes: string | null
           organization_id: string
@@ -487,6 +501,7 @@ export type Database = {
           created_at?: string
           duration_seconds?: number | null
           id?: string
+          invoiced_in_invoice_id?: string | null
           job_id: string
           notes?: string | null
           organization_id: string
@@ -500,6 +515,7 @@ export type Database = {
           created_at?: string
           duration_seconds?: number | null
           id?: string
+          invoiced_in_invoice_id?: string | null
           job_id?: string
           notes?: string | null
           organization_id?: string
@@ -510,6 +526,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "time_entries_invoiced_in_invoice_id_fkey"
+            columns: ["invoiced_in_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "time_entries_job_id_fkey"
             columns: ["job_id"]
@@ -560,6 +583,10 @@ export type Database = {
           state: string
         }[]
       }
+      next_invoice_number: {
+        Args: { p_organization_id: string }
+        Returns: string
+      }
       seat_limit_enforcement_ok: { Args: never; Returns: boolean }
     }
     Enums: {
@@ -572,6 +599,7 @@ export type Database = {
         | "software"
         | "subcontractor"
         | "other"
+      invoice_status: "draft" | "sent" | "paid" | "void"
       job_status: "active" | "archived"
       membership_role: "owner" | "member"
       plan_type: "free" | "pro"
@@ -713,6 +741,7 @@ export const Constants = {
         "subcontractor",
         "other",
       ],
+      invoice_status: ["draft", "sent", "paid", "void"],
       job_status: ["active", "archived"],
       membership_role: ["owner", "member"],
       plan_type: ["free", "pro"],

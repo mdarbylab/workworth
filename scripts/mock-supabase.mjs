@@ -64,7 +64,7 @@ export const COOKIE_VALUE = "base64-" + b64url(JSON.stringify(session));
 // ---------- fixtures ----------
 
 const organizations = [
-  { id: ORG, name: "Rivera Electric", timezone: TZ, currency: "USD", plan: "free", seat_limit: 2, address: "1420 Mission St\nAustin, TX 78701", contact_email: "hello@riveraelectric.com", contact_phone: "(512) 555-0134", created_at: hoursAgo(500), updated_at: hoursAgo(1) },
+  { id: ORG, name: "Rivera Electric", timezone: TZ, currency: "USD", plan: "free", seat_limit: 2, invoice_seq: 0, address: "1420 Mission St\nAustin, TX 78701", contact_email: "hello@riveraelectric.com", contact_phone: "(512) 555-0134", created_at: hoursAgo(500), updated_at: hoursAgo(1) },
 ];
 
 const subscriptions = [];
@@ -94,6 +94,7 @@ const entry = (id, jobId, userId, startH, durH, notes, source = "timer") => {
     id, organization_id: ORG, job_id: jobId, user_id: userId,
     started_at: started.toISOString(), stopped_at: stopped?.toISOString() ?? null,
     duration_seconds: durH === null ? null : Math.round(durH * 3600), notes, source,
+    invoiced_in_invoice_id: null,
     created_at: started.toISOString(), updated_at: (stopped ?? started).toISOString(), jobs: jobRef(jobId),
   };
 };
@@ -129,7 +130,10 @@ const audit_events = [
   },
 ];
 
-const tables = { organizations, memberships, clients, jobs, time_entries, expenses, audit_events, subscriptions };
+const invoices = [];
+const invoice_lines = [];
+
+const tables = { organizations, memberships, clients, jobs, time_entries, expenses, audit_events, subscriptions, invoices, invoice_lines };
 
 // MOCK_EMPTY=1 keeps only the org and owner, for exercising empty states.
 if (process.env.MOCK_EMPTY) {
@@ -213,6 +217,10 @@ if (isMain) http.createServer(async (req, res) => {
     const fn = p.slice("/rest/v1/rpc/".length);
     if (fn === "invite_preview") return json(res, 200, [{ organization_name: "Rivera Electric", invited_email: "sam@example.com", state: "pending" }]);
     if (fn === "create_organization" || fn === "accept_invite") return json(res, 200, ORG);
+    if (fn === "next_invoice_number") {
+      organizations[0].invoice_seq = (organizations[0].invoice_seq ?? 0) + 1;
+      return json(res, 200, `INV-${String(organizations[0].invoice_seq).padStart(4, "0")}`);
+    }
     return json(res, 200, null);
   }
 

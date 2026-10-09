@@ -17,6 +17,10 @@ export const EVENTS = [
   "seat_limit_hit",
   "checkout_started",
   "checkout_completed",
+  "invoice_created",
+  "invoice_sent",
+  "invoice_paid",
+  "invoice_voided",
 ] as const;
 
 export type EventName = (typeof EVENTS)[number];
