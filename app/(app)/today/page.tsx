@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { dateKey, formatTime, startOfDay } from "@/lib/dates";
-import { formatCents, formatDuration, profitCents, revenueCents } from "@/lib/calc";
+import { formatCents, formatDuration, profitCents, revenueCents, roundSeconds, roundingConfigFor } from "@/lib/calc";
 import { Timer } from "./timer";
 
 export const metadata: Metadata = { title: "Today" };
@@ -69,6 +69,9 @@ export default async function TodayPage() {
 
   // Group today's entries by job (SPEC §5.1). Earnings are estimated from hourly
   // rates only; fixed-price revenue isn't attributable to a single day (§8.2).
+  // Rounding (§8.1, Sprint 7) only ever affects earnings, never the displayed
+  // tracked seconds -- rounds each entry before it's billed, not the total.
+  const rounding = roundingConfigFor(ctx.organization);
   const byJob = new Map<string, { name: string; seconds: number; earningsCents: number; hourly: boolean }>();
   for (const e of entries ?? []) {
     const job = e.jobs;
@@ -79,7 +82,7 @@ export default async function TodayPage() {
       byJob.set(e.job_id, g);
     }
     g.seconds += secs;
-    if (job && job.billing_type === "hourly") g.earningsCents += revenueCents(job, secs);
+    if (job && job.billing_type === "hourly") g.earningsCents += revenueCents(job, roundSeconds(secs, rounding));
   }
   const totalSeconds = Array.from(byJob.values()).reduce((s, g) => s + g.seconds, 0);
   const earnings = Array.from(byJob.values()).reduce((s, g) => s + g.earningsCents, 0);

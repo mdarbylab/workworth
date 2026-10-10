@@ -12,6 +12,7 @@ import { CookiePreferencesButton } from "@/components/cookie-preferences-button"
 import { TrackOnMount } from "@/components/analytics";
 import { BusinessForm } from "./business-form";
 import { MileageRateForm } from "./mileage-rate-form";
+import { BillingRoundingForm } from "./billing-rounding-form";
 import { NameForm } from "./name-form";
 import { InviteForm } from "./invite-form";
 import { CopyButton } from "./copy-button";
@@ -98,6 +99,33 @@ export default async function SettingsPage({
           <MileageRateForm mileageRateCents={org.mileage_rate_cents} />
         ) : (
           <Row label="Rate per mile" value={`$${(org.mileage_rate_cents / 100).toFixed(2)}`} />
+        )}
+      </section>
+
+      <section className="card space-y-3">
+        <h2 className="font-semibold">Billing rounding</h2>
+        <p className="text-sm text-slate-500">
+          Rounds tracked time for revenue, reports, client reports and invoices — never the time
+          itself. Today, Time and Jobs always show exactly what was tracked.
+        </p>
+        {org.plan === "pro" ? (
+          canManage ? (
+            <BillingRoundingForm
+              timeRoundingMinutes={org.time_rounding_minutes}
+              timeRoundingMode={org.time_rounding_mode}
+            />
+          ) : (
+            <Row
+              label="Rounding"
+              value={
+                org.time_rounding_minutes === null
+                  ? "Off"
+                  : `Nearest ${org.time_rounding_minutes} min (${org.time_rounding_mode})`
+              }
+            />
+          )
+        ) : (
+          <p className="text-sm text-slate-500">Comes with Pro.</p>
         )}
       </section>
 

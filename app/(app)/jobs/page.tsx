@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getJobTotals, summarize } from "@/lib/jobs";
+import { getSessionContext } from "@/lib/session";
+import { roundingConfigFor } from "@/lib/calc";
+import { getJobTotals, summarize, type JobTotals } from "@/lib/jobs";
 import { JobSummaryBlock } from "@/components/job-summary";
 
 export const metadata: Metadata = { title: "Jobs" };
@@ -10,6 +12,9 @@ export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
   const { show } = await searchParams;
   const showArchived = show === "archived";
 
+  const ctx = await getSessionContext();
+  const rounding = ctx?.organization ? roundingConfigFor(ctx.organization) : null;
+
   const supabase = await createClient();
   const [{ data: jobs }, totals] = await Promise.all([
     supabase
@@ -17,7 +22,7 @@ export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
       .select("id, name, billing_type, hourly_rate_cents, fixed_price_cents, status, clients(name)")
       .eq("status", showArchived ? "archived" : "active")
       .order("created_at", { ascending: false }),
-    getJobTotals(),
+    getJobTotals(rounding),
   ]);
 
   return (
@@ -32,8 +37,8 @@ export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
       {jobs?.length ? (
         <ul className="space-y-3">
           {jobs.map((job) => {
-            const t = totals.get(job.id) ?? { seconds: 0, expensesCents: 0 };
-            const summary = summarize(job, t.seconds, t.expensesCents);
+            const t: JobTotals = totals.get(job.id) ?? { seconds: 0, billableSeconds: 0, expensesCents: 0 };
+            const summary = summarize(job, t, t.expensesCents);
             return (
               <li key={job.id}>
                 <Link href={`/jobs/${job.id}`} className="card block space-y-3 hover:border-ink-300">
