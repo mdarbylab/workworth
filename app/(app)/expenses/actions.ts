@@ -22,13 +22,15 @@ type ParsedExpense = {
   job_id: string | null;
   category: ExpenseCategory;
   description: string | null;
+  miles: number | null;
 };
 
-function parseExpenseForm(formData: FormData): ParsedExpense | ExpenseFormState {
-  const cents = parseDollars(String(formData.get("amount") ?? ""));
-  if (cents === null || Number.isNaN(cents)) return { error: "Enter the amount." };
-  if (cents <= 0) return { error: "Amount must be more than zero." };
-
+/**
+ * A mileage expense's amount is always computed from miles × the org's
+ * current mileage_rate_cents (Settings) — never trusted from the client,
+ * the same way invoice totals are server-derived rather than client-sent.
+ */
+function parseExpenseForm(formData: FormData, mileageRateCents: number): ParsedExpense | ExpenseFormState {
   const spentOn = String(formData.get("spent_on") ?? "");
   if (!isValidDateKey(spentOn)) return { error: "Enter a valid date." };
 
@@ -38,12 +40,23 @@ function parseExpenseForm(formData: FormData): ParsedExpense | ExpenseFormState 
   const jobId = String(formData.get("job_id") ?? "") || null;
   const description = String(formData.get("description") ?? "").trim() || null;
 
-  return { amount_cents: cents, spent_on: spentOn, job_id: jobId, category, description };
+  if (category === "mileage") {
+    const miles = Number(String(formData.get("miles") ?? "").trim());
+    if (!Number.isFinite(miles) || miles <= 0) return { error: "Enter the miles driven." };
+    const cents = Math.round(miles * mileageRateCents);
+    return { amount_cents: cents, spent_on: spentOn, job_id: jobId, category, description, miles };
+  }
+
+  const cents = parseDollars(String(formData.get("amount") ?? ""));
+  if (cents === null || Number.isNaN(cents)) return { error: "Enter the amount." };
+  if (cents <= 0) return { error: "Amount must be more than zero." };
+
+  return { amount_cents: cents, spent_on: spentOn, job_id: jobId, category, description, miles: null };
 }
 
 export async function createExpense(_prev: ExpenseFormState, formData: FormData): Promise<ExpenseFormState> {
   const ctx = await requireMembership();
-  const parsed = parseExpenseForm(formData);
+  const parsed = parseExpenseForm(formData, ctx.organization.mileage_rate_cents);
   if (!("amount_cents" in parsed)) return parsed;
 
   const supabase = await createClient();
@@ -68,11 +81,11 @@ export async function createExpense(_prev: ExpenseFormState, formData: FormData)
 }
 
 export async function updateExpense(_prev: ExpenseFormState, formData: FormData): Promise<ExpenseFormState> {
-  await requireMembership();
+  const ctx = await requireMembership();
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Missing expense." };
 
-  const parsed = parseExpenseForm(formData);
+  const parsed = parseExpenseForm(formData, ctx.organization.mileage_rate_cents);
   if (!("amount_cents" in parsed)) return parsed;
 
   // The audit trigger snapshots before/after (§8.4); RLS limits who can update.

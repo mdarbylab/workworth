@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { track } from "@/lib/analytics/server";
+import { parseDollars } from "@/lib/calc";
 
 export type SettingsState = { error?: string; message?: string };
 
@@ -54,6 +55,30 @@ export async function updateBusiness(_prev: SettingsState, formData: FormData): 
       contact_email: contactEmail,
       contact_phone: contactPhone,
     })
+    .eq("id", ctx.organization.id);
+  if (error) return { error: "Couldn't save. Please try again." };
+
+  revalidatePath("/", "layout");
+  return { message: "Saved." };
+}
+
+/**
+ * The mileage rate (Settings): deliberately a plain editable field, never
+ * re-derived from a hardcoded "current IRS rate" in code, since that rate
+ * changes every year and a hardcoded value would silently go stale.
+ */
+export async function updateMileageRate(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  const ctx = await requireMembership();
+  if (!ctx.hasFullAccess) return { error: "You don't have access to change this." };
+
+  const cents = parseDollars(String(formData.get("mileage_rate") ?? ""));
+  if (cents === null || Number.isNaN(cents)) return { error: "Enter a rate per mile." };
+  if (cents <= 0) return { error: "Rate must be more than zero." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("organizations")
+    .update({ mileage_rate_cents: cents })
     .eq("id", ctx.organization.id);
   if (error) return { error: "Couldn't save. Please try again." };
 

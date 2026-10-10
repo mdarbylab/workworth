@@ -64,7 +64,7 @@ export const COOKIE_VALUE = "base64-" + b64url(JSON.stringify(session));
 // ---------- fixtures ----------
 
 const organizations = [
-  { id: ORG, name: "Rivera Electric", timezone: TZ, currency: "USD", plan: "free", seat_limit: 2, invoice_seq: 0, address: "1420 Mission St\nAustin, TX 78701", contact_email: "hello@riveraelectric.com", contact_phone: "(512) 555-0134", created_at: hoursAgo(500), updated_at: hoursAgo(1) },
+  { id: ORG, name: "Rivera Electric", timezone: TZ, currency: "USD", plan: "free", seat_limit: 2, invoice_seq: 0, mileage_rate_cents: 67, time_rounding_minutes: null, time_rounding_mode: "nearest", address: "1420 Mission St\nAustin, TX 78701", contact_email: "hello@riveraelectric.com", contact_phone: "(512) 555-0134", created_at: hoursAgo(500), updated_at: hoursAgo(1) },
 ];
 
 const subscriptions = [];

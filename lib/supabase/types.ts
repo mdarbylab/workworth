@@ -109,6 +109,7 @@ export type Database = {
           description: string | null
           id: string
           job_id: string | null
+          miles: number | null
           organization_id: string
           receipt_path: string | null
           spent_on: string
@@ -122,6 +123,7 @@ export type Database = {
           description?: string | null
           id?: string
           job_id?: string | null
+          miles?: number | null
           organization_id: string
           receipt_path?: string | null
           spent_on?: string
@@ -135,6 +137,7 @@ export type Database = {
           description?: string | null
           id?: string
           job_id?: string | null
+          miles?: number | null
           organization_id?: string
           receipt_path?: string | null
           spent_on?: string
@@ -399,6 +402,7 @@ export type Database = {
           currency: string
           id: string
           invoice_seq: number
+          mileage_rate_cents: number
           name: string
           plan: Database["public"]["Enums"]["plan_type"]
           seat_limit: number
@@ -413,6 +417,7 @@ export type Database = {
           currency?: string
           id?: string
           invoice_seq?: number
+          mileage_rate_cents?: number
           name: string
           plan?: Database["public"]["Enums"]["plan_type"]
           seat_limit?: number
@@ -427,6 +432,7 @@ export type Database = {
           currency?: string
           id?: string
           invoice_seq?: number
+          mileage_rate_cents?: number
           name?: string
           plan?: Database["public"]["Enums"]["plan_type"]
           seat_limit?: number
@@ -599,6 +605,7 @@ export type Database = {
         | "software"
         | "subcontractor"
         | "other"
+        | "mileage"
       invoice_status: "draft" | "sent" | "paid" | "void"
       job_status: "active" | "archived"
       membership_role: "owner" | "member"
@@ -740,6 +747,7 @@ export const Constants = {
         "software",
         "subcontractor",
         "other",
+        "mileage",
       ],
       invoice_status: ["draft", "sent", "paid", "void"],
       job_status: ["active", "archived"],
