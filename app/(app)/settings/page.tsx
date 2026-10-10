@@ -11,6 +11,7 @@ import { FeedbackLink } from "@/components/feedback-link";
 import { CookiePreferencesButton } from "@/components/cookie-preferences-button";
 import { TrackOnMount } from "@/components/analytics";
 import { BusinessForm } from "./business-form";
+import { MileageRateForm } from "./mileage-rate-form";
 import { NameForm } from "./name-form";
 import { InviteForm } from "./invite-form";
 import { CopyButton } from "./copy-button";
@@ -84,6 +85,19 @@ export default async function SettingsPage({
             <Row label="Timezone" value={org.timezone} />
             <Row label="Currency" value={org.currency} />
           </dl>
+        )}
+      </section>
+
+      <section className="card space-y-3">
+        <h2 className="font-semibold">Mileage</h2>
+        <p className="text-sm text-slate-500">
+          Used to calculate mileage expenses. Update it yourself each year — WorkWorth doesn&apos;t
+          assume a rate for you.
+        </p>
+        {canManage ? (
+          <MileageRateForm mileageRateCents={org.mileage_rate_cents} />
+        ) : (
+          <Row label="Rate per mile" value={`$${(org.mileage_rate_cents / 100).toFixed(2)}`} />
         )}
       </section>
 

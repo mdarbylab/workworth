@@ -36,7 +36,7 @@ Effective rate: $105.80/hr
 
 ## 3. What v1 is NOT
 
-Not in v1: tax estimates, mileage, receipt scanning, payments, scheduling, payroll, HR, CRM, native mobile apps, integrations, AI features, multiple businesses per user, roles beyond owner/member. Invoicing shipped in Sprint 6 (§5.9) — the rest of this list stays deferred.
+Not in v1: tax estimates, receipt scanning, payments, scheduling, payroll, HR, CRM, native mobile apps, integrations, AI features, multiple businesses per user, roles beyond owner/member. Invoicing shipped in Sprint 6 (§5.9); mileage shipped in Sprint 7 (§5.4) — the rest of this list stays deferred.
 
 The schema was designed so invoicing and tax estimates could be added without migration pain (see §7); invoicing used that room in Sprint 6, tax estimates still haven't. The client report (§5.8) is still not an invoice: it has no invoice number, no payment terms, no tax, and nothing is marked paid — that's what §5.9 is for.
 
@@ -94,7 +94,13 @@ Navigation is a bottom bar on phone and a left rail on desktop. Five items:
 
 - List grouped by day; month total at top.
 - **+ Add expense** → amount, date (defaults today), job (optional), category, description.
-- Categories are fixed in v1: Materials, Fuel, Tools, Supplies, Software, Subcontractor, Other.
+- Categories: Materials, Fuel, Tools, Supplies, Software, Subcontractor, Other, **Mileage**
+  (Sprint 7, 2026-10-10). Mileage is free-plan like every other category — not a Pro
+  feature. Selecting it swaps the dollar amount for a miles input; the amount is
+  computed server-side as miles × the business's own mileage rate (Settings §5.6),
+  never trusted from the client. The rate is a plain editable field, not derived from
+  any "current IRS rate" in code — that number changes every year, so the business
+  updates it themselves rather than WorkWorth silently going stale.
 - Receipt attachment: **not in v1** (column exists, UI does not).
 
 ### 5.5 Reports
@@ -114,6 +120,7 @@ Then a breakdown table by job. **Export CSV** for time entries and for expenses.
 ### 5.6 Settings
 
 - Business: name, timezone, currency (USD only in v1, field exists), and optional address, phone and contact email used only as the letterhead on client reports (§5.8).
+- Mileage: rate per mile, used to compute mileage expenses (§5.4, Sprint 7). Free-plan too.
 - People: list of members (max 2 on free). **Invite** by email. Remove member.
 - Account: email, password, delete account.
 - Plan: shows "Free — 2 of 2 seats used" and, when both seats are used, the only upsell in the product: *Add another person → upgrade.* (Upgrade is a waitlist link in v1, not a checkout.)
@@ -220,12 +227,12 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 
 | Table | Purpose | Key columns |
 |---|---|---|
-| `organizations` | the business | name, timezone, currency, plan (`free`/`pro`), seat_limit (2), invoice_seq (Sprint 6, per-org invoice counter), address, contact_email, contact_phone (all three optional, letterhead only) |
+| `organizations` | the business | name, timezone, currency, plan (`free`/`pro`), seat_limit (2), invoice_seq (Sprint 6, per-org invoice counter), mileage_rate_cents (Sprint 7, default 67, business-editable), address, contact_email, contact_phone (all three optional, letterhead only) |
 | `memberships` | user ↔ org | user_id, organization_id, role, display_name, invited_email, accepted_at, removed_at |
 | `clients` | who the work is for | name, email, phone, notes |
 | `jobs` | unit of work | client_id, name, billing_type (`hourly`/`fixed`), hourly_rate_cents, fixed_price_cents, estimated_minutes, status (`active`/`archived`), notes |
 | `time_entries` | tracked time | job_id, user_id, started_at, stopped_at (null = running), duration_seconds (derived on stop), notes, source (`timer`/`manual`), invoiced_in_invoice_id (Sprint 6, nullable — which invoice, if any, billed this entry's hours) |
-| `expenses` | money out | job_id (nullable), user_id, amount_cents, spent_on (date), category, description, receipt_path (unused in v1) |
+| `expenses` | money out | job_id (nullable), user_id, amount_cents, spent_on (date), category (incl. `mileage`, Sprint 7), miles (nullable, mileage only), description, receipt_path (unused in v1) |
 | `audit_events` | change history | actor_user_id, table_name, record_id, action, before (jsonb), after (jsonb) |
 | `invoices` | a billed document for a client (§5.9, Sprint 6) | organization_id, client_id (nullable), number (`INV-0001`, sequential per org), status (`draft`/`sent`/`paid`/`void`), issued_on, due_on, total_cents (derived — see invoice_lines) |
 | `invoice_lines` | one invoice's line items | organization_id, invoice_id, job_id (nullable, traceability only), description, quantity, unit_cents, total_cents (`invoices.total_cents` is a trigger-maintained sum of these, never written directly by app code) |

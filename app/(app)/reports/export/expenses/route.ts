@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const [{ data: expenses }, people] = await Promise.all([
     supabase
       .from("expenses")
-      .select("id, user_id, spent_on, amount_cents, category, description, jobs(name, clients(name))")
+      .select("id, user_id, spent_on, amount_cents, category, description, miles, jobs(name, clients(name))")
       .gte("spent_on", period.fromKey)
       .lte("spent_on", period.toKey)
       .order("spent_on", { ascending: true })
@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
     x.spent_on,
     (x.amount_cents / 100).toFixed(2),
     CATEGORY_LABELS[x.category],
+    x.miles !== null ? x.miles.toFixed(1) : "",
     x.jobs?.name ?? "",
     x.jobs?.clients?.name ?? "",
     personLabel(people, x.user_id),
@@ -47,6 +48,6 @@ export async function GET(request: NextRequest) {
     rows: rows.length,
   });
 
-  const csv = toCsv(["Date", "Amount", "Category", "Job", "Client", "Person", "Description"], rows);
+  const csv = toCsv(["Date", "Amount", "Category", "Miles", "Job", "Client", "Person", "Description"], rows);
   return csvResponse(`workworth-expenses-${period.fromKey}-to-${period.toKey}.csv`, csv);
 }

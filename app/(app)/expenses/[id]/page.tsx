@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { formatDateTime } from "@/lib/dates";
 import { formatCents } from "@/lib/calc";
-import { CATEGORY_LABELS, isExpenseCategory, type ExpenseCategory } from "@/lib/expenses";
+import { CATEGORY_LABELS, formatMiles, isExpenseCategory, type ExpenseCategory } from "@/lib/expenses";
 import type { Json } from "@/lib/supabase/types";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { ExpenseForm } from "../expense-form";
@@ -18,6 +18,7 @@ type Snapshot = {
   job_id: string | null;
   category: ExpenseCategory;
   description: string | null;
+  miles: number | null;
 };
 
 function asSnapshot(json: Json | null): Snapshot | null {
@@ -30,6 +31,7 @@ function asSnapshot(json: Json | null): Snapshot | null {
     job_id: typeof o.job_id === "string" ? o.job_id : null,
     category: o.category,
     description: typeof o.description === "string" ? o.description : null,
+    miles: typeof o.miles === "number" ? o.miles : null,
   };
 }
 
@@ -61,7 +63,7 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
   const edits = events ?? [];
   const original = edits.length ? asSnapshot(edits[0].before) : null;
   const describe = (s: Snapshot) =>
-    `${formatCents(s.amount_cents)} · ${CATEGORY_LABELS[s.category]} · ${s.spent_on} · ${jobName(s.job_id)}${s.description ? ` · “${s.description}”` : ""}`;
+    `${formatCents(s.amount_cents)} · ${CATEGORY_LABELS[s.category]}${s.category === "mileage" && s.miles !== null ? ` (${formatMiles(s.miles)})` : ""} · ${s.spent_on} · ${jobName(s.job_id)}${s.description ? ` · “${s.description}”` : ""}`;
 
   return (
     <div className="space-y-6">
@@ -75,12 +77,14 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
       <div className="card">
         <ExpenseForm
           jobs={pickable}
+          mileageRateCents={ctx.organization.mileage_rate_cents}
           action={updateExpense}
           expenseId={expense.id}
           submitLabel="Save changes"
           cancelHref="/expenses"
           defaults={{
             amount: (expense.amount_cents / 100).toFixed(2),
+            miles: expense.miles !== null ? String(expense.miles) : "",
             spentOn: expense.spent_on,
             jobId: expense.job_id ?? "",
             category: expense.category,

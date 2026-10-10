@@ -23,11 +23,13 @@ export default async function NewExpensePage({ searchParams }: PageProps<"/expen
       <div className="card">
         <ExpenseForm
           jobs={jobs ?? []}
+          mileageRateCents={ctx.organization.mileage_rate_cents}
           action={createExpense}
           submitLabel="Save expense"
           cancelHref="/expenses"
           defaults={{
             amount: "",
+            miles: "",
             spentOn: dateKey(new Date(), ctx.organization.timezone),
             jobId: requestedJob,
             category: "materials",

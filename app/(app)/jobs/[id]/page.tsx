@@ -6,7 +6,7 @@ import { getSessionContext } from "@/lib/session";
 import { getJobTotals, summarize } from "@/lib/jobs";
 import { formatCents, formatDuration } from "@/lib/calc";
 import { formatDate, formatDayHeading, formatTime } from "@/lib/dates";
-import { CATEGORY_LABELS } from "@/lib/expenses";
+import { CATEGORY_LABELS, formatMiles } from "@/lib/expenses";
 import { getPeople, personLabel } from "@/lib/people";
 import { JobSummaryBlock } from "@/components/job-summary";
 import { archiveJob, unarchiveJob } from "../actions";
@@ -36,7 +36,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       .limit(100),
     supabase
       .from("expenses")
-      .select("id, spent_on, amount_cents, category, description")
+      .select("id, spent_on, amount_cents, category, description, miles")
       .eq("job_id", id)
       .order("spent_on", { ascending: false })
       .limit(100),
@@ -144,7 +144,10 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
                 <Link href={`/expenses/${x.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{x.description || CATEGORY_LABELS[x.category]}</p>
-                    <p className="truncate text-xs text-slate-500">{CATEGORY_LABELS[x.category]} · {formatDayHeading(x.spent_on, tz)}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {CATEGORY_LABELS[x.category]}
+                      {x.category === "mileage" && x.miles !== null ? ` (${formatMiles(x.miles)})` : ""} · {formatDayHeading(x.spent_on, tz)}
+                    </p>
                   </div>
                   <span className="shrink-0 text-sm font-semibold tabular-nums">{formatCents(x.amount_cents)}</span>
                 </Link>

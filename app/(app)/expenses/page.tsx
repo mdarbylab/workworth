@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { dateKey, formatDayHeading } from "@/lib/dates";
 import { formatCents } from "@/lib/calc";
-import { CATEGORY_LABELS, formatMonth } from "@/lib/expenses";
+import { CATEGORY_LABELS, formatMiles, formatMonth } from "@/lib/expenses";
 import { getPeople, personLabel } from "@/lib/people";
 
 export const metadata: Metadata = { title: "Expenses" };
@@ -19,7 +19,7 @@ export default async function ExpensesPage() {
   const [{ data: expenses }, people] = await Promise.all([
     supabase
       .from("expenses")
-      .select("id, user_id, job_id, amount_cents, spent_on, category, description, jobs(name)")
+      .select("id, user_id, job_id, amount_cents, spent_on, category, description, miles, jobs(name)")
       .order("spent_on", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(300),
@@ -92,6 +92,7 @@ export default async function ExpensesPage() {
                         </p>
                         <p className="truncate text-xs text-slate-500">
                           {CATEGORY_LABELS[x.category]}
+                          {x.category === "mileage" && x.miles !== null ? ` (${formatMiles(x.miles)})` : ""}
                           {x.jobs?.name ? ` · ${x.jobs.name}` : " · No job"}
                           {showPerson && ` · ${personLabel(people, x.user_id)}`}
                         </p>

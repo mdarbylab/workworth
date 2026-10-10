@@ -12,10 +12,16 @@ export const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   software: "Software",
   subcontractor: "Subcontractor",
   other: "Other",
+  mileage: "Mileage",
 };
 
 export function isExpenseCategory(value: unknown): value is ExpenseCategory {
   return typeof value === "string" && (EXPENSE_CATEGORIES as readonly string[]).includes(value);
+}
+
+/** "142.3 mi" for a mileage expense's `miles` column. */
+export function formatMiles(miles: number): string {
+  return `${miles.toFixed(1)} mi`;
 }
 
 /** Validate a "YYYY-MM-DD" date string for the `spent_on` column. */

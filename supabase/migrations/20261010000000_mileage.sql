@@ -1,0 +1,21 @@
+-- Sprint 7 (mileage half): a mileage expense records miles driven instead of
+-- a dollar amount typed by hand; amount_cents is computed server-side as
+-- miles * mileage_rate_cents (app/(app)/expenses/actions.ts), never trusted
+-- from the client.
+--
+-- mileage_rate_cents deliberately has no "authoritative current IRS rate"
+-- behavior anywhere in code -- that rate changes every year, and a hardcoded
+-- "current" value would silently go stale. It's a plain editable Settings
+-- field (like mileage_rate_cents below) that the business sets/updates
+-- themselves; the seeded default is a reasonable starting point only.
+--
+-- Not Pro-gated: expense tracking itself is already a free-plan feature, so
+-- mileage is just another category, unlike rounding rules (separate
+-- migration) which SPEC §8.1 already calls "a paid feature later."
+--
+-- ALTER TYPE ... ADD VALUE can't run in the same transaction as other DDL
+-- that references the new value in some Postgres versions -- kept as its
+-- own statement/migration for that reason, even though nothing else in this
+-- file actually uses 'mileage' yet.
+
+alter type expense_category add value if not exists 'mileage';
