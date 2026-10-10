@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { revenueCents } from "@/lib/calc";
+import { revenueCents, roundSeconds, roundingConfigFor } from "@/lib/calc";
 import { dateKey } from "@/lib/dates";
 import type { Period } from "@/lib/periods";
 import type { Tables } from "@/lib/supabase/types";
@@ -22,7 +22,11 @@ export type StatementJob = {
   hourlyRateCents: number | null;
   fixedPriceCents: number | null;
   lines: StatementLine[];
+  /** Raw tracked seconds -- always the true total, shown as "hours." */
   seconds: number;
+  /** Seconds after per-entry rounding (§8.1, Sprint 7) -- what amountCents
+   * is actually computed from. Equals `seconds` when rounding is off. */
+  billableSeconds: number;
   /** Null when the job has no price set, so the document can say so plainly. */
   amountCents: number | null;
 };
@@ -54,6 +58,7 @@ export async function buildStatement(clientId: string, period: Period): Promise<
     supabase.from("clients").select("id, name, email, phone").eq("id", clientId).maybeSingle(),
   ]);
   if (!org || !client) return null;
+  const rounding = roundingConfigFor(org);
 
   const { data: entries } = await supabase
     .from("time_entries")
@@ -80,12 +85,14 @@ export async function buildStatement(clientId: string, period: Period): Promise<
         fixedPriceCents: job.fixed_price_cents,
         lines: [],
         seconds: 0,
+        billableSeconds: 0,
         amountCents: null,
       };
       byJob.set(job.id, acc);
     }
     const seconds = e.duration_seconds ?? 0;
     acc.seconds += seconds;
+    acc.billableSeconds += roundSeconds(seconds, rounding);
     acc.lines.push({
       id: e.id,
       dayKey: dateKey(new Date(e.started_at), org.timezone),
@@ -107,7 +114,7 @@ export async function buildStatement(clientId: string, period: Period): Promise<
               hourly_rate_cents: j.hourlyRateCents,
               fixed_price_cents: j.fixedPriceCents,
             },
-            j.seconds,
+            j.billableSeconds,
           )
         : null,
     };

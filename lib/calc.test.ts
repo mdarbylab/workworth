@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { effectiveRateCents, formatDuration, formatRate, profitCents, revenueCents } from "./calc";
+import {
+  effectiveRateCents,
+  formatDuration,
+  formatRate,
+  profitCents,
+  revenueCents,
+  roundSeconds,
+  roundingConfigFor,
+} from "./calc";
 
 describe("revenueCents", () => {
   it("computes hourly revenue as hours times rate, unrounded hours", () => {
@@ -112,5 +120,51 @@ describe("formatRate", () => {
 
   it("renders a dollar amount per hour otherwise", () => {
     expect(formatRate(7_500)).toBe("$75/hr");
+  });
+});
+
+describe("roundSeconds", () => {
+  // 7 minutes (420s) at a 15-minute increment (900s): 420/900 = 0.4667 units.
+  it("rounds up to the next increment", () => {
+    expect(roundSeconds(420, { incrementMinutes: 15, mode: "up" })).toBe(900);
+  });
+
+  it("rounds down to the previous increment", () => {
+    expect(roundSeconds(420, { incrementMinutes: 15, mode: "down" })).toBe(0);
+  });
+
+  it("rounds to the nearest increment", () => {
+    expect(roundSeconds(420, { incrementMinutes: 15, mode: "nearest" })).toBe(0);
+    // 8 minutes (480s) is past the halfway point (450s) to the next increment.
+    expect(roundSeconds(480, { incrementMinutes: 15, mode: "nearest" })).toBe(900);
+  });
+
+  it("passes seconds through unchanged with no config", () => {
+    expect(roundSeconds(1_234, null)).toBe(1_234);
+  });
+
+  it("is a no-op for an entry that's already an exact multiple of the increment", () => {
+    expect(roundSeconds(900, { incrementMinutes: 15, mode: "up" })).toBe(900);
+    expect(roundSeconds(900, { incrementMinutes: 15, mode: "down" })).toBe(900);
+  });
+});
+
+describe("roundingConfigFor", () => {
+  it("is off for a free-plan org regardless of the stored setting", () => {
+    expect(
+      roundingConfigFor({ plan: "free", time_rounding_minutes: 15, time_rounding_mode: "up" }),
+    ).toBeNull();
+  });
+
+  it("is off for a Pro org with no increment configured", () => {
+    expect(
+      roundingConfigFor({ plan: "pro", time_rounding_minutes: null, time_rounding_mode: "nearest" }),
+    ).toBeNull();
+  });
+
+  it("returns the configured increment and mode for a Pro org", () => {
+    expect(
+      roundingConfigFor({ plan: "pro", time_rounding_minutes: 10, time_rounding_mode: "down" }),
+    ).toEqual({ incrementMinutes: 10, mode: "down" });
   });
 });

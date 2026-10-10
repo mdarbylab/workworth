@@ -217,6 +217,60 @@ against each other.
   invoice from a real statement, marked it sent (confirmed the 14-day due
   date and that line-editing controls disappeared), marked it paid
   (confirmed terminal — no further status actions render).
+- **Sprint 7 (2026-10-10/11, two PRs):** mileage expenses and billing
+  rounding — the two small, mechanical features pre-scoped together.
+
+  **Mileage** ([#31](https://github.com/mdarbylab/workworth/pull/31)): a
+  mileage expense records miles driven instead of a dollar amount.
+  Selecting "Mileage" on the expense form swaps the dollar input for a
+  miles input; `amount_cents` is always computed server-side as
+  `miles × organizations.mileage_rate_cents` — never trusted from the
+  client. `mileage_rate_cents` is a plain editable Settings field,
+  deliberately not re-derived from any "current IRS rate" in code, since
+  that changes every year and a hardcoded value would silently go stale.
+  **Not Pro-gated** — expense tracking is already free-plan, mileage is
+  just another category. New `expense_category` enum value (its own
+  migration, since `ALTER TYPE ... ADD VALUE` can't safely share a
+  transaction with DDL referencing the new value) + `expenses.miles` +
+  `organizations.mileage_rate_cents`.
+
+  **Billing rounding** (SPEC §8.1, Pro only): raw
+  `time_entries.duration_seconds` is never touched — rounding only ever
+  affects the *billing* surface (job revenue, Reports, Client Report,
+  Invoices), rounding each entry individually before summing (not the
+  period total), via `roundSeconds()`/`roundingConfigFor()` in
+  `lib/calc.ts`. "Effective hourly rate" deliberately keeps dividing by
+  real tracked hours, not billed hours, so it still measures what your
+  actual time turned into. A new per-org `time_rounding_minutes`
+  (nullable, off by default, `CHECK ... IN (5,10,15,30)`) +
+  `time_rounding_mode` (new `rounding_mode` enum) pair, read through five
+  call sites (`today/page.tsx`, `lib/jobs.ts`, `lib/reports.ts`,
+  `lib/statement.ts`, `lib/invoices.ts`) — all five were confirmed by
+  direct exploration to pre-sum raw per-entry seconds before reaching
+  `revenueCents()`, so rounding had to be inserted at each accumulation
+  loop rather than inside `revenueCents()` itself.
+
+  The Client Report/statement — "the one place worth showing both
+  numbers explicitly," since it's what an invoice is built from — shows
+  a job's real tracked hours in its table and per-line amounts as
+  before, but the subtotal and total reflect rounded hours, with an
+  explicit note when they differ ("9.75h tracked, billed as 10.00h per
+  your billing rounding settings..."), deliberately not silently
+  presenting a total that wouldn't match hand-adding the visible rows.
+
+  Verified live against real fixture data, not just unit tests (8 new
+  ones in `lib/calc.test.ts` cover `roundSeconds`'s three modes at a
+  7-minute/15-minute boundary and `roundingConfigFor`'s free-plan/
+  no-increment/configured cases): with 30-minute "up" rounding on a job
+  whose entries summed to 9.75h, the Job page correctly showed "9h 45m"
+  tracked but "$750" revenue (10h-equivalent at $75/hr) while "Effective
+  rate" stayed at $44.92/hr (profit ÷ the real 9.75h, not 10h); Reports'
+  total and the Client Report's subtotal/note matched; "Save as invoice"
+  correctly carried the rounded $750 and 10h quantity onto the invoice
+  line. Switching to 15-minute "nearest" (under which every existing
+  fixture entry happens to already be an exact multiple) correctly
+  reverted revenue to the raw $731.25 — confirming the Settings change
+  actually propagated, not just that rounding could visually differ.
 - **Supabase** project `workworth` (ref `btfmiviujsftuxzxslwt`, us-east-1, free plan).
 - **Netlify** site `merry-biscuit-d35e20`, building from `main`. Production deploys
   on merge. Hosting is Netlify, not Vercel.
@@ -347,8 +401,9 @@ tests/CI/verify-script work that closed the last item).
 
 **Sprint 3 (Stripe billing)**, **Sprint 4 (landing page)**, **Sprint 5
 (10-person seat cap for Pro, plus the seat-limit-enforcement monitoring
-alert that followed it)**, and **Sprint 6 (invoicing)** are all done and
-live — see "Billing", "Landing page" and "Invoicing" above.
+alert that followed it)**, **Sprint 6 (invoicing)**, and **Sprint 7
+(mileage + billing rounding)** are all done and live — see "Billing",
+"Landing page", "Invoicing" and "Sprint 7" above.
 
 **Backlog (needs Michael, not blocking anything):** real multi-user/
 multi-org testing against the 10-seat cap — invite real plus-addressed
@@ -362,29 +417,11 @@ changed. The sandbox can't do this — production account creation and
 sign-in are both off-limits to Claude — so it sits here until Michael has
 a spare minute.
 
-**Sprints 7–10 scoped 2026-10-09** (not yet built) for the rest of what
-SPEC §9 calls Pro, in this explicit order:
-
-- **Sprint 7 — Rounding rules + Mileage.** Two small, mechanical features
-  extending existing patterns rather than new infrastructure.
-  **Rounding**: SPEC §8.1 currently says "no rounding in v1." Raw
-  `time_entries.duration_seconds` stays untouched forever (keeps faith
-  with §8.4's "nothing silently overwritten," and Today/Time/Jobs keep
-  showing real tracked time) — rounding applies only at the *billing*
-  surface (job revenue, Reports, Client Report, Invoices), via a new
-  `roundSeconds(seconds, incrementMinutes, mode)` helper threaded through
-  `revenueCents()`, rounding **per entry** (not just the total — matches
-  how contractors actually think about it, "each visit rounds to 15
-  min"). New org setting: increment (5/10/15/30 min) + mode
-  (up/nearest/down), off by default, Pro-only. Where active, the UI shows
-  both "tracked" and "billable (rounded)" hours side by side — nothing
-  hidden. **Mileage**: new `expense_category` enum value `'mileage'`
-  (additive migration) + nullable `expenses.miles`. A new org setting,
-  `mileage_rate_cents` — deliberately not hardcoded to the current IRS
-  rate, since that changes annually and a hardcoded number would go
-  stale and mislead; it's configurable, business sets/updates it
-  themselves. Selecting "Mileage" on the expense form swaps the dollar
-  input for a miles input and auto-computes the amount.
+**Sprints 7–10 scoped 2026-10-09**, in this explicit order. **Sprint 7 is
+done** (see "Sprint 7" above — turned out to match the pre-scoped design
+almost exactly, with one addition: the Client Report's explicit
+tracked-vs-billed note, built in from the start rather than retrofitted).
+Sprints 8–10 are still ahead:
 
 - **Sprint 8 — Receipt storage.** `expenses.receipt_path` has existed
   since v1, unused. Genuinely new infrastructure — **first use of

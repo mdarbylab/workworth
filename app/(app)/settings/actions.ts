@@ -86,6 +86,41 @@ export async function updateMileageRate(_prev: SettingsState, formData: FormData
   return { message: "Saved." };
 }
 
+const ROUNDING_INCREMENTS = [5, 10, 15, 30];
+const ROUNDING_MODES = ["up", "nearest", "down"] as const;
+
+/**
+ * Time rounding (SPEC §8.1): Pro only, off by default. Only ever changes
+ * the billing surface (job revenue, Reports, Client Report, Invoices) --
+ * the raw tracked duration on every time entry is never touched by this.
+ */
+export async function updateRounding(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  const ctx = await requireMembership();
+  if (!ctx.hasFullAccess) return { error: "You don't have access to change this." };
+  if (ctx.organization.plan !== "pro") return { error: "Rounding comes with Pro." };
+
+  const incrementRaw = String(formData.get("increment") ?? "");
+  const increment = incrementRaw === "" ? null : Number(incrementRaw);
+  if (increment !== null && !ROUNDING_INCREMENTS.includes(increment)) {
+    return { error: "Pick a valid rounding increment." };
+  }
+
+  const mode = String(formData.get("mode") ?? "");
+  if (!ROUNDING_MODES.includes(mode as (typeof ROUNDING_MODES)[number])) {
+    return { error: "Pick a valid rounding direction." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("organizations")
+    .update({ time_rounding_minutes: increment, time_rounding_mode: mode as (typeof ROUNDING_MODES)[number] })
+    .eq("id", ctx.organization.id);
+  if (error) return { error: "Couldn't save. Please try again." };
+
+  revalidatePath("/", "layout");
+  return { message: "Saved." };
+}
+
 // ---------- People ----------
 
 export async function inviteMember(_prev: SettingsState, formData: FormData): Promise<SettingsState> {

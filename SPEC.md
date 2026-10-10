@@ -227,7 +227,7 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 
 | Table | Purpose | Key columns |
 |---|---|---|
-| `organizations` | the business | name, timezone, currency, plan (`free`/`pro`), seat_limit (2), invoice_seq (Sprint 6, per-org invoice counter), mileage_rate_cents (Sprint 7, default 67, business-editable), address, contact_email, contact_phone (all three optional, letterhead only) |
+| `organizations` | the business | name, timezone, currency, plan (`free`/`pro`), seat_limit (2), invoice_seq (Sprint 6, per-org invoice counter), mileage_rate_cents (Sprint 7, default 67, business-editable), time_rounding_minutes (Sprint 7, nullable, Pro, off by default), time_rounding_mode (`up`/`nearest`/`down`), address, contact_email, contact_phone (all three optional, letterhead only) |
 | `memberships` | user ↔ org | user_id, organization_id, role, display_name, invited_email, accepted_at, removed_at |
 | `clients` | who the work is for | name, email, phone, notes |
 | `jobs` | unit of work | client_id, name, billing_type (`hourly`/`fixed`), hourly_rate_cents, fixed_price_cents, estimated_minutes, status (`active`/`archived`), notes |
@@ -253,7 +253,15 @@ Rules:
 
 ### 8.1 Time
 - Duration = `stopped_at − started_at`, in seconds. Displayed as `Xh Ym`.
-- No rounding in v1. (Rounding is a paid feature later.)
+- Stored duration is never rounded. **Billing rounding** (Pro, Sprint 7,
+  2026-10-11) is a per-org setting (off by default) that rounds each time
+  entry to the nearest 5/10/15/30 minutes — up, down, or to nearest — but
+  only at the point revenue is computed (job revenue, Reports, Client
+  Report, Invoices). Today, Time and Jobs' "hours tracked" always show the
+  real duration; only the dollar amount (and, on an invoice line, its
+  displayed hours) reflects rounding. "Effective hourly rate" still divides
+  by real tracked hours, not billed hours — it measures what your actual
+  time turned into, not a rounding artifact.
 - An entry cannot stop before it starts; max single entry 24h (longer → warn, allow).
 
 ### 8.2 Revenue
@@ -291,8 +299,11 @@ separate UI to build. **Up to 10 people** (Sprint 5, 2026-10-07) — §6 has
 the enforcement detail. A tier for teams past 10 is a deliberate later
 decision, not named or priced here. **Invoicing** (Sprint 6, 2026-10-09)
 — §5.9 has the detail; a free-plan business doesn't see the "Save as
-invoice" control. What's still unscoped future work: tax estimates,
-mileage, receipt storage, rounding rules, integrations.
+invoice" control. **Billing rounding** (Sprint 7, 2026-10-11) — §8.1 has
+the detail; off by default, a free-plan business doesn't see the Settings
+control at all. (Mileage, Sprint 7, 2026-10-10, is free-plan too — §5.4 —
+not a Pro feature, just another expense category.) What's still unscoped
+future work: tax estimates, receipt storage, integrations.
 
 Billing (upgrade, cancel, payment method) is restricted to the person who
 created the business (`role = 'owner'`) — the same "only the creator"

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { revenueCents } from "@/lib/calc";
+import { revenueCents, roundSeconds, roundingConfigFor } from "@/lib/calc";
 import type { Statement } from "@/lib/statement";
 import type { Tables } from "@/lib/supabase/types";
 
@@ -68,6 +68,7 @@ export type DerivedInvoice = {
  * second invoice for the same client correctly bills just the increment.
  */
 export function deriveInvoiceLines(statement: Statement): DerivedInvoice {
+  const rounding = roundingConfigFor(statement.organization);
   const lines: DerivedInvoiceLine[] = [];
   const includedEntryIds: string[] = [];
   const excludedAlreadyInvoicedEntryIds: string[] = [];
@@ -92,7 +93,7 @@ export function deriveInvoiceLines(statement: Statement): DerivedInvoice {
     }
 
     if (job.hourlyRateCents === null) continue;
-    const seconds = notYetBilled.reduce((s, l) => s + l.seconds, 0);
+    const seconds = notYetBilled.reduce((s, l) => s + roundSeconds(l.seconds, rounding), 0);
     for (const l of notYetBilled) includedEntryIds.push(l.id);
     lines.push({
       jobId: job.id,

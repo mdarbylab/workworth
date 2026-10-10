@@ -15,6 +15,7 @@ function job(overrides: Partial<StatementJob> = {}): StatementJob {
     fixedPriceCents: null,
     lines: [line()],
     seconds: 3_600,
+    billableSeconds: 3_600,
     amountCents: 7_500,
     ...overrides,
   };

@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
-import { getJobTotals, summarize } from "@/lib/jobs";
-import { formatCents, formatDuration } from "@/lib/calc";
+import { getJobTotals, summarize, type JobTotals } from "@/lib/jobs";
+import { formatCents, formatDuration, roundingConfigFor } from "@/lib/calc";
 import { formatDate, formatDayHeading, formatTime } from "@/lib/dates";
 import { CATEGORY_LABELS, formatMiles } from "@/lib/expenses";
 import { getPeople, personLabel } from "@/lib/people";
@@ -27,7 +27,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       .select("*, clients(name)")
       .eq("id", id)
       .maybeSingle(),
-    getJobTotals(),
+    getJobTotals(roundingConfigFor(ctx.organization)),
     supabase
       .from("time_entries")
       .select("id, user_id, started_at, stopped_at, duration_seconds, notes")
@@ -44,8 +44,8 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   ]);
   if (!job) notFound();
 
-  const t = totals.get(job.id) ?? { seconds: 0, expensesCents: 0 };
-  const summary = summarize(job, t.seconds, t.expensesCents);
+  const t: JobTotals = totals.get(job.id) ?? { seconds: 0, billableSeconds: 0, expensesCents: 0 };
+  const summary = summarize(job, t, t.expensesCents);
   const canManage = ctx.hasFullAccess;
   const isArchived = job.status === "archived";
   const showPerson = people.length > 1;

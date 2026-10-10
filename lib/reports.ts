@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { effectiveRateCents, revenueCents, type BillingFields } from "@/lib/calc";
+import { effectiveRateCents, revenueCents, roundSeconds, type BillingFields, type RoundingConfig } from "@/lib/calc";
 import type { Period } from "@/lib/periods";
 
 export type JobRow = {
@@ -28,7 +28,7 @@ export type Report = {
  * in full in any period with activity on the job (§8.2). Expenses without a
  * job count toward the org total but no job.
  */
-export async function buildReport(period: Period): Promise<Report> {
+export async function buildReport(period: Period, rounding: RoundingConfig): Promise<Report> {
   const supabase = await createClient();
   const [{ data: entries }, { data: expenses }] = await Promise.all([
     supabase
@@ -44,18 +44,31 @@ export async function buildReport(period: Period): Promise<Report> {
       .lte("spent_on", period.toKey),
   ]);
 
-  type Acc = { name: string; clientName: string | null; billing: BillingFields; seconds: number; expensesCents: number };
+  type Acc = {
+    name: string;
+    clientName: string | null;
+    billing: BillingFields;
+    seconds: number;
+    billableSeconds: number;
+    expensesCents: number;
+  };
   const byJob = new Map<string, Acc>();
   const bucket = (jobId: string, job: NonNullable<NonNullable<typeof entries>[number]["jobs"]>) => {
     let a = byJob.get(jobId);
     if (!a) {
-      a = { name: job.name, clientName: job.clients?.name ?? null, billing: job, seconds: 0, expensesCents: 0 };
+      a = { name: job.name, clientName: job.clients?.name ?? null, billing: job, seconds: 0, billableSeconds: 0, expensesCents: 0 };
       byJob.set(jobId, a);
     }
     return a;
   };
 
-  for (const e of entries ?? []) if (e.jobs) bucket(e.job_id, e.jobs).seconds += e.duration_seconds ?? 0;
+  for (const e of entries ?? []) {
+    if (!e.jobs) continue;
+    const secs = e.duration_seconds ?? 0;
+    const a = bucket(e.job_id, e.jobs);
+    a.seconds += secs;
+    a.billableSeconds += roundSeconds(secs, rounding);
+  }
 
   let unassignedCents = 0;
   for (const x of expenses ?? []) {
@@ -65,7 +78,7 @@ export async function buildReport(period: Period): Promise<Report> {
 
   const rows: JobRow[] = Array.from(byJob.entries())
     .map(([jobId, a]) => {
-      const revenue = revenueCents(a.billing, a.seconds);
+      const revenue = revenueCents(a.billing, a.billableSeconds);
       const profit = revenue - a.expensesCents;
       return {
         jobId,

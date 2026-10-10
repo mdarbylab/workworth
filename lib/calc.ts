@@ -1,5 +1,7 @@
 // Calculation rules from SPEC §8. Money is integer cents; time is seconds.
 
+import type { Tables } from "@/lib/supabase/types";
+
 export type BillingFields = {
   billing_type: "hourly" | "fixed";
   hourly_rate_cents: number | null;
@@ -13,6 +15,32 @@ export function revenueCents(job: BillingFields, seconds: number): number {
   if (job.billing_type === "fixed") return job.fixed_price_cents ?? 0;
   const rate = job.hourly_rate_cents ?? 0;
   return Math.round((seconds / 3600) * rate);
+}
+
+export type RoundingMode = "up" | "nearest" | "down";
+export type RoundingConfig = { incrementMinutes: number; mode: RoundingMode } | null;
+
+/**
+ * §8.1: rounding (Pro, Sprint 7) applies only at the billing surface, never
+ * to the stored duration itself. Rounds a single time entry's seconds to
+ * the nearest configured increment -- callers round each entry before
+ * summing into a job/period total, not the total itself, matching how
+ * contractors actually think about it ("each visit rounds to 15 min").
+ */
+export function roundSeconds(seconds: number, config: RoundingConfig): number {
+  if (!config || config.incrementMinutes <= 0) return seconds;
+  const incSec = config.incrementMinutes * 60;
+  const units = seconds / incSec;
+  const rounded = config.mode === "up" ? Math.ceil(units) : config.mode === "down" ? Math.floor(units) : Math.round(units);
+  return rounded * incSec;
+}
+
+/** Off for free-plan orgs regardless of the stored setting (SPEC §8.1: "a paid feature later"). */
+export function roundingConfigFor(
+  org: Pick<Tables<"organizations">, "plan" | "time_rounding_minutes" | "time_rounding_mode">,
+): RoundingConfig {
+  if (org.plan !== "pro" || org.time_rounding_minutes === null) return null;
+  return { incrementMinutes: org.time_rounding_minutes, mode: org.time_rounding_mode };
 }
 
 /** §8.3: profit = revenue − expenses. */

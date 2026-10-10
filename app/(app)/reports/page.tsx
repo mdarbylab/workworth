@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/session";
 import { periodQuery, resolvePeriod } from "@/lib/periods";
 import { buildReport } from "@/lib/reports";
-import { formatCents, formatDuration, formatRate } from "@/lib/calc";
+import { formatCents, formatDuration, formatRate, roundingConfigFor } from "@/lib/calc";
 import { PeriodPicker } from "./period-picker";
 import { TrackOnMount } from "@/components/analytics";
 import { ClientReportForm } from "./client-report-form";
@@ -18,9 +18,10 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
   if (!ctx?.organization) redirect("/onboarding");
 
   const period = resolvePeriod(params, ctx.organization.timezone);
+  const rounding = roundingConfigFor(ctx.organization);
   const supabase = await createClient();
   const [report, { data: clients }] = await Promise.all([
-    buildReport(period),
+    buildReport(period, rounding),
     supabase.from("clients").select("id, name").order("name"),
   ]);
   const q = periodQuery(period);
@@ -56,6 +57,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
         <p className="pt-3 text-xs text-slate-400">
           Estimated — until invoicing exists.
           {hasFixed && " Fixed-price jobs count their full price in any period with activity."}
+          {rounding && " Revenue is rounded per your billing settings; hours above are the real tracked time."}
         </p>
       </section>
 

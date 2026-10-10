@@ -406,6 +406,8 @@ export type Database = {
           name: string
           plan: Database["public"]["Enums"]["plan_type"]
           seat_limit: number
+          time_rounding_minutes: number | null
+          time_rounding_mode: Database["public"]["Enums"]["rounding_mode"]
           timezone: string
           updated_at: string
         }
@@ -421,6 +423,8 @@ export type Database = {
           name: string
           plan?: Database["public"]["Enums"]["plan_type"]
           seat_limit?: number
+          time_rounding_minutes?: number | null
+          time_rounding_mode?: Database["public"]["Enums"]["rounding_mode"]
           timezone?: string
           updated_at?: string
         }
@@ -436,6 +440,8 @@ export type Database = {
           name?: string
           plan?: Database["public"]["Enums"]["plan_type"]
           seat_limit?: number
+          time_rounding_minutes?: number | null
+          time_rounding_mode?: Database["public"]["Enums"]["rounding_mode"]
           timezone?: string
           updated_at?: string
         }
@@ -610,6 +616,7 @@ export type Database = {
       job_status: "active" | "archived"
       membership_role: "owner" | "member"
       plan_type: "free" | "pro"
+      rounding_mode: "up" | "nearest" | "down"
       time_source: "timer" | "manual"
     }
     CompositeTypes: {
@@ -753,6 +760,7 @@ export const Constants = {
       job_status: ["active", "archived"],
       membership_role: ["owner", "member"],
       plan_type: ["free", "pro"],
+      rounding_mode: ["up", "nearest", "down"],
       time_source: ["timer", "manual"],
     },
   },
