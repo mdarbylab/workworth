@@ -362,9 +362,84 @@ changed. The sandbox can't do this — production account creation and
 sign-in are both off-limits to Claude — so it sits here until Michael has
 a spare minute.
 
-The rest of what SPEC §9 calls Pro — tax estimates, mileage, receipt
-storage, rounding rules, integrations — stays unscoped future work. Pick
-up whichever of those (or something else) when ready for the next sprint.
+**Sprints 7–10 scoped 2026-10-09** (not yet built) for the rest of what
+SPEC §9 calls Pro, in this explicit order:
+
+- **Sprint 7 — Rounding rules + Mileage.** Two small, mechanical features
+  extending existing patterns rather than new infrastructure.
+  **Rounding**: SPEC §8.1 currently says "no rounding in v1." Raw
+  `time_entries.duration_seconds` stays untouched forever (keeps faith
+  with §8.4's "nothing silently overwritten," and Today/Time/Jobs keep
+  showing real tracked time) — rounding applies only at the *billing*
+  surface (job revenue, Reports, Client Report, Invoices), via a new
+  `roundSeconds(seconds, incrementMinutes, mode)` helper threaded through
+  `revenueCents()`, rounding **per entry** (not just the total — matches
+  how contractors actually think about it, "each visit rounds to 15
+  min"). New org setting: increment (5/10/15/30 min) + mode
+  (up/nearest/down), off by default, Pro-only. Where active, the UI shows
+  both "tracked" and "billable (rounded)" hours side by side — nothing
+  hidden. **Mileage**: new `expense_category` enum value `'mileage'`
+  (additive migration) + nullable `expenses.miles`. A new org setting,
+  `mileage_rate_cents` — deliberately not hardcoded to the current IRS
+  rate, since that changes annually and a hardcoded number would go
+  stale and mislead; it's configurable, business sets/updates it
+  themselves. Selecting "Mileage" on the expense form swaps the dollar
+  input for a miles input and auto-computes the amount.
+
+- **Sprint 8 — Receipt storage.** `expenses.receipt_path` has existed
+  since v1, unused. Genuinely new infrastructure — **first use of
+  Supabase Storage** in this project (confirmed nothing uses it yet
+  going in). A private bucket (not public — a receipt can hold sensitive
+  info, matches SPEC §11's "no selling or sharing of user data"),
+  storage-level RLS keyed by org id in the object path
+  (`{organization_id}/{expense_id}/{filename}`), an upload control on
+  the expense form (image/PDF, size-limited), viewing via short-lived
+  signed URLs rather than permanent public links.
+
+- **Sprint 9 — Tax estimates (federal + state) + a security-hardening
+  close.** The big one — explicit decision to cover federal *and* state,
+  not federal-only, which meaningfully increases scope over the smaller
+  option. Self-employment tax (15.3% + additional Medicare above
+  threshold) + federal income tax estimate (bracket-based, needs filing
+  status as an input) + a state-level estimate, shown as "set aside this
+  much" per quarter against the four real IRS due dates (Apr 15 / Jun 15
+  / Sep 15 / Jan 15). Not a filing tool — no e-filing, no return math,
+  purely a cash-flow planning estimate.
+
+  Two things flagged and accepted rather than silently decided: (1)
+  **state tax is genuinely uneven** — 9 states have no income tax, some
+  are flat-rate, some (CA, NY, etc.) are progressive-bracket; flat-rate
+  and no-tax states get an exact estimate, progressive-bracket states get
+  a clearly-labeled single effective-rate approximation rather than full
+  bracket modeling, with extra caveat language on those specifically —
+  not full per-state bracket modeling, which is its own multi-sprint
+  effort. (2) **Rate tables go stale every year** — federal brackets, SE
+  tax thresholds, and state rates all change annually, so this needs a
+  `tax_year`-versioned rates table (never hardcoded in app code) and an
+  annual-update commitment; still open who owns that each January —
+  revisit when this sprint is actually scoped in detail.
+
+  **Mandatory consent gate**: a one-time disclaimer screen — estimate,
+  not tax advice, consult a professional — with explicit agreement
+  required before the feature unlocks, recorded per account.
+
+  **Security-hardening close**, before Sprint 10 opens external
+  connections: re-audit every RLS policy and security-definer function
+  added across Sprints 5–9 (seat limit, invoicing, mileage, receipts,
+  storage, tax estimates) for consistency and least-privilege;
+  specifically re-check the Storage bucket policies from Sprint 8 since
+  receipts are sensitive; revisit the Supabase performance lints
+  currently marked "deliberately deferred... premature at two users"
+  (worth reconsidering once there's more real usage by then); run the
+  `security-review` skill as a structured pass, not a vague "harden
+  things."
+
+- **Sprint 10 — Integrations.** Deliberately left as a placeholder, no
+  target named yet — "integrations" alone names nothing concrete, and
+  this product's own stated posture is "premature at two users" for less
+  urgent work. Comes after the Sprint 9 security close on purpose: more
+  external connections want a harder perimeter first. Scope it for real
+  once there's a specific integration in mind.
 
 **Not actually doable on the free plan**: "Prevent use of leaked passwords"
 (Authentication → Sign In / Providers → Email → Attack Protection) is a
