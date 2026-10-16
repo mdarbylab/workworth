@@ -1,2 +1,4 @@
 # Prettier reformat (ADR 0005). Use: git config blame.ignoreRevsFile .git-blame-ignore-revs
-4469b3553ae8f29c3ec0adc8aa094d5bbe664351
+# PR #34 was squash-merged, so the reformat landed in this single commit together
+# with the handbook adoption; ignoring it also hides that PR's other lines in blame.
+2de38bbe67b30fdc3be85abe2fefd2dd7fa1303c
