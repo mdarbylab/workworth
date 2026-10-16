@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "verify": "next typegen && tsc --noEmit && eslint . && vitest run && next build"
+    "verify": "npm run scan:secrets && npm run audit:deps && next typegen && tsc --noEmit && eslint . && vitest run && next build",
+    "scan:secrets": "bash scripts/secret-scan.sh",
+    "audit:deps": "node scripts/audit.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",
