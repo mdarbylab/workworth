@@ -4,6 +4,7 @@
 // basic PostgREST filter support. Not used in production.
 //
 //   node scripts/mock-supabase.mjs            # listens on :54321
+//   MOCK_PLAN=pro node scripts/mock-supabase.mjs   # Pro-only screens (invoices, receipts)
 //   NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=mock npm run dev
 //
 // Sign in by setting the cookie printed at startup (see scripts/qa-screenshots.mjs).
@@ -64,7 +65,7 @@ export const COOKIE_VALUE = "base64-" + b64url(JSON.stringify(session));
 // ---------- fixtures ----------
 
 const organizations = [
-  { id: ORG, name: "Rivera Electric", timezone: TZ, currency: "USD", plan: "free", seat_limit: 2, invoice_seq: 0, mileage_rate_cents: 67, time_rounding_minutes: null, time_rounding_mode: "nearest", address: "1420 Mission St\nAustin, TX 78701", contact_email: "hello@riveraelectric.com", contact_phone: "(512) 555-0134", created_at: hoursAgo(500), updated_at: hoursAgo(1) },
+  { id: ORG, name: "Rivera Electric", timezone: TZ, currency: "USD", plan: process.env.MOCK_PLAN ?? "free", seat_limit: 2, invoice_seq: 0, mileage_rate_cents: 67, time_rounding_minutes: null, time_rounding_mode: "nearest", address: "1420 Mission St\nAustin, TX 78701", contact_email: "hello@riveraelectric.com", contact_phone: "(512) 555-0134", created_at: hoursAgo(500), updated_at: hoursAgo(1) },
 ];
 
 const subscriptions = [];
@@ -194,6 +195,8 @@ const json = (res, status, body, headers = {}) => {
   res.end(body === undefined ? "" : JSON.stringify(body));
 };
 
+const objects = new Map();
+
 const readBody = (req) => new Promise((resolve) => {
   let s = ""; req.on("data", (c) => (s += c)); req.on("end", () => { try { resolve(s ? JSON.parse(s) : null); } catch { resolve(null); } });
 });
@@ -211,6 +214,35 @@ if (isMain) http.createServer(async (req, res) => {
   if (p === "/auth/v1/logout") { res.writeHead(204); return res.end(); }
   if (p === "/auth/v1/signup" || p === "/auth/v1/otp" || p === "/auth/v1/verify") return json(res, 200, { user, session: null });
   if (p.startsWith("/auth/v1/")) return json(res, 200, {});
+
+  // Storage (receipts): uploads kept in memory, signed URLs served back as-is.
+  if (p.startsWith("/storage/v1/object/")) {
+    const rest = p.slice("/storage/v1/object/".length);
+    if (req.method === "POST" && rest.startsWith("sign/")) {
+      const key = decodeURIComponent(rest.slice("sign/".length));
+      if (!objects.has(key)) return json(res, 400, { statusCode: "404", error: "not_found", message: "Object not found" });
+      return json(res, 200, { signedURL: `/object/sign/${key}?token=mock` });
+    }
+    if (req.method === "GET" && rest.startsWith("sign/")) {
+      const obj = objects.get(decodeURIComponent(rest.slice("sign/".length)));
+      if (!obj) return json(res, 404, { message: "not found" });
+      res.writeHead(200, { "Content-Type": obj.type });
+      return res.end(obj.body);
+    }
+    if (req.method === "POST") {
+      const chunks = [];
+      for await (const c of req) chunks.push(c);
+      const key = decodeURIComponent(rest);
+      objects.set(key, { type: req.headers["content-type"] ?? "application/octet-stream", body: Buffer.concat(chunks) });
+      return json(res, 200, { Key: key, Id: randomUUID() });
+    }
+    if (req.method === "DELETE") {
+      const body = await readBody(req);
+      const bucket = rest.replace(/\/$/, "");
+      const removed = (body?.prefixes ?? []).filter((k) => objects.delete(`${bucket}/${k}`));
+      return json(res, 200, removed.map((name) => ({ name })));
+    }
+  }
 
   // RPC
   if (p.startsWith("/rest/v1/rpc/")) {

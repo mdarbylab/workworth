@@ -36,7 +36,7 @@ Effective rate: $105.80/hr
 
 ## 3. What v1 is NOT
 
-Not in v1: tax estimates, receipt scanning, payments, scheduling, payroll, HR, CRM, native mobile apps, integrations, AI features, multiple businesses per user, roles beyond owner/member. Invoicing shipped in Sprint 6 (§5.9); mileage shipped in Sprint 7 (§5.4) — the rest of this list stays deferred.
+Not in v1: tax estimates, receipt scanning, payments, scheduling, payroll, HR, CRM, native mobile apps, integrations, AI features, multiple businesses per user, roles beyond owner/member. Invoicing shipped in Sprint 6 (§5.9); mileage shipped in Sprint 7 (§5.4); receipt *attachments* (not scanning) shipped in Sprint 8 (§5.4) — the rest of this list stays deferred.
 
 The schema was designed so invoicing and tax estimates could be added without migration pain (see §7); invoicing used that room in Sprint 6, tax estimates still haven't. The client report (§5.8) is still not an invoice: it has no invoice number, no payment terms, no tax, and nothing is marked paid — that's what §5.9 is for.
 
@@ -101,7 +101,16 @@ Navigation is a bottom bar on phone and a left rail on desktop. Five items:
   never trusted from the client. The rate is a plain editable field, not derived from
   any "current IRS rate" in code — that number changes every year, so the business
   updates it themselves rather than WorkWorth silently going stale.
-- Receipt attachment: **not in v1** (column exists, UI does not).
+- **Receipt attachment** (Sprint 8, 2026-10-16, Pro only — §9): one photo (JPEG, PNG,
+  WebP, HEIC) or PDF per expense, up to 4 MB, picked on the add/edit form. Choosing a
+  new file replaces the old one; "Remove" clears it; deleting the expense deletes its
+  receipt. The list marks expenses that have one. Files live in a **private** Supabase
+  Storage bucket at `{organization_id}/{expense_id}/{file}`; storage policies let
+  someone see a receipt only if they can see its expense (so on Pro, a member sees only
+  their own). "View receipt" mints a signed link on every click that expires after a
+  minute — there is never a permanent public URL. A business that drops back to free
+  keeps viewing and removing the receipts it has, but can't add new ones. Not receipt
+  *scanning*: nothing reads the file.
 
 ### 5.5 Reports
 
@@ -232,7 +241,7 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 | `clients` | who the work is for | name, email, phone, notes |
 | `jobs` | unit of work | client_id, name, billing_type (`hourly`/`fixed`), hourly_rate_cents, fixed_price_cents, estimated_minutes, status (`active`/`archived`), notes |
 | `time_entries` | tracked time | job_id, user_id, started_at, stopped_at (null = running), duration_seconds (derived on stop), notes, source (`timer`/`manual`), invoiced_in_invoice_id (Sprint 6, nullable — which invoice, if any, billed this entry's hours) |
-| `expenses` | money out | job_id (nullable), user_id, amount_cents, spent_on (date), category (incl. `mileage`, Sprint 7), miles (nullable, mileage only), description, receipt_path (unused in v1) |
+| `expenses` | money out | job_id (nullable), user_id, amount_cents, spent_on (date), category (incl. `mileage`, Sprint 7), miles (nullable, mileage only), description, receipt_path (Sprint 8, nullable — the receipt's object path in the private `receipts` Storage bucket) |
 | `audit_events` | change history | actor_user_id, table_name, record_id, action, before (jsonb), after (jsonb) |
 | `invoices` | a billed document for a client (§5.9, Sprint 6) | organization_id, client_id (nullable), number (`INV-0001`, sequential per org), status (`draft`/`sent`/`paid`/`void`), issued_on, due_on, total_cents (derived — see invoice_lines) |
 | `invoice_lines` | one invoice's line items | organization_id, invoice_id, job_id (nullable, traceability only), description, quantity, unit_cents, total_cents (`invoices.total_cents` is a trigger-maintained sum of these, never written directly by app code) |
@@ -302,8 +311,10 @@ decision, not named or priced here. **Invoicing** (Sprint 6, 2026-10-09)
 invoice" control. **Billing rounding** (Sprint 7, 2026-10-11) — §8.1 has
 the detail; off by default, a free-plan business doesn't see the Settings
 control at all. (Mileage, Sprint 7, 2026-10-10, is free-plan too — §5.4 —
-not a Pro feature, just another expense category.) What's still unscoped
-future work: tax estimates, receipt storage, integrations.
+not a Pro feature, just another expense category.) **Receipt
+attachments** (Sprint 8, 2026-10-16) — §5.4 has the detail; a free-plan
+business doesn't see the upload control. What's still unscoped future
+work: tax estimates, integrations.
 
 Billing (upgrade, cancel, payment method) is restricted to the person who
 created the business (`role = 'owner'`) — the same "only the creator"
@@ -334,6 +345,9 @@ exist exactly so this was a data/webhook change, not a rewrite — see §7.
 - RLS on every org-scoped table; no client query can read another org's rows.
 - All writes go through server actions that re-check membership and role.
 - Seat limit enforced server-side.
+- Receipts (§5.4) live in a private Storage bucket, never public. Storage policies key on
+  the org id in the object path and on the caller's own access to the expense; viewing
+  is only by signed links that expire after a minute.
 - Secrets in Netlify/Supabase env vars, never in the repo. `.env*` is gitignored from commit one.
 - Supabase daily backups on. Point-in-time recovery when there are paying customers.
 - No selling or sharing of user data. Minimal personal data collected (email only).
