@@ -18,7 +18,7 @@
 
 - [ ] Traces to requirement IDs
 - [ ] Tests written first and passing, including failure paths
-- [ ] `npm run verify` green: secret scan, dependency audit, types, lint, tests, build
+- [ ] `npm run verify` green: secret scan, dependency audit, format, types, lint, tests, build
 - [ ] UI changes exercised on the real screen (mock server) at 375px and desktop
 - [ ] Database changes: migration applied to the live project and committed in this PR; RLS still isolates every org
 - [ ] No real customer data, secrets or personal identifiers in the diff (the repository is public)

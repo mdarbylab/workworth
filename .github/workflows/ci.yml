@@ -1,8 +1,8 @@
 name: CI
 
 # Runs `npm run verify`, the project's one gate script (handbook
-# quality-gates.md): secret scan, dependency audit, type-check, lint, tests,
-# build. Same command locally and here, on every push to main and every PR.
+# quality-gates.md): secret scan, dependency audit, format check, type-check,
+# lint, tests, build. Same command locally and here, on every push to main and every PR.
 
 on:
   push:

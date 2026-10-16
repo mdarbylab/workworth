@@ -1,0 +1,2 @@
+# Prettier reformat (ADR 0005). Use: git config blame.ignoreRevsFile .git-blame-ignore-revs
+4469b3553ae8f29c3ec0adc8aa094d5bbe664351

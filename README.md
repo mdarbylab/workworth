@@ -15,8 +15,8 @@ cp .env.example .env.local   # fill in SUPABASE_SERVICE_ROLE_KEY only if needed
 npm run dev                  # http://localhost:3000
 ```
 
-Checks: `npm run verify` runs every gate (secret scan, dependency audit, types,
-lint, tests, build), the same command CI runs.
+Checks: `npm run verify` runs every gate (secret scan, dependency audit, format,
+types, lint, tests, build); `npm run format` fixes formatting, the same command CI runs.
 
 ### Running the UI without Supabase access
 

@@ -22,4 +22,4 @@ Option 1. Next.js App Router with TypeScript (strict) and Tailwind; all writes t
 - Access control lives in RLS and a few security-definer helpers (ADR 0002); the app never holds a service-role key.
 - Free-plan gaps are covered by our own controls: a nightly encrypted dump (`.github/workflows/backup.yml`) and a health check that also keeps the project from pausing (docs/operations.md).
 - The repository is public, so it must never hold customer data or credentials (handbook security-and-data.md).
-- No format checker was chosen; see ADR 0004.
+- Formatting is Prettier with default settings (ADR 0005).

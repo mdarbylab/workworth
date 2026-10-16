@@ -49,7 +49,7 @@ See `docs/adr/0001-stack.md`. Next.js App Router, TypeScript strict, Tailwind, S
 
 ## Verifying changes
 
-`npm run verify` is the gate: secret scan, dependency audit, `next typegen`, `tsc --noEmit`, `eslint .`, `vitest run`, `next build`. `next typegen` must come before `tsc`, which needs the route types Next.js generates into `.next/types`. The dependency audit needs the npm registry; a deliberately deferred advisory goes in `scripts/audit-allowlist.json` with a reason and a review-by date, never by weakening the gate (ADR 0004).
+`npm run verify` is the gate: secret scan, dependency audit, format check (`prettier --check .`; fix with `npm run format`), `next typegen`, `tsc --noEmit`, `eslint .`, `vitest run`, `next build`. `next typegen` must come before `tsc`, which needs the route types Next.js generates into `.next/types`. The dependency audit needs the npm registry; a deliberately deferred advisory goes in `scripts/audit-allowlist.json` with a reason and a review-by date, never by weakening the gate (ADR 0004).
 
 Tests live beside the module they cover (`lib/*.test.ts`). A green build proves only that the code compiles, so also:
 
