@@ -27,6 +27,7 @@ export default async function NewExpensePage({ searchParams }: PageProps<"/expen
           action={createExpense}
           submitLabel="Save expense"
           cancelHref="/expenses"
+          canAttachReceipt={ctx.organization.plan === "pro"}
           defaults={{
             amount: "",
             miles: "",

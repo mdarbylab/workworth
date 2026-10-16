@@ -19,6 +19,7 @@ type Snapshot = {
   category: ExpenseCategory;
   description: string | null;
   miles: number | null;
+  receipt_path: string | null;
 };
 
 function asSnapshot(json: Json | null): Snapshot | null {
@@ -32,6 +33,7 @@ function asSnapshot(json: Json | null): Snapshot | null {
     category: o.category,
     description: typeof o.description === "string" ? o.description : null,
     miles: typeof o.miles === "number" ? o.miles : null,
+    receipt_path: typeof o.receipt_path === "string" ? o.receipt_path : null,
   };
 }
 
@@ -63,7 +65,7 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
   const edits = events ?? [];
   const original = edits.length ? asSnapshot(edits[0].before) : null;
   const describe = (s: Snapshot) =>
-    `${formatCents(s.amount_cents)} · ${CATEGORY_LABELS[s.category]}${s.category === "mileage" && s.miles !== null ? ` (${formatMiles(s.miles)})` : ""} · ${s.spent_on} · ${jobName(s.job_id)}${s.description ? ` · “${s.description}”` : ""}`;
+    `${formatCents(s.amount_cents)} · ${CATEGORY_LABELS[s.category]}${s.category === "mileage" && s.miles !== null ? ` (${formatMiles(s.miles)})` : ""} · ${s.spent_on} · ${jobName(s.job_id)}${s.description ? ` · “${s.description}”` : ""}${s.receipt_path ? " · Receipt attached" : ""}`;
 
   return (
     <div className="space-y-6">
@@ -82,6 +84,8 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
           expenseId={expense.id}
           submitLabel="Save changes"
           cancelHref="/expenses"
+          canAttachReceipt={ctx.organization.plan === "pro"}
+          receiptHref={expense.receipt_path ? `/expenses/${expense.id}/receipt` : null}
           defaults={{
             amount: (expense.amount_cents / 100).toFixed(2),
             miles: expense.miles !== null ? String(expense.miles) : "",
@@ -121,7 +125,11 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
         action={deleteExpense}
         id={expense.id}
         label="Delete expense"
-        message="Delete this expense? The change is recorded in history."
+        message={
+          expense.receipt_path
+            ? "Delete this expense and its receipt? The change is recorded in history, but the receipt file is removed."
+            : "Delete this expense? The change is recorded in history."
+        }
       />
     </div>
   );

@@ -27,4 +27,4 @@ Option 1. Every org-scoped policy calls security-definer helpers:
 
 - Isolation holds even if a query forgets a filter; a policy or trigger mistake, though, affects every query at once, so migrations touching them need extra review.
 - `/api/health` checks that the seat-limit triggers are attached and enabled (REQ-043).
-- An automated cross-tenant leak test suite does not exist yet; it is **(planned)** in slice SL-06 (ADR 0004). Until then isolation is verified by inspection and by the two-account test at launch.
+- An automated cross-tenant leak test suite does not exist yet; it is **(planned)** in slice SL-05 (ADR 0004). Until then isolation is verified by inspection and by the two-account test at launch.

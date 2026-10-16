@@ -45,7 +45,7 @@ Effective rate: $105.80/hr
 
 ## 3. What v1 is NOT
 
-Not in v1: tax estimates, receipt scanning, payments, scheduling, payroll, HR, CRM, native mobile apps, integrations, AI features, multiple businesses per user, roles beyond owner/member. Invoicing shipped in Sprint 6 (§5.9); mileage shipped in Sprint 7 (§5.4) — the rest of this list stays deferred.
+Not in v1: tax estimates, receipt scanning, payments, scheduling, payroll, HR, CRM, native mobile apps, integrations, AI features, multiple businesses per user, roles beyond owner/member. Invoicing shipped in Sprint 6 (§5.9); mileage shipped in Sprint 7 (§5.4); receipt *attachments* (not scanning) shipped in Sprint 8 (§5.4) — the rest of this list stays deferred.
 
 The schema was designed so invoicing and tax estimates could be added without migration pain (see §7); invoicing used that room in Sprint 6, tax estimates still haven't. The client report (§5.8) is still not an invoice: it has no invoice number, no payment terms, no tax, and nothing is marked paid — that's what §5.9 is for.
 
@@ -109,7 +109,7 @@ Requirements: REQ-010, REQ-025, REQ-035.
 
 ### 5.4 Expenses
 
-Requirements: REQ-011.
+Requirements: REQ-011, REQ-046.
 
 - List grouped by day; month total at top.
 - **+ Add expense** → amount, date (defaults today), job (optional), category, description.
@@ -120,7 +120,16 @@ Requirements: REQ-011.
   never trusted from the client. The rate is a plain editable field, not derived from
   any "current IRS rate" in code — that number changes every year, so the business
   updates it themselves rather than WorkWorth silently going stale.
-- Receipt attachment: **not in v1** (column exists, UI does not).
+- **Receipt attachment** (Sprint 8, 2026-10-16, Pro only — §9): one photo (JPEG, PNG,
+  WebP, HEIC) or PDF per expense, up to 4 MB, picked on the add/edit form. Choosing a
+  new file replaces the old one; "Remove" clears it; deleting the expense deletes its
+  receipt. The list marks expenses that have one. Files live in a **private** Supabase
+  Storage bucket at `{organization_id}/{expense_id}/{file}`; storage policies let
+  someone see a receipt only if they can see its expense (so on Pro, a member sees only
+  their own). "View receipt" mints a signed link on every click that expires after a
+  minute — there is never a permanent public URL. A business that drops back to free
+  keeps viewing and removing the receipts it has, but can't add new ones. Not receipt
+  *scanning*: nothing reads the file.
 
 ### 5.5 Reports
 
@@ -265,7 +274,7 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 | `clients` | who the work is for | name, email, phone, notes |
 | `jobs` | unit of work | client_id, name, billing_type (`hourly`/`fixed`), hourly_rate_cents, fixed_price_cents, estimated_minutes, status (`active`/`archived`), notes |
 | `time_entries` | tracked time | job_id, user_id, started_at, stopped_at (null = running), duration_seconds (derived on stop), notes, source (`timer`/`manual`), invoiced_in_invoice_id (Sprint 6, nullable — which invoice, if any, billed this entry's hours) |
-| `expenses` | money out | job_id (nullable), user_id, amount_cents, spent_on (date), category (incl. `mileage`, Sprint 7), miles (nullable, mileage only), description, receipt_path (unused in v1) |
+| `expenses` | money out | job_id (nullable), user_id, amount_cents, spent_on (date), category (incl. `mileage`, Sprint 7), miles (nullable, mileage only), description, receipt_path (Sprint 8, nullable — the receipt's object path in the private `receipts` Storage bucket) |
 | `audit_events` | change history | actor_user_id, table_name, record_id, action, before (jsonb), after (jsonb) |
 | `invoices` | a billed document for a client (§5.9, Sprint 6) | organization_id, client_id (nullable), number (`INV-0001`, sequential per org), status (`draft`/`sent`/`paid`/`void`), issued_on, due_on, total_cents (derived — see invoice_lines) |
 | `invoice_lines` | one invoice's line items | organization_id, invoice_id, job_id (nullable, traceability only), description, quantity, unit_cents, total_cents (`invoices.total_cents` is a trigger-maintained sum of these, never written directly by app code) |
@@ -329,7 +338,7 @@ Requirements: REQ-035.
 
 ## 9. Free vs paid boundary
 
-Requirements: REQ-001, REQ-022, REQ-025, REQ-026, REQ-036, REQ-037.
+Requirements: REQ-001, REQ-022, REQ-025, REQ-026, REQ-036, REQ-037, REQ-046.
 
 **Free — $0 forever:** 2 people, unlimited jobs and time entries, expenses, dashboard, reports, CSV export.
 
@@ -345,8 +354,10 @@ decision, not named or priced here. **Invoicing** (Sprint 6, 2026-10-09)
 invoice" control. **Billing rounding** (Sprint 7, 2026-10-11) — §8.1 has
 the detail; off by default, a free-plan business doesn't see the Settings
 control at all. (Mileage, Sprint 7, 2026-10-10, is free-plan too — §5.4 —
-not a Pro feature, just another expense category.) What's still unscoped
-future work: tax estimates, receipt storage, integrations.
+not a Pro feature, just another expense category.) **Receipt
+attachments** (Sprint 8, 2026-10-16) — §5.4 has the detail; a free-plan
+business doesn't see the upload control. What's still unscoped future
+work: tax estimates, integrations.
 
 Billing (upgrade, cancel, payment method) is restricted to the person who
 created the business (`role = 'owner'`) — the same "only the creator"
@@ -374,11 +385,14 @@ exist exactly so this was a data/webhook change, not a rewrite — see §7.
 
 ## 11. Security
 
-Requirements: REQ-030, REQ-038 to REQ-044.
+Requirements: REQ-030, REQ-038 to REQ-044, REQ-046.
 
 - RLS on every org-scoped table; no client query can read another org's rows.
 - All writes go through server actions that re-check membership and role.
 - Seat limit enforced server-side.
+- Receipts (§5.4) live in a private Storage bucket, never public. Storage policies key on
+  the org id in the object path and on the caller's own access to the expense; viewing
+  is only by signed links that expire after a minute.
 - Secrets in Netlify/Supabase env vars, never in the repo. `.env*` is gitignored from commit one.
 - Backups: the Supabase free plan has none, so a nightly GitHub Actions job dumps the database, encrypts it and stores it in a separate private repository ([docs/backups.md](docs/backups.md)). Point-in-time recovery **(planned)**: when there are paying customers, which needs the Supabase Pro plan.
 - No selling or sharing of user data. Minimal personal data collected (email only).
@@ -433,6 +447,7 @@ last sprints were scoped; it carries over unchanged.
 | Sprint 5 | 10-person seat cap for Pro, plus the seat-limit health check (§6) |
 | Sprint 6 | Invoicing (§5.9) |
 | Sprint 7 | Mileage expenses (§5.4) and billing rounding (§8.1) |
+| Sprint 8 | Receipt attachments on expenses (§5.4) |
 
 What happened in each, and why, is in [docs/history.md](docs/history.md).
 
@@ -441,21 +456,20 @@ What happened in each, and why, is in [docs/history.md](docs/history.md).
 | Slice | Scope | Requirements |
 |---|---|---|
 | SL-01 | Live check of the 10-seat cap through the real invite, signup and accept screens: invite up to 10 accounts on the live Pro org, confirm each accepts, confirm the 11th is refused with the plan-aware message. Needs the owner (real accounts and sign-in are off-limits to Claude). Not blocking anything: the database-level limit was already proven live on 2026-10-07. | REQ-026 |
-| SL-02 | **Receipt storage.** `expenses.receipt_path` has existed since v1, unused. First use of Supabase Storage in this project. A private bucket (a receipt can hold sensitive information, §11), storage RLS keyed by org id in the object path (`{organization_id}/{expense_id}/{filename}`), an upload control on the expense form (image or PDF, size-limited), viewing through short-lived signed URLs, never permanent public links. Needs an ADR first (new infrastructure). | REQ-046 |
-| SL-03 | **Tax estimates, part 1: consent gate and self-employment tax.** The one-time disclaimer (an estimate, not tax advice, consult a professional) with explicit agreement recorded per account before the feature unlocks; then self-employment tax (15.3% plus additional Medicare above the threshold) shown as "set aside this much" per quarter against the four IRS due dates (Apr 15, Jun 15, Sep 15, Jan 15). Rates come from a `tax_year`-versioned table, never hardcoded. Needs an ADR first (data model). | REQ-047, REQ-048 |
-| SL-04 | **Tax estimates, part 2: federal income tax**, bracket-based, with filing status as an input. | REQ-047 |
-| SL-05 | **Tax estimates, part 3: state.** No-tax and flat-rate states get an exact estimate; progressive-bracket states (CA, NY and others) get a clearly labelled single effective-rate approximation with extra caveat language, not full bracket modelling. | REQ-047 |
-| SL-06 | **Security-hardening close**, before any integration opens an external connection: re-audit every RLS policy and security-definer function added since Sprint 5 (seat limit, invoicing, mileage, receipts, storage, tax estimates) for consistency and least privilege; re-check the receipt bucket's policies; revisit the deferred Supabase performance lints; run the `security-review` skill as a structured pass; add an automated cross-tenant leak test suite (handbook quality gate, **(planned)** here). | REQ-038, REQ-039 |
+| SL-02 | **Tax estimates, part 1: consent gate and self-employment tax.** The one-time disclaimer (an estimate, not tax advice, consult a professional) with explicit agreement recorded per account before the feature unlocks; then self-employment tax (15.3% plus additional Medicare above the threshold) shown as "set aside this much" per quarter against the four IRS due dates (Apr 15, Jun 15, Sep 15, Jan 15). Rates come from a `tax_year`-versioned table, never hardcoded. Needs an ADR first (data model). | REQ-047, REQ-048 |
+| SL-03 | **Tax estimates, part 2: federal income tax**, bracket-based, with filing status as an input. | REQ-047 |
+| SL-04 | **Tax estimates, part 3: state.** No-tax and flat-rate states get an exact estimate; progressive-bracket states (CA, NY and others) get a clearly labelled single effective-rate approximation with extra caveat language, not full bracket modelling. | REQ-047 |
+| SL-05 | **Security-hardening close**, before any integration opens an external connection: re-audit every RLS policy and security-definer function added since Sprint 5 (seat limit, invoicing, mileage, receipts and their storage policies, tax estimates) for consistency and least privilege; re-check the receipt bucket's policies; revisit the deferred Supabase performance lints; run the `security-review` skill as a structured pass; add an automated cross-tenant leak test suite (handbook quality gate, **(planned)** here). | REQ-038, REQ-039 |
 
 Tax estimates are a cash-flow planning estimate, not a filing tool: no
 e-filing and no return math. Two decisions were taken knowingly on
 2026-10-09: federal **and** state, not federal only; and approximating
 progressive-bracket states rather than modelling them. Still open: who
-updates the rate tables each January (decide when SL-03 is picked up).
+updates the rate tables each January (decide when SL-02 is picked up).
 
 ### Backlog (not yet scoped)
 
 - **Integrations.** No target named yet; "integrations" alone names nothing
-  concrete. Comes after SL-06 on purpose: more external connections want a
+  concrete. Comes after SL-05 on purpose: more external connections want a
   harder perimeter first. Scope it, with a requirement ID, once there is a
   specific integration in mind.

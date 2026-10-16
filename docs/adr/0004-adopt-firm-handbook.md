@@ -17,7 +17,7 @@ The firm now has one handbook for every project (`mdarbylab/handbook`, version 1
 
 Option 2. WorkWorth follows handbook 1.0.0 (`HANDBOOK_VERSION`):
 
-- **Method.** Sprints are retired. The scoped Sprints 8 to 10 become slices SL-01 to SL-06 plus an unscoped backlog item, in the same order (SPEC §14). At most two slices in progress.
+- **Method.** Sprints are retired; Sprint 8 (receipts) was the last. The scoped Sprints 9 and 10 and the open seat-cap check become slices SL-01 to SL-05 plus an unscoped backlog item, in the same order (SPEC §14). At most two slices in progress.
 - **Records.** `SPEC.md` stays at the repository root as the spec. Requirement IDs live in `docs/requirements.md` and each spec section names its own. ADRs live in `docs/adr/`; 0001 to 0003 record decisions already taken. Non-negotiables live in `docs/non-negotiables.md`, with candidates for the owner to approve. `CLAUDE.md` holds rules only; live-system facts moved to `docs/operations.md` and the dated narrative to `docs/history.md`.
 - **Gate script.** `npm run verify` is the gate script, run by CI on every PR and every push to `main`. It now runs, in order: secret scan (`scripts/secret-scan.sh`, the template's patterns plus Stripe, Supabase, Resend and PostHog key shapes), dependency audit (`scripts/audit.mjs`), `next typegen`, `tsc --noEmit`, `eslint .`, `vitest run`, `next build`.
 - **Dependency audit.** Any known vulnerability fails the gate, with one mechanism for deliberate deferral: `scripts/audit-allowlist.json` lists a dev-only advisory with a reason and a review-by date. The gate fails once that date passes, or at once if the advisory reaches a production dependency. The one entry is `braces` (GHSA-vfj7-8cjw-p6xm), review by 2026-11-16, in step with the monthly audit. The `sharp` and `source-map-js` findings are fixed in this change by `npm audit fix` (lockfile only, patch versions within the existing ranges; no `package.json` range changed).
@@ -28,7 +28,7 @@ Option 2. WorkWorth follows handbook 1.0.0 (`HANDBOOK_VERSION`):
 | Handbook expects | WorkWorth now | Until |
 |---|---|---|
 | Format check in the gate | None. Adding Prettier is a new dependency and a repository-wide reformat; it gets its own PR | **(planned)** 2026-11-30 |
-| Cross-tenant leak test suite (multi-tenant data) | Isolation verified by inspection (ADR 0002) | **(planned)** with slice SL-06; date set when SL-06 is pulled |
+| Cross-tenant leak test suite (multi-tenant data) | Isolation verified by inspection (ADR 0002) | **(planned)** with slice SL-05; date set when SL-05 is pulled |
 | Dependency audit clean | Clean except the allowlisted, dev-only `braces` advisory | Review by 2026-11-16 |
 | Spec at `docs/spec.md` | `SPEC.md` at the root | Permanent; this ADR |
 | Branch protection on `main` where the plan enforces it (firm ADR 0003); this repository is public, so it does | Not yet turned on | **(planned)** 2026-10-23, an owner action in repository settings |

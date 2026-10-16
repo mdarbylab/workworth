@@ -13,6 +13,12 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Keep `next dev` from appending its agent-rules block to CLAUDE.md.
   agentRules: false,
+  experimental: {
+    // Receipt uploads (SPEC §5.4) go through the expense server actions. The
+    // default 1 MB would refuse most phone photos; 5 MB covers the 4 MB
+    // receipt cap plus the form's other fields (lib/receipts.ts).
+    serverActions: { bodySizeLimit: "5mb" },
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

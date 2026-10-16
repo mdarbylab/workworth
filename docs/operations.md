@@ -82,7 +82,10 @@ Production is **https://workworth.de**.
   project. Revisit if the project upgrades.
 - **Supabase performance lints** (unindexed foreign keys, per-row `auth.uid()`
   re-evaluation) are known and deliberately deferred: real at scale, premature
-  at two users. Revisited in slice SL-06.
+  at two users. Revisited in slice SL-05.
+- **Receipt files are not backed up.** The nightly dump carries each
+  expense's `receipt_path` but not the file in the `receipts` Storage bucket
+  (docs/backups.md). Backing up the bucket is its own piece of work.
 - The `braces` advisory in `eslint-config-next`'s lint tooling is deferred;
   see `scripts/audit-allowlist.json` and ADR 0004.
 

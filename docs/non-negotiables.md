@@ -11,7 +11,7 @@ The features and attributes that define WorkWorth. If a change would break one, 
 
 | ID | Candidate | Why it would define the product | Requirements | Verified by |
 |---|---|---|---|---|
-| NN-01 | **No business can see another business's data.** | The product holds people's earnings; one leak ends it. | REQ-023, REQ-038, REQ-039 | Inspection (ADR 0002); cross-tenant test suite **(planned)** with SL-06 |
+| NN-01 | **No business can see another business's data.** | The product holds people's earnings; one leak ends it. | REQ-023, REQ-038, REQ-039 | Inspection (ADR 0002); cross-tenant test suite **(planned)** with SL-05 |
 | NN-02 | **Nothing is silently overwritten.** Edits to time and expenses keep the original visible; a sent invoice is never changed, only voided and replaced. | SPEC §8.4 calls this "the trust feature". | REQ-020, REQ-035 | Inspection |
 | NN-03 | **The numbers are right.** Money in integer cents; revenue, profit and effective rate match a hand calculation; stored time is never rounded. | The promise is "what you actually made". | REQ-028, REQ-031, REQ-033, REQ-034 | `lib/calc.test.ts` |
 | NN-04 | **What leaves the business shows only the client's numbers.** The client report and invoices never show expenses, profit or effective rate. | A business must be able to hand the document over without thinking. | REQ-018 | Inspection |

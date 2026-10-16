@@ -19,7 +19,7 @@ export default async function ExpensesPage() {
   const [{ data: expenses }, people] = await Promise.all([
     supabase
       .from("expenses")
-      .select("id, user_id, job_id, amount_cents, spent_on, category, description, miles, jobs(name)")
+      .select("id, user_id, job_id, amount_cents, spent_on, category, description, miles, receipt_path, jobs(name)")
       .order("spent_on", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(300),
@@ -86,6 +86,9 @@ export default async function ExpensesPage() {
                       <div className="min-w-0">
                         <p className="flex items-center gap-2 text-sm font-medium">
                           <span className="truncate">{x.description || CATEGORY_LABELS[x.category]}</span>
+                          {x.receipt_path && (
+                            <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">Receipt</span>
+                          )}
                           {edited.has(x.id) && (
                             <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">Edited</span>
                           )}

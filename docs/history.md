@@ -275,6 +275,42 @@ against each other.
   reverted revenue to the raw $731.25 — confirming the Settings change
   actually propagated, not just that rounding could visually differ.
 
+- **Sprint 8 (2026-10-16): receipt storage** (Pro only, SPEC §5.4) — the
+  first use of Supabase Storage. A private `receipts` bucket (4 MB, images
+  + PDF, both enforced by the bucket itself) at
+  `{organization_id}/{expense_id}/{file}`; policies in
+  `supabase/migrations/20261016000000_receipt_storage.sql`. Select requires
+  the path's org to be yours *and* the expense to be visible to you through
+  `expenses`' own RLS, so Pro role separation carries over to receipts for
+  free. Insert additionally requires `plan = 'pro'`. Insert/delete also
+  allow an expense id that doesn't exist at all (via the security-definer
+  `expense_id_unused()`), because a new expense's receipt is uploaded
+  *before* the row is inserted (so history shows one insert, not insert +
+  edit) and the file is removed *after* the row is deleted. No update
+  policy — every upload gets a fresh filename. Viewing is
+  `/expenses/[id]/receipt`, which mints a 60-second signed URL per click.
+
+  Why 4 MB: uploads go through a server action, and Netlify functions cap
+  a request at 6 MB after base64-encoding the body
+  (`serverActions.bodySizeLimit` is raised to 5 MB in `next.config.ts`).
+  Direct browser-to-Storage upload would lift that, at the cost of trusting
+  a client-sent path — revisit only if 4 MB proves too small.
+
+  Verified live (inside a rolled-back transaction with simulated JWTs): a
+  Pro owner can upload under their own org and a new expense id, but not
+  under another org's path or another org's existing expense id; a free
+  owner can't upload; a free owner sees their own seeded receipt, and the
+  Pro owner and `anon` see nothing. **Delete couldn't be tested this way**
+  — `storage.protect_delete` refuses direct SQL deletes on
+  `storage.objects` — so it was exercised only through the mock server.
+  The full UI flow (upload, wrong-type refusal, view via signed URL with
+  byte-identical content, replace, remove, delete-with-expense, free plan
+  hiding the control) was driven against `scripts/mock-supabase.mjs`, which
+  now fakes Storage too (`MOCK_PLAN=pro` for Pro-only screens).
+
+  **Known gap:** the nightly backup dumps only the database, so receipt
+  *files* aren't backed up (see `docs/backups.md`).
+
 ## Done 2026-10-04 and earlier notes
 
 **Not actually doable on the free plan**: "Prevent use of leaked passwords"
