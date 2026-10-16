@@ -10,7 +10,9 @@ export default function NotFound() {
         <p className="text-sm text-slate-600">
           That page doesn&apos;t exist, or it belongs to a different business.
         </p>
-        <Link href="/today" className="btn-primary">Back to Today</Link>
+        <Link href="/today" className="btn-primary">
+          Back to Today
+        </Link>
       </div>
     </main>
   );

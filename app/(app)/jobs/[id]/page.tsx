@@ -14,37 +14,44 @@ import { startTimerFromJob } from "../../time/actions";
 
 export const metadata: Metadata = { title: "Job" };
 
-export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">) {
+export default async function JobDetailPage({
+  params,
+}: PageProps<"/jobs/[id]">) {
   const { id } = await params;
   const ctx = await getSessionContext();
   if (!ctx?.organization || !ctx.membership) redirect("/onboarding");
   const tz = ctx.organization.timezone;
 
   const supabase = await createClient();
-  const [{ data: job }, totals, { data: entries }, { data: expenses }, people] = await Promise.all([
-    supabase
-      .from("jobs")
-      .select("*, clients(name)")
-      .eq("id", id)
-      .maybeSingle(),
-    getJobTotals(roundingConfigFor(ctx.organization)),
-    supabase
-      .from("time_entries")
-      .select("id, user_id, started_at, stopped_at, duration_seconds, notes")
-      .eq("job_id", id)
-      .order("started_at", { ascending: false })
-      .limit(100),
-    supabase
-      .from("expenses")
-      .select("id, spent_on, amount_cents, category, description, miles")
-      .eq("job_id", id)
-      .order("spent_on", { ascending: false })
-      .limit(100),
-    getPeople(ctx.organization.id, ctx.user.id),
-  ]);
+  const [{ data: job }, totals, { data: entries }, { data: expenses }, people] =
+    await Promise.all([
+      supabase
+        .from("jobs")
+        .select("*, clients(name)")
+        .eq("id", id)
+        .maybeSingle(),
+      getJobTotals(roundingConfigFor(ctx.organization)),
+      supabase
+        .from("time_entries")
+        .select("id, user_id, started_at, stopped_at, duration_seconds, notes")
+        .eq("job_id", id)
+        .order("started_at", { ascending: false })
+        .limit(100),
+      supabase
+        .from("expenses")
+        .select("id, spent_on, amount_cents, category, description, miles")
+        .eq("job_id", id)
+        .order("spent_on", { ascending: false })
+        .limit(100),
+      getPeople(ctx.organization.id, ctx.user.id),
+    ]);
   if (!job) notFound();
 
-  const t: JobTotals = totals.get(job.id) ?? { seconds: 0, billableSeconds: 0, expensesCents: 0 };
+  const t: JobTotals = totals.get(job.id) ?? {
+    seconds: 0,
+    billableSeconds: 0,
+    expensesCents: 0,
+  };
   const summary = summarize(job, t, t.expensesCents);
   const canManage = ctx.hasFullAccess;
   const isArchived = job.status === "archived";
@@ -54,24 +61,39 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link href="/jobs" className="text-sm text-slate-500 hover:underline">← Jobs</Link>
+          <Link href="/jobs" className="text-sm text-slate-500 hover:underline">
+            ← Jobs
+          </Link>
           <h1 className="truncate text-2xl font-semibold">{job.name}</h1>
           <p className="text-sm text-slate-500">
             {job.clients?.name ?? "No client"} ·{" "}
             {job.billing_type === "hourly"
               ? `Hourly${job.hourly_rate_cents !== null ? ` at ${formatCents(job.hourly_rate_cents)}/hr` : ""}`
               : `Fixed price${job.fixed_price_cents !== null ? ` ${formatCents(job.fixed_price_cents)}` : ""}`}
-            {job.estimated_minutes !== null && ` · est. ${formatDuration(job.estimated_minutes * 60)}`}
+            {job.estimated_minutes !== null &&
+              ` · est. ${formatDuration(job.estimated_minutes * 60)}`}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <Link href={`/jobs/${job.id}/edit`} className="text-sm text-slate-600 hover:underline">Edit</Link>
+          <Link
+            href={`/jobs/${job.id}/edit`}
+            className="text-sm text-slate-600 hover:underline"
+          >
+            Edit
+          </Link>
           {isArchived ? (
-            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700">Archived</span>
+            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700">
+              Archived
+            </span>
           ) : (
             <form action={startTimerFromJob}>
               <input type="hidden" name="job_id" value={job.id} />
-              <button type="submit" className="btn-primary w-auto px-4 py-2 text-sm">Start timer</button>
+              <button
+                type="submit"
+                className="btn-primary w-auto px-4 py-2 text-sm"
+              >
+                Start timer
+              </button>
             </form>
           )}
         </div>
@@ -92,7 +114,10 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Time entries</h2>
           {!isArchived && (
-            <Link href={`/time/new?job=${job.id}`} className="text-sm text-ink-800 hover:underline">
+            <Link
+              href={`/time/new?job=${job.id}`}
+              className="text-sm text-ink-800 hover:underline"
+            >
               + Add time
             </Link>
           )}
@@ -104,19 +129,29 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
               const running = e.stopped_at === null;
               return (
                 <li key={e.id}>
-                  <Link href={`/time/${e.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+                  <Link
+                    href={`/time/${e.id}`}
+                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50"
+                  >
                     <div className="min-w-0">
                       <p className="text-sm font-medium">
                         {formatDate(start, tz)} · {formatTime(start, tz)}
-                        {e.stopped_at ? ` – ${formatTime(new Date(e.stopped_at), tz)}` : ""}
+                        {e.stopped_at
+                          ? ` – ${formatTime(new Date(e.stopped_at), tz)}`
+                          : ""}
                       </p>
                       <p className="truncate text-xs text-slate-500">
-                        {showPerson && `${personLabel(people, e.user_id)}${e.notes ? " · " : ""}`}
+                        {showPerson &&
+                          `${personLabel(people, e.user_id)}${e.notes ? " · " : ""}`}
                         {e.notes}
                       </p>
                     </div>
-                    <span className={`shrink-0 text-sm font-semibold tabular-nums ${running ? "text-ink-700" : ""}`}>
-                      {running ? "Running" : formatDuration(e.duration_seconds ?? 0)}
+                    <span
+                      className={`shrink-0 text-sm font-semibold tabular-nums ${running ? "text-ink-700" : ""}`}
+                    >
+                      {running
+                        ? "Running"
+                        : formatDuration(e.duration_seconds ?? 0)}
                     </span>
                   </Link>
                 </li>
@@ -124,7 +159,9 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             })}
           </ul>
         ) : (
-          <p className="card text-sm text-slate-500">No time tracked on this job yet.</p>
+          <p className="card text-sm text-slate-500">
+            No time tracked on this job yet.
+          </p>
         )}
       </section>
 
@@ -132,7 +169,10 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Expenses</h2>
           {!isArchived && (
-            <Link href={`/expenses/new?job=${job.id}`} className="text-sm text-ink-800 hover:underline">
+            <Link
+              href={`/expenses/new?job=${job.id}`}
+              className="text-sm text-ink-800 hover:underline"
+            >
               + Add expense
             </Link>
           )}
@@ -141,21 +181,33 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           <ul className="card divide-y divide-slate-100 p-0">
             {expenses.map((x) => (
               <li key={x.id}>
-                <Link href={`/expenses/${x.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+                <Link
+                  href={`/expenses/${x.id}`}
+                  className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50"
+                >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{x.description || CATEGORY_LABELS[x.category]}</p>
+                    <p className="truncate text-sm font-medium">
+                      {x.description || CATEGORY_LABELS[x.category]}
+                    </p>
                     <p className="truncate text-xs text-slate-500">
                       {CATEGORY_LABELS[x.category]}
-                      {x.category === "mileage" && x.miles !== null ? ` (${formatMiles(x.miles)})` : ""} · {formatDayHeading(x.spent_on, tz)}
+                      {x.category === "mileage" && x.miles !== null
+                        ? ` (${formatMiles(x.miles)})`
+                        : ""}{" "}
+                      · {formatDayHeading(x.spent_on, tz)}
                     </p>
                   </div>
-                  <span className="shrink-0 text-sm font-semibold tabular-nums">{formatCents(x.amount_cents)}</span>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums">
+                    {formatCents(x.amount_cents)}
+                  </span>
                 </Link>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="card text-sm text-slate-500">No expenses on this job yet.</p>
+          <p className="card text-sm text-slate-500">
+            No expenses on this job yet.
+          </p>
         )}
       </section>
 

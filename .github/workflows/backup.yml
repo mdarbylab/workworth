@@ -112,7 +112,9 @@ jobs:
           ls -l dump.sql.gz.gpg
 
       - name: Check out the private backup store
-        uses: actions/checkout@v4
+        # Pinned to a commit SHA (handbook, quality-gates.md). Credentials
+        # stay persisted here on purpose: the last step pushes with them.
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ secrets.BACKUP_REPO }}
           token: ${{ secrets.BACKUP_REPO_TOKEN }}

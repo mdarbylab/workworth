@@ -7,7 +7,12 @@ import { formatClock } from "@/lib/calc";
 
 type Props = {
   jobs: Array<{ id: string; name: string }>;
-  running: { id: string; jobId: string; jobName: string; startedAt: string } | null;
+  running: {
+    id: string;
+    jobId: string;
+    jobName: string;
+    startedAt: string;
+  } | null;
   defaultJobId: string;
 };
 
@@ -18,9 +23,17 @@ function elapsedSince(iso: string) {
 }
 
 export function Timer({ jobs, running, defaultJobId }: Props) {
-  const [startState, startAction, startPending] = useActionState(startTimer, initial);
-  const [stopState, stopAction, stopPending] = useActionState(stopTimer, initial);
-  const [elapsed, setElapsed] = useState(() => (running ? elapsedSince(running.startedAt) : 0));
+  const [startState, startAction, startPending] = useActionState(
+    startTimer,
+    initial,
+  );
+  const [stopState, stopAction, stopPending] = useActionState(
+    stopTimer,
+    initial,
+  );
+  const [elapsed, setElapsed] = useState(() =>
+    running ? elapsedSince(running.startedAt) : 0,
+  );
 
   const startedAt = running?.startedAt ?? null;
   useEffect(() => {
@@ -37,11 +50,19 @@ export function Timer({ jobs, running, defaultJobId }: Props) {
       {running ? (
         <>
           <p className="flex items-center gap-2 text-sm text-slate-500">
-            <span aria-hidden className="h-2 w-2 rounded-full bg-apple motion-safe:animate-pulse" />
+            <span
+              aria-hidden
+              className="h-2 w-2 rounded-full bg-apple motion-safe:animate-pulse"
+            />
             Tracking
           </p>
-          <p className="max-w-full truncate text-lg font-semibold">{running.jobName}</p>
-          <p className="font-mono text-6xl tabular-nums text-ink-800" suppressHydrationWarning>
+          <p className="max-w-full truncate text-lg font-semibold">
+            {running.jobName}
+          </p>
+          <p
+            className="font-mono text-6xl tabular-nums text-ink-800"
+            suppressHydrationWarning
+          >
             {formatClock(elapsed)}
           </p>
           <form action={stopAction} className="w-full max-w-xs">
@@ -55,7 +76,10 @@ export function Timer({ jobs, running, defaultJobId }: Props) {
           </form>
         </>
       ) : (
-        <form action={startAction} className="flex w-full max-w-xs flex-col items-center gap-5">
+        <form
+          action={startAction}
+          className="flex w-full max-w-xs flex-col items-center gap-5"
+        >
           {jobs.length ? (
             <select
               name="job_id"
@@ -65,15 +89,22 @@ export function Timer({ jobs, running, defaultJobId }: Props) {
               className="input text-center text-base font-medium"
             >
               {jobs.map((j) => (
-                <option key={j.id} value={j.id}>{j.name}</option>
+                <option key={j.id} value={j.id}>
+                  {j.name}
+                </option>
               ))}
             </select>
           ) : (
             <p className="text-sm text-slate-600">
-              <Link href="/jobs/new" className="text-ink-800 hover:underline">Create a job</Link> to start tracking.
+              <Link href="/jobs/new" className="text-ink-800 hover:underline">
+                Create a job
+              </Link>{" "}
+              to start tracking.
             </p>
           )}
-          <p className="font-mono text-6xl tabular-nums text-slate-300">0:00:00</p>
+          <p className="font-mono text-6xl tabular-nums text-slate-300">
+            0:00:00
+          </p>
           <button
             type="submit"
             disabled={pending || jobs.length === 0}

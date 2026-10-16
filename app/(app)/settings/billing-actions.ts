@@ -12,17 +12,24 @@ export type BillingState = { error?: string };
 async function requireCreator() {
   const ctx = await getSessionContext();
   if (!ctx?.organization || !ctx.membership) redirect("/onboarding");
-  if (!ctx.isCreator) return { error: "Only the person who created this business can manage billing." };
+  if (!ctx.isCreator)
+    return {
+      error: "Only the person who created this business can manage billing.",
+    };
   return { ...ctx, organization: ctx.organization };
 }
 
 const TRIAL_DAYS = 14;
 
-export async function createCheckoutSession(_prev: BillingState, formData: FormData): Promise<BillingState> {
+export async function createCheckoutSession(
+  _prev: BillingState,
+  formData: FormData,
+): Promise<BillingState> {
   const ctx = await requireCreator();
   if ("error" in ctx) return ctx;
 
-  const interval: BillingInterval = formData.get("interval") === "year" ? "year" : "month";
+  const interval: BillingInterval =
+    formData.get("interval") === "year" ? "year" : "month";
   const price = priceIdFor(interval);
   if (!price) return { error: "Billing isn't set up yet. Try again shortly." };
 
@@ -51,7 +58,9 @@ export async function createCheckoutSession(_prev: BillingState, formData: FormD
   redirect(url);
 }
 
-export async function createPortalSession(_prev: BillingState): Promise<BillingState> {
+export async function createPortalSession(
+  _prev: BillingState,
+): Promise<BillingState> {
   const ctx = await requireCreator();
   if ("error" in ctx) return ctx;
 

@@ -9,8 +9,14 @@ type Props = {
 };
 
 /** Billing type toggle + amount field, shared by onboarding and the job form. */
-export function BillingFields({ defaultType = "hourly", defaultAmount = "", required = false }: Props) {
-  const [billingType, setBillingType] = useState<"hourly" | "fixed">(defaultType);
+export function BillingFields({
+  defaultType = "hourly",
+  defaultAmount = "",
+  required = false,
+}: Props) {
+  const [billingType, setBillingType] = useState<"hourly" | "fixed">(
+    defaultType,
+  );
 
   return (
     <>
@@ -43,7 +49,9 @@ export function BillingFields({ defaultType = "hourly", defaultAmount = "", requ
       <div>
         <label htmlFor="amount" className="label">
           {billingType === "hourly" ? "Hourly rate" : "Fixed price"}{" "}
-          {!required && <span className="font-normal text-slate-400">(optional)</span>}
+          {!required && (
+            <span className="font-normal text-slate-400">(optional)</span>
+          )}
         </label>
         <div className="relative">
           <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">

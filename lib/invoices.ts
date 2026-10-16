@@ -27,7 +27,11 @@ export async function buildInvoice(id: string): Promise<InvoiceDetail | null> {
 
   const [{ data: client }, { data: lines }] = await Promise.all([
     invoice.client_id
-      ? supabase.from("clients").select("id, name, email, phone").eq("id", invoice.client_id).maybeSingle()
+      ? supabase
+          .from("clients")
+          .select("id, name, email, phone")
+          .eq("id", invoice.client_id)
+          .maybeSingle()
       : Promise.resolve({ data: null as InvoiceDetail["client"] }),
     supabase
       .from("invoice_lines")
@@ -36,7 +40,12 @@ export async function buildInvoice(id: string): Promise<InvoiceDetail | null> {
       .order("created_at"),
   ]);
 
-  return { invoice, organization: org, client: client ?? null, lines: lines ?? [] };
+  return {
+    invoice,
+    organization: org,
+    client: client ?? null,
+    lines: lines ?? [],
+  };
 }
 
 export type DerivedInvoiceLine = {
@@ -93,7 +102,10 @@ export function deriveInvoiceLines(statement: Statement): DerivedInvoice {
     }
 
     if (job.hourlyRateCents === null) continue;
-    const seconds = notYetBilled.reduce((s, l) => s + roundSeconds(l.seconds, rounding), 0);
+    const seconds = notYetBilled.reduce(
+      (s, l) => s + roundSeconds(l.seconds, rounding),
+      0,
+    );
     for (const l of notYetBilled) includedEntryIds.push(l.id);
     lines.push({
       jobId: job.id,
@@ -101,13 +113,22 @@ export function deriveInvoiceLines(statement: Statement): DerivedInvoice {
       quantity: Number((seconds / 3600).toFixed(4)),
       unitCents: job.hourlyRateCents,
       totalCents: revenueCents(
-        { billing_type: "hourly", hourly_rate_cents: job.hourlyRateCents, fixed_price_cents: null },
+        {
+          billing_type: "hourly",
+          hourly_rate_cents: job.hourlyRateCents,
+          fixed_price_cents: null,
+        },
         seconds,
       ),
     });
   }
 
-  return { lines, includedEntryIds, excludedAlreadyInvoicedEntryIds, hasUnpricedWork: statement.hasUnpricedWork };
+  return {
+    lines,
+    includedEntryIds,
+    excludedAlreadyInvoicedEntryIds,
+    hasUnpricedWork: statement.hasUnpricedWork,
+  };
 }
 
 /** "INV-0001" sequencing is server-side (next_invoice_number RPC); this just

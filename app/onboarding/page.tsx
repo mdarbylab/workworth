@@ -33,7 +33,11 @@ export default async function OnboardingPage() {
         </p>
       </div>
       <div className="card w-full max-w-sm">
-        {step === "org" ? <OrgForm /> : <JobForm businessName={ctx.organization!.name} />}
+        {step === "org" ? (
+          <OrgForm />
+        ) : (
+          <JobForm businessName={ctx.organization!.name} />
+        )}
       </div>
     </main>
   );

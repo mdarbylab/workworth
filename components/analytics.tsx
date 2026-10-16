@@ -3,7 +3,13 @@
 import posthog from "posthog-js";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
-import { analyticsEnabled, posthogHost, posthogKey, type EventName, type EventProps } from "@/lib/analytics/events";
+import {
+  analyticsEnabled,
+  posthogHost,
+  posthogKey,
+  type EventName,
+  type EventProps,
+} from "@/lib/analytics/events";
 import { getConsent, onConsentChange } from "@/lib/consent";
 
 let initialized = false;
@@ -67,7 +73,13 @@ export function Analytics() {
 }
 
 /** Ties browser events to the signed-in user and their business (ids only). */
-export function Identify({ userId, organizationId }: { userId: string; organizationId?: string | null }) {
+export function Identify({
+  userId,
+  organizationId,
+}: {
+  userId: string;
+  organizationId?: string | null;
+}) {
   useEffect(() => {
     if (!analyticsReady()) return;
     ensureInit();
@@ -78,7 +90,13 @@ export function Identify({ userId, organizationId }: { userId: string; organizat
 }
 
 /** Fires an event when a screen is shown (e.g. report_viewed). */
-export function TrackOnMount({ event, props }: { event: EventName; props?: EventProps }) {
+export function TrackOnMount({
+  event,
+  props,
+}: {
+  event: EventName;
+  props?: EventProps;
+}) {
   const key = JSON.stringify(props ?? {});
   useEffect(() => {
     trackClient(event, props);

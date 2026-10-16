@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { markInvoiceSent, markInvoicePaid, voidInvoice, deleteDraftInvoice, type InvoiceFormState } from "../actions";
+import {
+  markInvoiceSent,
+  markInvoicePaid,
+  voidInvoice,
+  deleteDraftInvoice,
+  type InvoiceFormState,
+} from "../actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import type { Tables } from "@/lib/supabase/types";
 
@@ -16,7 +22,10 @@ function StatusButton({
   confirmMessage,
   className,
 }: {
-  action: (prev: InvoiceFormState, formData: FormData) => Promise<InvoiceFormState>;
+  action: (
+    prev: InvoiceFormState,
+    formData: FormData,
+  ) => Promise<InvoiceFormState>;
   id: string;
   label: string;
   pendingLabel: string;
@@ -51,7 +60,12 @@ export function InvoiceControls({
 }) {
   return (
     <div className="no-print mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
-      <Link href="/reports/invoices" className="text-sm text-slate-600 hover:underline">← Invoices</Link>
+      <Link
+        href="/reports/invoices"
+        className="text-sm text-slate-600 hover:underline"
+      >
+        ← Invoices
+      </Link>
 
       {canManage && invoice.status === "draft" && (
         <StatusButton
@@ -71,16 +85,17 @@ export function InvoiceControls({
           className="btn-secondary w-auto px-3 py-2 text-sm"
         />
       )}
-      {canManage && (invoice.status === "draft" || invoice.status === "sent") && (
-        <StatusButton
-          action={voidInvoice}
-          id={invoice.id}
-          label="Void"
-          pendingLabel="Voiding…"
-          confirmMessage="Void this invoice? It can't be un-voided — create a new one if this was a mistake."
-          className="w-auto px-3 py-2 text-sm text-red-700 hover:underline"
-        />
-      )}
+      {canManage &&
+        (invoice.status === "draft" || invoice.status === "sent") && (
+          <StatusButton
+            action={voidInvoice}
+            id={invoice.id}
+            label="Void"
+            pendingLabel="Voiding…"
+            confirmMessage="Void this invoice? It can't be un-voided — create a new one if this was a mistake."
+            className="w-auto px-3 py-2 text-sm text-red-700 hover:underline"
+          />
+        )}
       {canManage && invoice.status === "draft" && (
         <ConfirmDelete
           action={deleteDraftInvoice}

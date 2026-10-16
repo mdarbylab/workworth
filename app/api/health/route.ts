@@ -42,13 +42,21 @@ export async function GET() {
       // Doesn't check *counts* — a Pro org that downgrades legitimately
       // keeps members over its new, lower limit (no forced removal), so
       // that alone isn't a fault condition.
-      const { data: seatLimitOk, error: seatLimitError } = await supabase.rpc("seat_limit_enforcement_ok");
+      const { data: seatLimitOk, error: seatLimitError } = await supabase.rpc(
+        "seat_limit_enforcement_ok",
+      );
       if (seatLimitError || seatLimitOk === false) {
-        console.error("health check: seat limit enforcement disabled", seatLimitError?.message);
-        trackException(new Error("health check: seat limit enforcement disabled"), {
-          source: "health-check",
-          code: seatLimitError?.code || null,
-        });
+        console.error(
+          "health check: seat limit enforcement disabled",
+          seatLimitError?.message,
+        );
+        trackException(
+          new Error("health check: seat limit enforcement disabled"),
+          {
+            source: "health-check",
+            code: seatLimitError?.code || null,
+          },
+        );
         return Response.json(
           { ok: false, db: "ok", seatLimitEnforcement: "disabled" },
           { status: 503, headers: { "Cache-Control": "no-store" } },
@@ -68,7 +76,10 @@ export async function GET() {
         : "unreachable";
 
     console.error("health check:", db, error.code, error.message);
-    trackException(new Error(`health check: ${db}`), { source: "health-check", code: error.code || null });
+    trackException(new Error(`health check: ${db}`), {
+      source: "health-check",
+      code: error.code || null,
+    });
 
     return Response.json(
       { ok: false, db, ...(error.code ? { code: error.code } : {}) },
@@ -78,6 +89,9 @@ export async function GET() {
     // Unexpected — createClient() itself failing, etc. Keep the same shape.
     console.error("health check: unreachable (unexpected)", err);
     trackException(err, { source: "health-check" });
-    return Response.json({ ok: false, db: "unreachable" }, { status: 503, headers: { "Cache-Control": "no-store" } });
+    return Response.json(
+      { ok: false, db: "unreachable" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
   }
 }

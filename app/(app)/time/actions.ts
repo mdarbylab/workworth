@@ -43,13 +43,19 @@ async function insertRunningEntry(jobId: string): Promise<string | null> {
     if (error.code === "23505") return "You already have a timer running.";
     return "Couldn't start the timer. Please try again.";
   }
-  track("timer_started", { userId: ctx.user.id, organizationId: ctx.membership.organization_id });
+  track("timer_started", {
+    userId: ctx.user.id,
+    organizationId: ctx.membership.organization_id,
+  });
   revalidatePath("/", "layout");
   return null;
 }
 
 /** Today screen START button. */
-export async function startTimer(_prev: TimerState, formData: FormData): Promise<TimerState> {
+export async function startTimer(
+  _prev: TimerState,
+  formData: FormData,
+): Promise<TimerState> {
   const jobId = String(formData.get("job_id") ?? "");
   if (!jobId) return { error: "Pick a job first." };
   const error = await insertRunningEntry(jobId);
@@ -74,9 +80,13 @@ export async function stopTimer(): Promise<TimerState> {
     .is("stopped_at", null)
     .select("duration_seconds");
   if (error) return { error: "Couldn't stop the timer. Please try again." };
-  track("timer_stopped", { userId: ctx.user.id, organizationId: ctx.membership.organization_id }, {
-    duration_seconds: data?.[0]?.duration_seconds ?? null,
-  });
+  track(
+    "timer_stopped",
+    { userId: ctx.user.id, organizationId: ctx.membership.organization_id },
+    {
+      duration_seconds: data?.[0]?.duration_seconds ?? null,
+    },
+  );
   revalidatePath("/", "layout");
   return {};
 }
@@ -90,7 +100,10 @@ type ParsedEntry = {
   notes: string | null;
 };
 
-function parseEntryForm(formData: FormData, tz: string): ParsedEntry | EntryFormState {
+function parseEntryForm(
+  formData: FormData,
+  tz: string,
+): ParsedEntry | EntryFormState {
   const jobId = String(formData.get("job_id") ?? "");
   if (!jobId) return { error: "Pick a job." };
 
@@ -103,7 +116,13 @@ function parseEntryForm(formData: FormData, tz: string): ParsedEntry | EntryForm
   if (formData.get("mode") === "duration") {
     const hours = Number(formData.get("duration_hours") || 0);
     const minutes = Number(formData.get("duration_minutes") || 0);
-    if (!Number.isInteger(hours) || !Number.isInteger(minutes) || hours < 0 || minutes < 0 || minutes > 59) {
+    if (
+      !Number.isInteger(hours) ||
+      !Number.isInteger(minutes) ||
+      hours < 0 ||
+      minutes < 0 ||
+      minutes > 59
+    ) {
       return { error: "Enter a duration in whole hours and minutes." };
     }
     const seconds = hours * 3600 + minutes * 60;
@@ -118,7 +137,10 @@ function parseEntryForm(formData: FormData, tz: string): ParsedEntry | EntryForm
 
   // §8.1: an entry cannot stop before it starts.
   if (stoppedAt.getTime() <= startedAt.getTime()) {
-    return { error: "Stop time must be after the start time. For work past midnight, enter a duration instead." };
+    return {
+      error:
+        "Stop time must be after the start time. For work past midnight, enter a duration instead.",
+    };
   }
 
   // §8.1: max single entry 24h — longer warns but is allowed.
@@ -133,7 +155,10 @@ function parseEntryForm(formData: FormData, tz: string): ParsedEntry | EntryForm
   return { jobId, startedAt, stoppedAt, notes };
 }
 
-export async function createTimeEntry(_prev: EntryFormState, formData: FormData): Promise<EntryFormState> {
+export async function createTimeEntry(
+  _prev: EntryFormState,
+  formData: FormData,
+): Promise<EntryFormState> {
   const ctx = await requireMembership();
   const parsed = parseEntryForm(formData, ctx.organization.timezone);
   if (!("jobId" in parsed)) return parsed;
@@ -150,14 +175,23 @@ export async function createTimeEntry(_prev: EntryFormState, formData: FormData)
   });
   if (error) return { error: "Couldn't save that entry. Please try again." };
 
-  track("time_entry_manual", { userId: ctx.user.id, organizationId: ctx.membership.organization_id }, {
-    duration_seconds: Math.round((parsed.stoppedAt.getTime() - parsed.startedAt.getTime()) / 1000),
-  });
+  track(
+    "time_entry_manual",
+    { userId: ctx.user.id, organizationId: ctx.membership.organization_id },
+    {
+      duration_seconds: Math.round(
+        (parsed.stoppedAt.getTime() - parsed.startedAt.getTime()) / 1000,
+      ),
+    },
+  );
   revalidatePath("/", "layout");
   redirect("/time");
 }
 
-export async function updateTimeEntry(_prev: EntryFormState, formData: FormData): Promise<EntryFormState> {
+export async function updateTimeEntry(
+  _prev: EntryFormState,
+  formData: FormData,
+): Promise<EntryFormState> {
   const ctx = await requireMembership();
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Missing entry." };
@@ -180,7 +214,10 @@ export async function updateTimeEntry(_prev: EntryFormState, formData: FormData)
     .select("id");
   if (error || !data?.length) return { error: "Couldn't update that entry." };
 
-  track("time_entry_edited", { userId: ctx.user.id, organizationId: ctx.membership.organization_id });
+  track("time_entry_edited", {
+    userId: ctx.user.id,
+    organizationId: ctx.membership.organization_id,
+  });
   revalidatePath("/", "layout");
   redirect("/time");
 }

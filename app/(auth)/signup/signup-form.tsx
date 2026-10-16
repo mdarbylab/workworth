@@ -6,21 +6,32 @@ import { signUp, type AuthState } from "../actions";
 
 const initial: AuthState = {};
 
-export function SignupForm({ next = "/", defaultEmail = "" }: { next?: string; defaultEmail?: string }) {
+export function SignupForm({
+  next = "/",
+  defaultEmail = "",
+}: {
+  next?: string;
+  defaultEmail?: string;
+}) {
   const [state, action, pending] = useActionState(signUp, initial);
-  const loginHref = next === "/" ? "/login" : `/login?next=${encodeURIComponent(next)}`;
+  const loginHref =
+    next === "/" ? "/login" : `/login?next=${encodeURIComponent(next)}`;
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-xl font-semibold">Create your account</h1>
-        <p className="mt-1 text-sm text-slate-500">Free for up to 2 people. No trial, no card.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          Free for up to 2 people. No trial, no card.
+        </p>
       </div>
 
       <form action={action} className="space-y-4">
         <input type="hidden" name="next" value={next} />
         <div>
-          <label htmlFor="display_name" className="label">Your name</label>
+          <label htmlFor="display_name" className="label">
+            Your name
+          </label>
           <input
             id="display_name"
             name="display_name"
@@ -31,10 +42,14 @@ export function SignupForm({ next = "/", defaultEmail = "" }: { next?: string; d
             className="input"
             placeholder="Alex Rivera"
           />
-          <p className="mt-1 text-xs text-slate-500">This is how you appear to anyone you work with.</p>
+          <p className="mt-1 text-xs text-slate-500">
+            This is how you appear to anyone you work with.
+          </p>
         </div>
         <div>
-          <label htmlFor="email" className="label">Email</label>
+          <label htmlFor="email" className="label">
+            Email
+          </label>
           <input
             id="email"
             name="email"
@@ -47,7 +62,9 @@ export function SignupForm({ next = "/", defaultEmail = "" }: { next?: string; d
           />
         </div>
         <div>
-          <label htmlFor="password" className="label">Password</label>
+          <label htmlFor="password" className="label">
+            Password
+          </label>
           <input
             id="password"
             name="password"
@@ -70,7 +87,10 @@ export function SignupForm({ next = "/", defaultEmail = "" }: { next?: string; d
 
       <p className="text-center text-sm text-slate-600">
         Already have an account?{" "}
-        <Link href={loginHref} className="font-medium text-ink-800 hover:underline">
+        <Link
+          href={loginHref}
+          className="font-medium text-ink-800 hover:underline"
+        >
           Sign in
         </Link>
       </p>

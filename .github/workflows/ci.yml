@@ -1,8 +1,8 @@
 name: CI
 
-# Runs the same checks `npm run verify` runs locally — type-check, lint,
-# tests, build — on every push and PR. This is the first CI step the project
-# has had beyond Netlify's own build of `main`.
+# Runs `npm run verify`, the project's one gate script (handbook
+# quality-gates.md): secret scan, dependency audit, format check, type-check,
+# lint, tests, build. Same command locally and here, on every push to main and every PR.
 
 on:
   push:
@@ -17,12 +17,16 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      # Third-party actions are pinned to commit SHAs (handbook,
+      # quality-gates.md); the comment names the version.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
-          cache: npm
+          package-manager-cache: false
 
       - run: npm ci
       - run: npm run verify

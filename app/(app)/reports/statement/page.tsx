@@ -182,13 +182,16 @@ export default async function StatementPage({
                   </p>
                 )}
 
-                {showMoney && job.billingType === "hourly" && job.seconds !== job.billableSeconds && (
-                  <p className="fixed-note">
-                    {hours(job.seconds)}h tracked, billed as {hours(job.billableSeconds)}h per your
-                    billing rounding settings. The amount above reflects the billed hours, not the
-                    hours and per-line amounts listed row by row.
-                  </p>
-                )}
+                {showMoney &&
+                  job.billingType === "hourly" &&
+                  job.seconds !== job.billableSeconds && (
+                    <p className="fixed-note">
+                      {hours(job.seconds)}h tracked, billed as{" "}
+                      {hours(job.billableSeconds)}h per your billing rounding
+                      settings. The amount above reflects the billed hours, not
+                      the hours and per-line amounts listed row by row.
+                    </p>
+                  )}
               </section>
             ))}
 

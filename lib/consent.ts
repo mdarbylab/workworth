@@ -22,7 +22,9 @@ export function setConsent(value: Consent) {
   } catch {
     // Couldn't persist it — the banner will just reappear next visit.
   }
-  window.dispatchEvent(new CustomEvent<Consent>(CONSENT_EVENT, { detail: value }));
+  window.dispatchEvent(
+    new CustomEvent<Consent>(CONSENT_EVENT, { detail: value }),
+  );
 }
 
 /** Fires when the visitor makes or changes a consent choice this session. */

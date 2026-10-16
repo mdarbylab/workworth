@@ -8,7 +8,11 @@ import {
   type RoundingConfig,
 } from "@/lib/calc";
 
-export type JobTotals = { seconds: number; billableSeconds: number; expensesCents: number };
+export type JobTotals = {
+  seconds: number;
+  billableSeconds: number;
+  expensesCents: number;
+};
 
 export type JobSummary = {
   seconds: number;
@@ -26,11 +30,19 @@ export type JobSummary = {
  * Sprint 7) -- it's what revenue is computed from; seconds stays the raw,
  * always-true tracked total shown on screen.
  */
-export async function getJobTotals(rounding: RoundingConfig): Promise<Map<string, JobTotals>> {
+export async function getJobTotals(
+  rounding: RoundingConfig,
+): Promise<Map<string, JobTotals>> {
   const supabase = await createClient();
   const [{ data: entries }, { data: expenses }] = await Promise.all([
-    supabase.from("time_entries").select("job_id, duration_seconds").not("stopped_at", "is", null),
-    supabase.from("expenses").select("job_id, amount_cents").not("job_id", "is", null),
+    supabase
+      .from("time_entries")
+      .select("job_id, duration_seconds")
+      .not("stopped_at", "is", null),
+    supabase
+      .from("expenses")
+      .select("job_id, amount_cents")
+      .not("job_id", "is", null),
   ]);
 
   const totals = new Map<string, JobTotals>();
@@ -48,11 +60,16 @@ export async function getJobTotals(rounding: RoundingConfig): Promise<Map<string
     t.seconds += secs;
     t.billableSeconds += roundSeconds(secs, rounding);
   }
-  for (const x of expenses ?? []) if (x.job_id) bucket(x.job_id).expensesCents += x.amount_cents;
+  for (const x of expenses ?? [])
+    if (x.job_id) bucket(x.job_id).expensesCents += x.amount_cents;
   return totals;
 }
 
-export function summarize(job: BillingFields, totals: JobTotals, expensesCents: number): JobSummary {
+export function summarize(
+  job: BillingFields,
+  totals: JobTotals,
+  expensesCents: number,
+): JobSummary {
   const revenue = revenueCents(job, totals.billableSeconds);
   const profit = profitCents(revenue, expensesCents);
   return {

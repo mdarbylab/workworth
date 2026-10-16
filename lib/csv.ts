@@ -9,7 +9,10 @@ function cell(value: string | number | null | undefined): string {
   return `"${s.replace(/"/g, '""')}"`;
 }
 
-export function toCsv(header: string[], rows: Array<Array<string | number | null | undefined>>): string {
+export function toCsv(
+  header: string[],
+  rows: Array<Array<string | number | null | undefined>>,
+): string {
   const lines = [header, ...rows].map((r) => r.map(cell).join(","));
   return "﻿" + lines.join("\r\n") + "\r\n";
 }

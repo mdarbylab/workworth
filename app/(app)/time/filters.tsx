@@ -29,7 +29,9 @@ export function TimeFilters({ jobs, people }: Props) {
       >
         <option value="">All jobs</option>
         {jobs.map((j) => (
-          <option key={j.id} value={j.id}>{j.name}</option>
+          <option key={j.id} value={j.id}>
+            {j.name}
+          </option>
         ))}
       </select>
       {people.length > 1 && (
@@ -41,7 +43,9 @@ export function TimeFilters({ jobs, people }: Props) {
         >
           <option value="">Everyone</option>
           {people.map((p) => (
-            <option key={p.userId} value={p.userId}>{p.label}</option>
+            <option key={p.userId} value={p.userId}>
+              {p.label}
+            </option>
           ))}
         </select>
       )}

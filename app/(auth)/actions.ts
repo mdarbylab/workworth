@@ -9,7 +9,9 @@ import { track } from "@/lib/analytics/server";
 export type AuthState = { error?: string; message?: string };
 
 function readCredentials(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const password = String(formData.get("password") ?? "");
   const next = safeNext(formData.get("next"));
   return { email, password, next };
@@ -41,22 +43,31 @@ export async function signUp(
   const { email, password, next } = readCredentials(formData);
   // Carried on the auth user until a membership exists to hold it, since
   // signup happens before anyone belongs to a business (SPEC §5.7).
-  const displayName = String(formData.get("display_name") ?? "").trim().slice(0, 80);
+  const displayName = String(formData.get("display_name") ?? "")
+    .trim()
+    .slice(0, 80);
   if (!displayName) return { error: "Enter your name." };
   if (!email) return { error: "Enter your email." };
-  if (password.length < 8) return { error: "Use at least 8 characters for your password." };
+  if (password.length < 8)
+    return { error: "Use at least 8 characters for your password." };
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: await callbackUrl(next), data: { display_name: displayName } },
+    options: {
+      emailRedirectTo: await callbackUrl(next),
+      data: { display_name: displayName },
+    },
   });
   if (error) return { error: error.message };
-  if (data.user) track("signup", { userId: data.user.id }, { confirmed: !!data.session });
+  if (data.user)
+    track("signup", { userId: data.user.id }, { confirmed: !!data.session });
 
   if (!data.session) {
-    return { message: `We sent a confirmation link to ${email}. Open it to finish signing up.` };
+    return {
+      message: `We sent a confirmation link to ${email}. Open it to finish signing up.`,
+    };
   }
   redirect(next === "/" ? "/onboarding" : next);
 }
@@ -82,7 +93,9 @@ export async function requestPasswordReset(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   if (!email) return { error: "Enter your email." };
 
   const supabase = await createClient();
@@ -93,7 +106,9 @@ export async function requestPasswordReset(
   // an error here is operational (rate limit, malformed address), not
   // "no such user". Keep the message the same either way.
   if (error) return { error: error.message };
-  return { message: `If an account exists for ${email}, we've sent a link to reset the password.` };
+  return {
+    message: `If an account exists for ${email}, we've sent a link to reset the password.`,
+  };
 }
 
 export async function signOut() {

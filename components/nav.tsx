@@ -13,9 +13,16 @@ const ITEMS = [
   { href: "/reports", label: "Reports", icon: ChartIcon },
 ] as const;
 
-export function Nav({ orgName, avatar }: { orgName: string; avatar: ReactNode }) {
+export function Nav({
+  orgName,
+  avatar,
+}: {
+  orgName: string;
+  avatar: ReactNode;
+}) {
   const pathname = usePathname();
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <>
@@ -42,7 +49,12 @@ export function Nav({ orgName, avatar }: { orgName: string; avatar: ReactNode })
             >
               <Icon className="h-5 w-5" />
               {label}
-              {isActive(href) && <span aria-hidden className="ml-auto h-1.5 w-1.5 rounded-full bg-apple" />}
+              {isActive(href) && (
+                <span
+                  aria-hidden
+                  className="ml-auto h-1.5 w-1.5 rounded-full bg-apple"
+                />
+              )}
             </Link>
           ))}
         </nav>
@@ -70,7 +82,12 @@ export function Nav({ orgName, avatar }: { orgName: string; avatar: ReactNode })
           >
             <Icon className="h-6 w-6" />
             {label}
-            {isActive(href) && <span aria-hidden className="absolute top-1 h-1 w-1 rounded-full bg-apple" />}
+            {isActive(href) && (
+              <span
+                aria-hidden
+                className="absolute top-1 h-1 w-1 rounded-full bg-apple"
+              />
+            )}
           </Link>
         ))}
       </nav>
@@ -82,7 +99,16 @@ type IconProps = { className?: string };
 
 function SunIcon({ className }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <circle cx="12" cy="12" r="4" />
       <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
     </svg>
@@ -91,7 +117,16 @@ function SunIcon({ className }: IconProps) {
 
 function BriefcaseIcon({ className }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <rect x="3" y="7" width="18" height="13" rx="2" />
       <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 12h18" />
     </svg>
@@ -100,7 +135,16 @@ function BriefcaseIcon({ className }: IconProps) {
 
 function ClockIcon({ className }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 2" />
     </svg>
@@ -109,7 +153,16 @@ function ClockIcon({ className }: IconProps) {
 
 function ReceiptIcon({ className }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z" />
       <path d="M9 8h6M9 12h6M9 16h4" />
     </svg>
@@ -118,7 +171,16 @@ function ReceiptIcon({ className }: IconProps) {
 
 function ChartIcon({ className }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
     </svg>
   );

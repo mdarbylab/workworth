@@ -12,37 +12,92 @@ import {
 describe("revenueCents", () => {
   it("computes hourly revenue as hours times rate, unrounded hours", () => {
     // $75/hr for 2h 30m (9000s) = $187.50 -> 18750 cents.
-    expect(revenueCents({ billing_type: "hourly", hourly_rate_cents: 7_500, fixed_price_cents: null }, 9_000)).toBe(
-      18_750,
-    );
+    expect(
+      revenueCents(
+        {
+          billing_type: "hourly",
+          hourly_rate_cents: 7_500,
+          fixed_price_cents: null,
+        },
+        9_000,
+      ),
+    ).toBe(18_750);
   });
 
   it("rounds hourly revenue to the nearest cent", () => {
     // $100/hr for 1234 seconds = 100 * 1234/3600 = $34.2777... -> 3428 cents.
-    expect(revenueCents({ billing_type: "hourly", hourly_rate_cents: 10_000, fixed_price_cents: null }, 1_234)).toBe(
-      3_428,
-    );
+    expect(
+      revenueCents(
+        {
+          billing_type: "hourly",
+          hourly_rate_cents: 10_000,
+          fixed_price_cents: null,
+        },
+        1_234,
+      ),
+    ).toBe(3_428);
   });
 
   it("is zero for hourly work with no seconds tracked", () => {
-    expect(revenueCents({ billing_type: "hourly", hourly_rate_cents: 7_500, fixed_price_cents: null }, 0)).toBe(0);
+    expect(
+      revenueCents(
+        {
+          billing_type: "hourly",
+          hourly_rate_cents: 7_500,
+          fixed_price_cents: null,
+        },
+        0,
+      ),
+    ).toBe(0);
   });
 
   it("treats a null hourly rate as zero", () => {
-    expect(revenueCents({ billing_type: "hourly", hourly_rate_cents: null, fixed_price_cents: null }, 3_600)).toBe(0);
+    expect(
+      revenueCents(
+        {
+          billing_type: "hourly",
+          hourly_rate_cents: null,
+          fixed_price_cents: null,
+        },
+        3_600,
+      ),
+    ).toBe(0);
   });
 
   it("returns the fixed price regardless of seconds tracked", () => {
-    expect(revenueCents({ billing_type: "fixed", hourly_rate_cents: null, fixed_price_cents: 50_000 }, 1)).toBe(
-      50_000,
-    );
-    expect(revenueCents({ billing_type: "fixed", hourly_rate_cents: null, fixed_price_cents: 50_000 }, 999_999)).toBe(
-      50_000,
-    );
+    expect(
+      revenueCents(
+        {
+          billing_type: "fixed",
+          hourly_rate_cents: null,
+          fixed_price_cents: 50_000,
+        },
+        1,
+      ),
+    ).toBe(50_000);
+    expect(
+      revenueCents(
+        {
+          billing_type: "fixed",
+          hourly_rate_cents: null,
+          fixed_price_cents: 50_000,
+        },
+        999_999,
+      ),
+    ).toBe(50_000);
   });
 
   it("treats a null fixed price as zero", () => {
-    expect(revenueCents({ billing_type: "fixed", hourly_rate_cents: null, fixed_price_cents: null }, 3_600)).toBe(0);
+    expect(
+      revenueCents(
+        {
+          billing_type: "fixed",
+          hourly_rate_cents: null,
+          fixed_price_cents: null,
+        },
+        3_600,
+      ),
+    ).toBe(0);
   });
 });
 
@@ -134,9 +189,13 @@ describe("roundSeconds", () => {
   });
 
   it("rounds to the nearest increment", () => {
-    expect(roundSeconds(420, { incrementMinutes: 15, mode: "nearest" })).toBe(0);
+    expect(roundSeconds(420, { incrementMinutes: 15, mode: "nearest" })).toBe(
+      0,
+    );
     // 8 minutes (480s) is past the halfway point (450s) to the next increment.
-    expect(roundSeconds(480, { incrementMinutes: 15, mode: "nearest" })).toBe(900);
+    expect(roundSeconds(480, { incrementMinutes: 15, mode: "nearest" })).toBe(
+      900,
+    );
   });
 
   it("passes seconds through unchanged with no config", () => {
@@ -152,19 +211,31 @@ describe("roundSeconds", () => {
 describe("roundingConfigFor", () => {
   it("is off for a free-plan org regardless of the stored setting", () => {
     expect(
-      roundingConfigFor({ plan: "free", time_rounding_minutes: 15, time_rounding_mode: "up" }),
+      roundingConfigFor({
+        plan: "free",
+        time_rounding_minutes: 15,
+        time_rounding_mode: "up",
+      }),
     ).toBeNull();
   });
 
   it("is off for a Pro org with no increment configured", () => {
     expect(
-      roundingConfigFor({ plan: "pro", time_rounding_minutes: null, time_rounding_mode: "nearest" }),
+      roundingConfigFor({
+        plan: "pro",
+        time_rounding_minutes: null,
+        time_rounding_mode: "nearest",
+      }),
     ).toBeNull();
   });
 
   it("returns the configured increment and mode for a Pro org", () => {
     expect(
-      roundingConfigFor({ plan: "pro", time_rounding_minutes: 10, time_rounding_mode: "down" }),
+      roundingConfigFor({
+        plan: "pro",
+        time_rounding_minutes: 10,
+        time_rounding_mode: "down",
+      }),
     ).toEqual({ incrementMinutes: 10, mode: "down" });
   });
 });

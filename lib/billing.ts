@@ -28,12 +28,19 @@ export function subscriptionStatusLabel(
 
   if (!status) return "Pro";
   if (status === "trialing") {
-    if (canceling) return until ? `Free trial — ends ${until}, won't continue to Pro` : "Free trial — won't continue to Pro";
+    if (canceling)
+      return until
+        ? `Free trial — ends ${until}, won't continue to Pro`
+        : "Free trial — won't continue to Pro";
     return until ? `Free trial — ends ${until}` : "Free trial";
   }
   if (status === "past_due") return "Pro — payment failed, update your card";
   if (status === "canceled") return "Pro — canceled";
-  if (status === "incomplete" || status === "incomplete_expired" || status === "unpaid") {
+  if (
+    status === "incomplete" ||
+    status === "incomplete_expired" ||
+    status === "unpaid"
+  ) {
     return "Pro — payment incomplete";
   }
   // active

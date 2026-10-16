@@ -5,7 +5,13 @@ import { useEffect } from "react";
 import { captureException } from "@/components/analytics";
 import { LogoMark } from "@/components/logo";
 
-export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   useEffect(() => {
     console.error(error);
     captureException(error);
@@ -19,10 +25,16 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
         <p className="text-sm text-slate-600">
           Your data is safe. Try again, or head back to Today.
         </p>
-        {error.digest && <p className="text-xs text-slate-400">Reference: {error.digest}</p>}
+        {error.digest && (
+          <p className="text-xs text-slate-400">Reference: {error.digest}</p>
+        )}
         <div className="flex gap-3">
-          <Link href="/today" className="btn-secondary">Today</Link>
-          <button type="button" onClick={reset} className="btn-primary">Try again</button>
+          <Link href="/today" className="btn-secondary">
+            Today
+          </Link>
+          <button type="button" onClick={reset} className="btn-primary">
+            Try again
+          </button>
         </div>
       </div>
     </main>

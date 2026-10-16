@@ -16,7 +16,10 @@ export const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
 };
 
 export function isExpenseCategory(value: unknown): value is ExpenseCategory {
-  return typeof value === "string" && (EXPENSE_CATEGORIES as readonly string[]).includes(value);
+  return (
+    typeof value === "string" &&
+    (EXPENSE_CATEGORIES as readonly string[]).includes(value)
+  );
 }
 
 /** "142.3 mi" for a mileage expense's `miles` column. */
@@ -30,13 +33,19 @@ export function isValidDateKey(value: string): boolean {
   if (!m) return false;
   const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
   const date = new Date(Date.UTC(y, mo - 1, d));
-  return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d;
+  return (
+    date.getUTCFullYear() === y &&
+    date.getUTCMonth() === mo - 1 &&
+    date.getUTCDate() === d
+  );
 }
 
 /** "September 2026" for a "YYYY-MM" or "YYYY-MM-DD" key. */
 export function formatMonth(key: string): string {
   const [y, m] = key.split("-").map(Number);
-  return new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(
-    new Date(Date.UTC(y, m - 1, 1)),
-  );
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(y, m - 1, 1)));
 }

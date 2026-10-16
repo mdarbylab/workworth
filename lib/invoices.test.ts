@@ -3,7 +3,14 @@ import { deriveInvoiceLines, formatInvoiceNumber } from "./invoices";
 import type { Statement, StatementJob, StatementLine } from "./statement";
 
 function line(overrides: Partial<StatementLine> = {}): StatementLine {
-  return { id: "line-1", dayKey: "2026-10-01", seconds: 3_600, notes: null, invoicedInvoiceId: null, ...overrides };
+  return {
+    id: "line-1",
+    dayKey: "2026-10-01",
+    seconds: 3_600,
+    notes: null,
+    invoicedInvoiceId: null,
+    ...overrides,
+  };
 }
 
 function job(overrides: Partial<StatementJob> = {}): StatementJob {
@@ -24,8 +31,20 @@ function job(overrides: Partial<StatementJob> = {}): StatementJob {
 function statement(jobs: StatementJob[]): Statement {
   return {
     organization: {} as Statement["organization"],
-    client: { id: "client-1", name: "Rivera Electric", email: null, phone: null },
-    period: { key: "month", label: "October 2026", from: new Date(), to: new Date(), fromKey: "2026-10-01", toKey: "2026-10-31" },
+    client: {
+      id: "client-1",
+      name: "Rivera Electric",
+      email: null,
+      phone: null,
+    },
+    period: {
+      key: "month",
+      label: "October 2026",
+      from: new Date(),
+      to: new Date(),
+      fromKey: "2026-10-01",
+      toKey: "2026-10-31",
+    },
     jobs,
     totalSeconds: jobs.reduce((s, j) => s + j.seconds, 0),
     totalAmountCents: jobs.reduce((s, j) => s + (j.amountCents ?? 0), 0),
@@ -37,7 +56,13 @@ describe("deriveInvoiceLines", () => {
   it("bills an hourly job's full tracked time when nothing is already invoiced", () => {
     const result = deriveInvoiceLines(statement([job()]));
     expect(result.lines).toEqual([
-      { jobId: "job-1", description: "Kitchen Remodel", quantity: 1, unitCents: 7_500, totalCents: 7_500 },
+      {
+        jobId: "job-1",
+        description: "Kitchen Remodel",
+        quantity: 1,
+        unitCents: 7_500,
+        totalCents: 7_500,
+      },
     ]);
     expect(result.includedEntryIds).toEqual(["line-1"]);
     expect(result.excludedAlreadyInvoicedEntryIds).toEqual([]);
@@ -53,7 +78,13 @@ describe("deriveInvoiceLines", () => {
     });
     const result = deriveInvoiceLines(statement([j]));
     expect(result.lines).toEqual([
-      { jobId: "job-1", description: "Kitchen Remodel", quantity: 0.5, unitCents: 7_500, totalCents: 3_750 },
+      {
+        jobId: "job-1",
+        description: "Kitchen Remodel",
+        quantity: 0.5,
+        unitCents: 7_500,
+        totalCents: 3_750,
+      },
     ]);
     expect(result.includedEntryIds).toEqual(["b"]);
     expect(result.excludedAlreadyInvoicedEntryIds).toEqual(["a"]);
@@ -71,12 +102,21 @@ describe("deriveInvoiceLines", () => {
       billingType: "fixed",
       hourlyRateCents: null,
       fixedPriceCents: 120_000,
-      lines: [line({ id: "a", seconds: 1_000 }), line({ id: "b", seconds: 2_000 })],
+      lines: [
+        line({ id: "a", seconds: 1_000 }),
+        line({ id: "b", seconds: 2_000 }),
+      ],
       amountCents: 120_000,
     });
     const result = deriveInvoiceLines(statement([j]));
     expect(result.lines).toEqual([
-      { jobId: "job-1", description: "Kitchen Remodel (fixed price)", quantity: 1, unitCents: 120_000, totalCents: 120_000 },
+      {
+        jobId: "job-1",
+        description: "Kitchen Remodel (fixed price)",
+        quantity: 1,
+        unitCents: 120_000,
+        totalCents: 120_000,
+      },
     ]);
     expect(result.includedEntryIds).toEqual(["a", "b"]);
   });
@@ -86,7 +126,10 @@ describe("deriveInvoiceLines", () => {
       billingType: "fixed",
       hourlyRateCents: null,
       fixedPriceCents: 120_000,
-      lines: [line({ id: "a", invoicedInvoiceId: "inv-old" }), line({ id: "b" })],
+      lines: [
+        line({ id: "a", invoicedInvoiceId: "inv-old" }),
+        line({ id: "b" }),
+      ],
       amountCents: 120_000,
     });
     const result = deriveInvoiceLines(statement([j]));
@@ -104,7 +147,13 @@ describe("deriveInvoiceLines", () => {
 
   it("produces one line per job across multiple jobs", () => {
     const a = job({ id: "job-a", name: "Job A", lines: [line({ id: "a1" })] });
-    const b = job({ id: "job-b", name: "Job B", lines: [line({ id: "b1", seconds: 7_200 })], seconds: 7_200, amountCents: 15_000 });
+    const b = job({
+      id: "job-b",
+      name: "Job B",
+      lines: [line({ id: "b1", seconds: 7_200 })],
+      seconds: 7_200,
+      amountCents: 15_000,
+    });
     const result = deriveInvoiceLines(statement([a, b]));
     expect(result.lines.map((l) => l.description)).toEqual(["Job A", "Job B"]);
   });

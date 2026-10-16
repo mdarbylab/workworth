@@ -10,7 +10,9 @@ export function InviteForm() {
 
   return (
     <form action={action} className="space-y-3 border-t border-slate-100 pt-4">
-      <label htmlFor="invite_email" className="label">Invite someone</label>
+      <label htmlFor="invite_email" className="label">
+        Invite someone
+      </label>
       <div className="flex gap-2">
         <input
           id="invite_email"
@@ -20,7 +22,11 @@ export function InviteForm() {
           className="input"
           placeholder="their@email.com"
         />
-        <button type="submit" disabled={pending} className="btn-primary w-auto shrink-0 px-4">
+        <button
+          type="submit"
+          disabled={pending}
+          className="btn-primary w-auto shrink-0 px-4"
+        >
           {pending ? "…" : "Invite"}
         </button>
       </div>

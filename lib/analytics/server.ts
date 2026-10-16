@@ -1,9 +1,19 @@
 import { after } from "next/server";
-import { analyticsEnabled, posthogHost, posthogKey, type EventName, type EventProps } from "./events";
+import {
+  analyticsEnabled,
+  posthogHost,
+  posthogKey,
+  type EventName,
+  type EventProps,
+} from "./events";
 
 type Target = { userId: string; organizationId?: string | null };
 
-async function send(event: string, target: Target, props: Record<string, unknown> = {}) {
+async function send(
+  event: string,
+  target: Target,
+  props: Record<string, unknown> = {},
+) {
   try {
     await fetch(`${posthogHost}/capture/`, {
       method: "POST",
@@ -16,7 +26,9 @@ async function send(event: string, target: Target, props: Record<string, unknown
         properties: {
           ...props,
           $lib: "workworth-server",
-          ...(target.organizationId ? { $groups: { organization: target.organizationId } } : {}),
+          ...(target.organizationId
+            ? { $groups: { organization: target.organizationId } }
+            : {}),
         },
       }),
       signal: AbortSignal.timeout(3000),
@@ -40,11 +52,21 @@ export function trackException(error: unknown, context: EventProps = {}) {
   if (!analyticsEnabled) return;
   const err = error instanceof Error ? error : new Error(String(error));
   after(() =>
-    send("$exception", { userId: "server" }, {
-      ...context,
-      $exception_list: [{ type: err.name, value: err.message, stacktrace: { type: "raw", frames: [] } }],
-      $exception_message: err.message,
-      $exception_type: err.name,
-    }),
+    send(
+      "$exception",
+      { userId: "server" },
+      {
+        ...context,
+        $exception_list: [
+          {
+            type: err.name,
+            value: err.message,
+            stacktrace: { type: "raw", frames: [] },
+          },
+        ],
+        $exception_message: err.message,
+        $exception_type: err.name,
+      },
+    ),
   );
 }

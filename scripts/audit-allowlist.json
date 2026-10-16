@@ -1,0 +1,11 @@
+{
+  "$comment": "Dev-only advisories deliberately deferred. Each needs a reason and a review-by date; scripts/audit.mjs fails once the date passes, or at once if the advisory reaches a production dependency. Decision: docs/adr/0004-adopt-firm-handbook.md.",
+  "advisories": [
+    {
+      "id": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "reason": "Reached only through eslint-config-next (fast-glob, @next/eslint-plugin-next). Lint tooling, never runs in the deployed app; the only fix is a breaking downgrade to eslint-config-next@14.",
+      "reviewBy": "2026-11-16"
+    }
+  ]
+}

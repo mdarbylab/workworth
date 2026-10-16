@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { effectiveRateCents, revenueCents, roundSeconds, type BillingFields, type RoundingConfig } from "@/lib/calc";
+import {
+  effectiveRateCents,
+  revenueCents,
+  roundSeconds,
+  type BillingFields,
+  type RoundingConfig,
+} from "@/lib/calc";
 import type { Period } from "@/lib/periods";
 
 export type JobRow = {
@@ -28,18 +34,25 @@ export type Report = {
  * in full in any period with activity on the job (§8.2). Expenses without a
  * job count toward the org total but no job.
  */
-export async function buildReport(period: Period, rounding: RoundingConfig): Promise<Report> {
+export async function buildReport(
+  period: Period,
+  rounding: RoundingConfig,
+): Promise<Report> {
   const supabase = await createClient();
   const [{ data: entries }, { data: expenses }] = await Promise.all([
     supabase
       .from("time_entries")
-      .select("job_id, duration_seconds, jobs(name, billing_type, hourly_rate_cents, fixed_price_cents, clients(name))")
+      .select(
+        "job_id, duration_seconds, jobs(name, billing_type, hourly_rate_cents, fixed_price_cents, clients(name))",
+      )
       .not("stopped_at", "is", null)
       .gte("started_at", period.from.toISOString())
       .lt("started_at", period.to.toISOString()),
     supabase
       .from("expenses")
-      .select("job_id, amount_cents, jobs(name, billing_type, hourly_rate_cents, fixed_price_cents, clients(name))")
+      .select(
+        "job_id, amount_cents, jobs(name, billing_type, hourly_rate_cents, fixed_price_cents, clients(name))",
+      )
       .gte("spent_on", period.fromKey)
       .lte("spent_on", period.toKey),
   ]);
@@ -53,10 +66,20 @@ export async function buildReport(period: Period, rounding: RoundingConfig): Pro
     expensesCents: number;
   };
   const byJob = new Map<string, Acc>();
-  const bucket = (jobId: string, job: NonNullable<NonNullable<typeof entries>[number]["jobs"]>) => {
+  const bucket = (
+    jobId: string,
+    job: NonNullable<NonNullable<typeof entries>[number]["jobs"]>,
+  ) => {
     let a = byJob.get(jobId);
     if (!a) {
-      a = { name: job.name, clientName: job.clients?.name ?? null, billing: job, seconds: 0, billableSeconds: 0, expensesCents: 0 };
+      a = {
+        name: job.name,
+        clientName: job.clients?.name ?? null,
+        billing: job,
+        seconds: 0,
+        billableSeconds: 0,
+        expensesCents: 0,
+      };
       byJob.set(jobId, a);
     }
     return a;
@@ -72,7 +95,8 @@ export async function buildReport(period: Period, rounding: RoundingConfig): Pro
 
   let unassignedCents = 0;
   for (const x of expenses ?? []) {
-    if (x.job_id && x.jobs) bucket(x.job_id, x.jobs).expensesCents += x.amount_cents;
+    if (x.job_id && x.jobs)
+      bucket(x.job_id, x.jobs).expensesCents += x.amount_cents;
     else unassignedCents += x.amount_cents;
   }
 
@@ -111,5 +135,12 @@ export async function buildReport(period: Period, rounding: RoundingConfig): Pro
   const spent = rows.reduce((s, r) => s + r.expensesCents, 0);
   const profit = revenue - spent;
 
-  return { seconds, revenueCents: revenue, expensesCents: spent, profitCents: profit, rateCents: effectiveRateCents(profit, seconds), rows };
+  return {
+    seconds,
+    revenueCents: revenue,
+    expensesCents: spent,
+    profitCents: profit,
+    rateCents: effectiveRateCents(profit, seconds),
+    rows,
+  };
 }

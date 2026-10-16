@@ -11,11 +11,15 @@ describe("subscriptionStatusLabel", () => {
   });
 
   it("renders trialing with the trial end date", () => {
-    expect(subscriptionStatusLabel("trialing", periodEnd, null, NY)).toBe("Free trial — ends Wed, Jul 15");
+    expect(subscriptionStatusLabel("trialing", periodEnd, null, NY)).toBe(
+      "Free trial — ends Wed, Jul 15",
+    );
   });
 
   it("renders trialing without a date if none is known", () => {
-    expect(subscriptionStatusLabel("trialing", null, null, NY)).toBe("Free trial");
+    expect(subscriptionStatusLabel("trialing", null, null, NY)).toBe(
+      "Free trial",
+    );
   });
 
   it("renders a canceled trial using cancel_at, not current_period_end", () => {
@@ -33,11 +37,15 @@ describe("subscriptionStatusLabel", () => {
   });
 
   it("renders active as a renewal date", () => {
-    expect(subscriptionStatusLabel("active", periodEnd, null, NY)).toBe("Pro — renews Wed, Jul 15");
+    expect(subscriptionStatusLabel("active", periodEnd, null, NY)).toBe(
+      "Pro — renews Wed, Jul 15",
+    );
   });
 
   it("renders active-but-canceling as an end date from cancel_at", () => {
-    expect(subscriptionStatusLabel("active", periodEnd, trialEnd, NY)).toBe("Pro — ends Fri, Jul 10");
+    expect(subscriptionStatusLabel("active", periodEnd, trialEnd, NY)).toBe(
+      "Pro — ends Fri, Jul 10",
+    );
   });
 
   it("renders past_due with a call to action", () => {
@@ -47,12 +55,20 @@ describe("subscriptionStatusLabel", () => {
   });
 
   it("renders canceled plainly", () => {
-    expect(subscriptionStatusLabel("canceled", periodEnd, null, NY)).toBe("Pro — canceled");
+    expect(subscriptionStatusLabel("canceled", periodEnd, null, NY)).toBe(
+      "Pro — canceled",
+    );
   });
 
   it("renders the incomplete states as payment incomplete", () => {
-    for (const status of ["incomplete", "incomplete_expired", "unpaid"] as const) {
-      expect(subscriptionStatusLabel(status, periodEnd, null, NY)).toBe("Pro — payment incomplete");
+    for (const status of [
+      "incomplete",
+      "incomplete_expired",
+      "unpaid",
+    ] as const) {
+      expect(subscriptionStatusLabel(status, periodEnd, null, NY)).toBe(
+        "Pro — payment incomplete",
+      );
     }
   });
 });

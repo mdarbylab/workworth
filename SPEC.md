@@ -4,9 +4,16 @@
 **Owner:** Darby
 **Promise:** Know where your time goes, what you earned, and what you actually made.
 
+Requirement IDs for everything below are in [docs/requirements.md](docs/requirements.md);
+each section names the ones it owns. Decisions are in [docs/adr/](docs/adr/). The
+project follows the firm handbook named in `HANDBOOK_VERSION` (ADR 0004): this spec
+is a living document, edited in the same PR as the code it describes.
+
 ---
 
 ## 1. Locked requirements
+
+Requirements: REQ-001, REQ-002.
 
 These do not change without Darby's say-so.
 
@@ -16,6 +23,8 @@ These do not change without Darby's say-so.
 4. **Ambition:** a real commercial product, not a prototype. Foundation must handle real customers, multiple organizations, billing, and data security even though the v1 feature set is small.
 
 ## 2. What v1 is
+
+Requirements: REQ-003.
 
 The entire product revolves around one loop:
 
@@ -50,6 +59,8 @@ A feature ships only if it answers yes to: *Does this make it easier for a small
 
 ### 5.0 Signed-out landing (Sprint 4, 2026-10-06)
 
+Requirements: REQ-004, REQ-005.
+
 A visitor with no session who hits `/` sees a real marketing page, not a
 bare login form. Header (wordmark, Sign in / Get started) · hero (the
 promise from the top of this doc, two CTAs) · the §2 "aha moment" example,
@@ -65,6 +76,8 @@ Navigation is a bottom bar on phone and a left rail on desktop. Five items:
 
 ### 5.1 Today (home)
 
+Requirements: REQ-006, REQ-007.
+
 - Greeting + date.
 - Job picker (defaults to the last-used job).
 - Big timer. One button: **START** / **STOP**.
@@ -78,6 +91,8 @@ Navigation is a bottom bar on phone and a left rail on desktop. Five items:
 
 ### 5.2 Jobs
 
+Requirements: REQ-009.
+
 - List of active jobs. Each card: name, client, billing type, hours tracked, revenue, expenses, profit, effective rate.
 - **+ New Job** → name, client (optional, type-ahead creates if new), billing type (hourly rate or fixed price), rate/price, estimated hours (optional), notes.
 - Job detail: the summary block above + time entries for that job + expenses for that job + Archive button.
@@ -85,12 +100,16 @@ Navigation is a bottom bar on phone and a left rail on desktop. Five items:
 
 ### 5.3 Time
 
+Requirements: REQ-010, REQ-025, REQ-035.
+
 - Chronological list of time entries, grouped by day, filterable by job and person.
 - **+ Add time** for manual entries (job, start, stop OR duration, notes).
 - Tap an entry to edit. Editing never overwrites history (see §8.4).
 - Owner sees everyone; member sees only their own.
 
 ### 5.4 Expenses
+
+Requirements: REQ-011, REQ-046.
 
 - List grouped by day; month total at top.
 - **+ Add expense** → amount, date (defaults today), job (optional), category, description.
@@ -114,6 +133,8 @@ Navigation is a bottom bar on phone and a left rail on desktop. Five items:
 
 ### 5.5 Reports
 
+Requirements: REQ-012, REQ-013, REQ-014.
+
 Answers four questions for a selected period (this week / this month / last month / custom):
 
 ```
@@ -128,15 +149,19 @@ Then a breakdown table by job. **Export CSV** for time entries and for expenses.
 
 ### 5.6 Settings
 
+Requirements: REQ-015.
+
 - Business: name, timezone, currency (USD only in v1, field exists), and optional address, phone and contact email used only as the letterhead on client reports (§5.8).
 - Mileage: rate per mile, used to compute mileage expenses (§5.4, Sprint 7). Free-plan too.
 - People: list of members (max 2 on free). **Invite** by email. Remove member.
 - Account: email, password, delete account.
-- Plan: shows "Free — 2 of 2 seats used" and, when both seats are used, the only upsell in the product: *Add another person → upgrade.* (Upgrade is a waitlist link in v1, not a checkout.)
+- Plan: shows "Free — 2 of 2 seats used" and, when both seats are used, the only upsell in the product: *Add another person → upgrade.* (A waitlist link in v1; since Sprint 3 it opens Stripe Checkout, §9.)
 - Legal: links to the Privacy Policy, Terms of Service and Impressum, plus a
   control to revisit the cookie-analytics choice.
 
 ### 5.7 Auth & onboarding
+
+Requirements: REQ-002, REQ-016, REQ-017.
 
 1. Sign up: name, email, password — or magic link. The name is required, because people are shown by name and never by email address.
 2. "What's your business called?" → creates the organization, user becomes its creator.
@@ -154,6 +179,8 @@ password, then straight into the app — no separate sign-in step after.
 An invite link is its own front door. Someone who follows `/invite/<token>` without an account sees who invited them and to what, and goes straight to sign-up with their email filled in — never to a bare login form they have to find their way out of.
 
 ### 5.8 Client report
+
+Requirements: REQ-018.
 
 The one screen whose output leaves the business. Picked from Reports: choose a client, get a printable document covering the selected period.
 
@@ -173,6 +200,8 @@ Rules:
 - Output is the browser's print-to-PDF. No PDF library in v1.
 
 ### 5.9 Invoices (Sprint 6, 2026-10-09, Pro only)
+
+Requirements: REQ-019, REQ-020, REQ-021, REQ-022.
 
 Created from a client report, not a separate form: on the Client report
 screen, **Save as invoice** turns the statement's job breakdown into a
@@ -214,6 +243,8 @@ Invoicing itself is Pro only (§9); a free-plan business doesn't see the
 
 ## 6. Two-person model
 
+Requirements: REQ-023 to REQ-027.
+
 - **Organization** is the fundamental object. Every record belongs to an organization.
 - A user can belong to exactly one organization in v1.
 - **On the free plan the two people are peers.** Both see all of the business's time, expenses and reports, both can edit jobs and business settings, and both can invite. Role separation is what an upgrade buys, not something the free plan withholds.
@@ -231,6 +262,8 @@ Invoicing itself is Pro only (§9); a free-plan business doesn't see the
 ---
 
 ## 7. Data model (Postgres / Supabase)
+
+Requirements: REQ-008, REQ-028, REQ-029, REQ-030.
 
 All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables have `organization_id` and Row Level Security keyed on it.
 
@@ -261,6 +294,8 @@ Rules:
 ## 8. Calculation rules
 
 ### 8.1 Time
+
+Requirements: REQ-010, REQ-031, REQ-032.
 - Duration = `stopped_at − started_at`, in seconds. Displayed as `Xh Ym`.
 - Stored duration is never rounded. **Billing rounding** (Pro, Sprint 7,
   2026-10-11) is a per-org setting (off by default) that rounds each time
@@ -274,10 +309,14 @@ Rules:
 - An entry cannot stop before it starts; max single entry 24h (longer → warn, allow).
 
 ### 8.2 Revenue
+
+Requirements: REQ-033.
 - Hourly job: `revenue = hours × hourly_rate` where hours = total tracked seconds ÷ 3600 (not rounded).
 - Fixed job: `revenue = fixed_price` regardless of hours.
 
 ### 8.3 Profit and rate
+
+Requirements: REQ-034.
 - `profit = revenue − sum(expenses on that job)`
 - `effective_rate = profit ÷ hours`. If hours = 0, show "—", never divide by zero.
   Also "—" under one minute of tracked time: the duration display itself
@@ -289,6 +328,8 @@ Rules:
 - Everything is labeled "estimated" until invoicing exists.
 
 ### 8.4 Edit history
+
+Requirements: REQ-035.
 - Every create/update/delete on `time_entries` and `expenses` writes an `audit_events` row with before/after snapshots.
 - The UI shows "Edited" on changed entries; tapping shows the original values.
 - Nothing is silently overwritten. This is the trust feature.
@@ -297,11 +338,13 @@ Rules:
 
 ## 9. Free vs paid boundary
 
+Requirements: REQ-001, REQ-022, REQ-025, REQ-026, REQ-036, REQ-037, REQ-046.
+
 **Free — $0 forever:** 2 people, unlimited jobs and time entries, expenses, dashboard, reports, CSV export.
 
 **Pro — $25/mo or $240/yr ($20/mo billed annually), 14-day free trial,
 self-serve via Stripe Checkout (Sprint 3, 2026-10-04; repriced 2026-10-07
-— see "Where things stand" in CLAUDE.md for the reasoning):** real **roles
+— see [docs/history.md](docs/history.md) for the reasoning):** real **roles
 and permissions** — `auth_is_owner()` already splits owner/member once
 `plan = 'pro'`, so this activates the moment a checkout completes, with no
 separate UI to build. **Up to 10 people** (Sprint 5, 2026-10-07) — §6 has
@@ -336,11 +379,13 @@ exist exactly so this was a data/webhook change, not a rewrite — see §7.
 - **Hosting:** Netlify (already connected). Preview deploys per branch.
 - **Payments:** Stripe Checkout (subscriptions) + Stripe Customer Portal, live as of Sprint 3.
 - **Analytics:** PostHog free tier (or Plausible). Events listed in §12.
-- **Repo:** github.com/<darby>/workworth (private).
+- **Repo:** github.com/mdarbylab/workworth (public, so nothing in it may identify a customer or hold a credential).
 
 ---
 
 ## 11. Security
+
+Requirements: REQ-030, REQ-038 to REQ-044, REQ-046.
 
 - RLS on every org-scoped table; no client query can read another org's rows.
 - All writes go through server actions that re-check membership and role.
@@ -349,7 +394,7 @@ exist exactly so this was a data/webhook change, not a rewrite — see §7.
   the org id in the object path and on the caller's own access to the expense; viewing
   is only by signed links that expire after a minute.
 - Secrets in Netlify/Supabase env vars, never in the repo. `.env*` is gitignored from commit one.
-- Supabase daily backups on. Point-in-time recovery when there are paying customers.
+- Backups: the Supabase free plan has none, so a nightly GitHub Actions job dumps the database, encrypts it and stores it in a separate private repository ([docs/backups.md](docs/backups.md)). Point-in-time recovery **(planned)**: when there are paying customers, which needs the Supabase Pro plan.
 - No selling or sharing of user data. Minimal personal data collected (email only).
 - Browser analytics only run after the visitor accepts the cookie banner; a
   decline (or no answer) means the PostHog client never loads. `/privacy`,
@@ -360,6 +405,8 @@ exist exactly so this was a data/webhook change, not a rewrite — see §7.
 
 ## 12. Analytics events
 
+Requirements: REQ-041.
+
 `signup`, `org_created`, `job_created`, `timer_started`, `timer_stopped`, `time_entry_manual`, `time_entry_edited`, `expense_added`, `report_viewed`, `client_report_viewed`, `csv_exported`, `member_invited`, `member_joined`, `seat_limit_hit`, `checkout_started`, `checkout_completed`, `invoice_created`, `invoice_sent`, `invoice_paid`, `invoice_voided`.
 
 **North-star metric for v1:** % of new users who track time on 3 different days in their first 2 weeks. If this is bad, we fix the product before adding features.
@@ -368,31 +415,61 @@ exist exactly so this was a data/webhook change, not a rewrite — see §7.
 
 ## 13. Acceptance criteria (v1 done when all pass)
 
-1. New user reaches a running timer within 60 seconds of landing on signup.
-2. Timer survives page refresh, tab close, and phone lock; elapsed time is correct.
-3. Two people in one org can each track time and expenses, and on the free plan each sees the whole business. Neither can remove the other; only the creator can delete the business, and neither can promote themselves.
-4. A third invite is refused server-side with a clear message.
-5. Job summary numbers match a hand calculation for one hourly job and one fixed job with expenses.
-6. Editing a time entry keeps the original visible in history.
-7. Reports for "this month" match the sum of the underlying entries.
-8. CSV export opens cleanly in Excel with correct times in the org's timezone.
-9. No org can read another org's data (tested with two accounts).
-10. Works on iPhone Safari, Android Chrome, and desktop Chrome at 375px and 1280px widths.
-11. Deployed on Netlify with a production Supabase project; env vars not in repo.
-12. A client report shows hours, and amounts only when the toggle is on. It never shows expenses, profit, or effective hourly rate, and it prints on one clean page per few jobs with no app chrome.
+1. New user reaches a running timer within 60 seconds of landing on signup. (REQ-003)
+2. Timer survives page refresh, tab close, and phone lock; elapsed time is correct. (REQ-006)
+3. Two people in one org can each track time and expenses, and on the free plan each sees the whole business. Neither can remove the other; only the creator can delete the business, and neither can promote themselves. (REQ-024)
+4. A third invite is refused server-side with a clear message. (REQ-026)
+5. Job summary numbers match a hand calculation for one hourly job and one fixed job with expenses. (REQ-033, REQ-034)
+6. Editing a time entry keeps the original visible in history. (REQ-035)
+7. Reports for "this month" match the sum of the underlying entries. (REQ-013)
+8. CSV export opens cleanly in Excel with correct times in the org's timezone. (REQ-014)
+9. No org can read another org's data (tested with two accounts). (REQ-038)
+10. Works on iPhone Safari, Android Chrome, and desktop Chrome at 375px and 1280px widths. (REQ-045)
+11. Deployed on Netlify with a production Supabase project; env vars not in repo. (REQ-040)
+12. A client report shows hours, and amounts only when the toggle is on. It never shows expenses, profit, or effective hourly rate, and it prints on one clean page per few jobs with no app chrome. (REQ-018)
 
 ---
 
-## 14. Build order
+## 14. Build order (slices)
 
-| Sprint | Scope |
+Sprints are retired (ADR 0004, firm ADR 0002). Work now moves as thin
+end-to-end slices on a Kanban board, at most two in progress, each tracing to
+requirement IDs. The order below is the owner's, set on 2026-10-09 when the
+last sprints were scoped; it carries over unchanged.
+
+### Done
+
+| Slice | Scope |
 |---|---|
-| 1 — Foundation | repo, Next.js, Supabase project, schema + RLS, auth, org creation, onboarding, nav shell |
-| 2 — Time | jobs, timer, manual entries, edit with history, Today screen totals |
-| 3 — Money | hourly/fixed pricing, expenses, revenue/profit/rate on jobs |
-| 4 — Reports | period selector, four questions, per-job table, CSV export |
-| 5 — Team | invites, member role, seat limit, Settings |
-| 6 — Polish | empty states, errors, loading, PWA, mobile QA |
-| 7 — Beta | Netlify prod, analytics, feedback link, monitoring, upgrade waitlist |
+| v1, sprints 1–7 | Foundation, time, money, reports, team, polish, beta. Launched as the free 2-person version (2026-09-26). |
+| Sprint 3 (post-launch) | Pro billing via Stripe Checkout and Customer Portal (§9) |
+| Sprint 4 | Signed-out landing page and SEO (§5.0) |
+| Sprint 5 | 10-person seat cap for Pro, plus the seat-limit health check (§6) |
+| Sprint 6 | Invoicing (§5.9) |
+| Sprint 7 | Mileage expenses (§5.4) and billing rounding (§8.1) |
+| Sprint 8 | Receipt attachments on expenses (§5.4) |
 
-Then launch the free 2-person version.
+What happened in each, and why, is in [docs/history.md](docs/history.md).
+
+### Next, in order
+
+| Slice | Scope | Requirements |
+|---|---|---|
+| SL-01 | Live check of the 10-seat cap through the real invite, signup and accept screens: invite up to 10 accounts on the live Pro org, confirm each accepts, confirm the 11th is refused with the plan-aware message. Needs the owner (real accounts and sign-in are off-limits to Claude). Not blocking anything: the database-level limit was already proven live on 2026-10-07. | REQ-026 |
+| SL-02 | **Tax estimates, part 1: consent gate and self-employment tax.** The one-time disclaimer (an estimate, not tax advice, consult a professional) with explicit agreement recorded per account before the feature unlocks; then self-employment tax (15.3% plus additional Medicare above the threshold) shown as "set aside this much" per quarter against the four IRS due dates (Apr 15, Jun 15, Sep 15, Jan 15). Rates come from a `tax_year`-versioned table, never hardcoded. Needs an ADR first (data model). | REQ-047, REQ-048 |
+| SL-03 | **Tax estimates, part 2: federal income tax**, bracket-based, with filing status as an input. | REQ-047 |
+| SL-04 | **Tax estimates, part 3: state.** No-tax and flat-rate states get an exact estimate; progressive-bracket states (CA, NY and others) get a clearly labelled single effective-rate approximation with extra caveat language, not full bracket modelling. | REQ-047 |
+| SL-05 | **Security-hardening close**, before any integration opens an external connection: re-audit every RLS policy and security-definer function added since Sprint 5 (seat limit, invoicing, mileage, receipts and their storage policies, tax estimates) for consistency and least privilege; re-check the receipt bucket's policies; revisit the deferred Supabase performance lints; run the `security-review` skill as a structured pass; add an automated cross-tenant leak test suite (handbook quality gate, **(planned)** here). | REQ-038, REQ-039 |
+
+Tax estimates are a cash-flow planning estimate, not a filing tool: no
+e-filing and no return math. Two decisions were taken knowingly on
+2026-10-09: federal **and** state, not federal only; and approximating
+progressive-bracket states rather than modelling them. Still open: who
+updates the rate tables each January (decide when SL-02 is picked up).
+
+### Backlog (not yet scoped)
+
+- **Integrations.** No target named yet; "integrations" alone names nothing
+  concrete. Comes after SL-05 on purpose: more external connections want a
+  harder perimeter first. Scope it, with a requirement ID, once there is a
+  specific integration in mind.

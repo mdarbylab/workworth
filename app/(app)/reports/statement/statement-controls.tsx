@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createInvoiceFromStatement, type InvoiceFormState } from "../invoices/actions";
+import {
+  createInvoiceFromStatement,
+  type InvoiceFormState,
+} from "../invoices/actions";
 
 const initialInvoiceState: InvoiceFormState = {};
 
@@ -42,7 +45,9 @@ export function StatementControls({
 
   return (
     <div className="no-print mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
-      <Link href="/reports" className="text-sm text-slate-600 hover:underline">← Reports</Link>
+      <Link href="/reports" className="text-sm text-slate-600 hover:underline">
+        ← Reports
+      </Link>
 
       <label className="flex items-center gap-2 text-sm font-medium">
         <input
@@ -60,7 +65,11 @@ export function StatementControls({
           <input type="hidden" name="period" value={periodKey} />
           <input type="hidden" name="from" value={fromKey} />
           <input type="hidden" name="to" value={toKey} />
-          <button type="submit" disabled={invoicePending} className="btn-secondary w-auto px-3 py-2 text-sm">
+          <button
+            type="submit"
+            disabled={invoicePending}
+            className="btn-secondary w-auto px-3 py-2 text-sm"
+          >
             {invoicePending ? "Saving…" : "Save as invoice"}
           </button>
           {invoiceState.error && <p className="error">{invoiceState.error}</p>}

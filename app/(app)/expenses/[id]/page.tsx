@@ -4,7 +4,12 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { formatDateTime } from "@/lib/dates";
 import { formatCents } from "@/lib/calc";
-import { CATEGORY_LABELS, formatMiles, isExpenseCategory, type ExpenseCategory } from "@/lib/expenses";
+import {
+  CATEGORY_LABELS,
+  formatMiles,
+  isExpenseCategory,
+  type ExpenseCategory,
+} from "@/lib/expenses";
 import type { Json } from "@/lib/supabase/types";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { ExpenseForm } from "../expense-form";
@@ -25,7 +30,12 @@ type Snapshot = {
 function asSnapshot(json: Json | null): Snapshot | null {
   if (!json || typeof json !== "object" || Array.isArray(json)) return null;
   const o = json as Record<string, Json | undefined>;
-  if (typeof o.amount_cents !== "number" || typeof o.spent_on !== "string" || !isExpenseCategory(o.category)) return null;
+  if (
+    typeof o.amount_cents !== "number" ||
+    typeof o.spent_on !== "string" ||
+    !isExpenseCategory(o.category)
+  )
+    return null;
   return {
     amount_cents: o.amount_cents,
     spent_on: o.spent_on,
@@ -37,29 +47,36 @@ function asSnapshot(json: Json | null): Snapshot | null {
   };
 }
 
-export default async function EditExpensePage({ params }: PageProps<"/expenses/[id]">) {
+export default async function EditExpensePage({
+  params,
+}: PageProps<"/expenses/[id]">) {
   const { id } = await params;
   const ctx = await getSessionContext();
   if (!ctx?.organization) redirect("/onboarding");
   const tz = ctx.organization.timezone;
 
   const supabase = await createClient();
-  const [{ data: expense }, { data: jobs }, { data: events }] = await Promise.all([
-    supabase.from("expenses").select("*").eq("id", id).maybeSingle(),
-    supabase.from("jobs").select("id, name, status").order("name"),
-    supabase
-      .from("audit_events")
-      .select("id, action, before, after, created_at")
-      .eq("table_name", "expenses")
-      .eq("record_id", id)
-      .eq("action", "update")
-      .order("created_at", { ascending: true }),
-  ]);
+  const [{ data: expense }, { data: jobs }, { data: events }] =
+    await Promise.all([
+      supabase.from("expenses").select("*").eq("id", id).maybeSingle(),
+      supabase.from("jobs").select("id, name, status").order("name"),
+      supabase
+        .from("audit_events")
+        .select("id, action, before, after, created_at")
+        .eq("table_name", "expenses")
+        .eq("record_id", id)
+        .eq("action", "update")
+        .order("created_at", { ascending: true }),
+    ]);
   if (!expense) notFound();
 
   const jobName = (jobId: string | null) =>
-    jobId === null ? "No job" : (jobs?.find((j) => j.id === jobId)?.name ?? "Unknown job");
-  const pickable = (jobs ?? []).filter((j) => j.status === "active" || j.id === expense.job_id);
+    jobId === null
+      ? "No job"
+      : (jobs?.find((j) => j.id === jobId)?.name ?? "Unknown job");
+  const pickable = (jobs ?? []).filter(
+    (j) => j.status === "active" || j.id === expense.job_id,
+  );
 
   // §8.4: original values come from the first update's "before" snapshot.
   const edits = events ?? [];
@@ -72,7 +89,9 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Edit expense</h1>
         {edits.length > 0 && (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">Edited</span>
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+            Edited
+          </span>
         )}
       </div>
 
@@ -85,7 +104,9 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
           submitLabel="Save changes"
           cancelHref="/expenses"
           canAttachReceipt={ctx.organization.plan === "pro"}
-          receiptHref={expense.receipt_path ? `/expenses/${expense.id}/receipt` : null}
+          receiptHref={
+            expense.receipt_path ? `/expenses/${expense.id}/receipt` : null
+          }
           defaults={{
             amount: (expense.amount_cents / 100).toFixed(2),
             miles: expense.miles !== null ? String(expense.miles) : "",
@@ -101,7 +122,9 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
         <section className="card space-y-3">
           <h2 className="font-semibold">History</h2>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Original</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500">
+              Original
+            </p>
             <p className="text-sm">{describe(original)}</p>
           </div>
           <ol className="space-y-2 border-t border-slate-100 pt-3">
@@ -117,7 +140,9 @@ export default async function EditExpensePage({ params }: PageProps<"/expenses/[
               );
             })}
           </ol>
-          <p className="text-xs text-slate-400">Nothing is overwritten — every change is kept.</p>
+          <p className="text-xs text-slate-400">
+            Nothing is overwritten — every change is kept.
+          </p>
         </section>
       )}
 

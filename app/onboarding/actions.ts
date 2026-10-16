@@ -26,7 +26,8 @@ export async function createOrganization(
 ): Promise<OnboardingState> {
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Give your business a name." };
-  if (name.length > 120) return { error: "That name is a bit long — keep it under 120 characters." };
+  if (name.length > 120)
+    return { error: "That name is a bit long — keep it under 120 characters." };
   const timezone = normalizeTimezone(String(formData.get("timezone") ?? ""));
 
   const supabase = await createClient();
@@ -39,15 +40,26 @@ export async function createOrganization(
     return { error: "Couldn't create your business. Please try again." };
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (user) {
     // Move the name from signup onto the membership, where teammates can read it.
     const displayName =
-      typeof user.user_metadata?.display_name === "string" ? user.user_metadata.display_name.trim() : "";
+      typeof user.user_metadata?.display_name === "string"
+        ? user.user_metadata.display_name.trim()
+        : "";
     if (displayName) {
-      await supabase.from("memberships").update({ display_name: displayName }).eq("user_id", user.id);
+      await supabase
+        .from("memberships")
+        .update({ display_name: displayName })
+        .eq("user_id", user.id);
     }
-    track("org_created", { userId: user.id, organizationId: orgId }, { timezone });
+    track(
+      "org_created",
+      { userId: user.id, organizationId: orgId },
+      { timezone },
+    );
   }
 
   redirect("/onboarding");
@@ -64,7 +76,8 @@ export async function createFirstJob(
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "What should we call this job?" };
 
-  const billingType = formData.get("billing_type") === "fixed" ? "fixed" : "hourly";
+  const billingType =
+    formData.get("billing_type") === "fixed" ? "fixed" : "hourly";
   const cents = parseDollars(String(formData.get("amount") ?? ""));
   if (cents !== null && Number.isNaN(cents)) {
     return { error: "Enter a valid amount, or leave it blank." };
@@ -80,10 +93,14 @@ export async function createFirstJob(
   });
   if (error) return { error: "Couldn't save that job. Please try again." };
 
-  track("job_created", { userId: ctx.user.id, organizationId: ctx.membership.organization_id }, {
-    billing_type: billingType,
-    onboarding: true,
-  });
+  track(
+    "job_created",
+    { userId: ctx.user.id, organizationId: ctx.membership.organization_id },
+    {
+      billing_type: billingType,
+      onboarding: true,
+    },
+  );
 
   redirect("/today");
 }

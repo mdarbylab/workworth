@@ -1,0 +1,8 @@
+# Generated or vendored
+.next/
+node_modules/
+package-lock.json
+next-env.d.ts
+lib/supabase/types.ts
+# Prose: tables and hand-wrapped text are kept as written
+*.md
