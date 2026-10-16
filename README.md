@@ -2,7 +2,10 @@
 
 Know where your time goes, what you earned, and what you actually made.
 
-See `SPEC.md` for the product spec and `CLAUDE.md` for working conventions.
+See `SPEC.md` for the product spec, `docs/requirements.md` for requirement IDs,
+`docs/adr/` for decisions, `docs/operations.md` for what is live, and
+`CLAUDE.md` for the working rules. The project follows the firm handbook
+version in `HANDBOOK_VERSION`.
 
 ## Local development
 
@@ -12,7 +15,8 @@ cp .env.example .env.local   # fill in SUPABASE_SERVICE_ROLE_KEY only if needed
 npm run dev                  # http://localhost:3000
 ```
 
-Checks: `npm run lint` and `npm run build`.
+Checks: `npm run verify` runs every gate (secret scan, dependency audit, types,
+lint, tests, build), the same command CI runs.
 
 ### Running the UI without Supabase access
 
