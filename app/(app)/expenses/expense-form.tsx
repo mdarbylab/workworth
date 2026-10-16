@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import type { ExpenseFormState } from "./actions";
 import { CATEGORY_LABELS, EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/expenses";
 import { formatCents } from "@/lib/calc";
+import { RECEIPT_ACCEPT } from "@/lib/receipts";
 
 export type ExpenseDefaults = {
   amount: string;
@@ -23,11 +24,25 @@ type Props = {
   expenseId?: string;
   submitLabel: string;
   cancelHref: string;
+  /** Pro only (SPEC §9). Off, the upload control isn't shown at all. */
+  canAttachReceipt: boolean;
+  /** Where "View receipt" goes, when this expense already has one. */
+  receiptHref?: string | null;
 };
 
 const initial: ExpenseFormState = {};
 
-export function ExpenseForm({ jobs, defaults, mileageRateCents, action, expenseId, submitLabel, cancelHref }: Props) {
+export function ExpenseForm({
+  jobs,
+  defaults,
+  mileageRateCents,
+  action,
+  expenseId,
+  submitLabel,
+  cancelHref,
+  canAttachReceipt,
+  receiptHref,
+}: Props) {
   const [state, formAction, pending] = useActionState(action, initial);
   const [category, setCategory] = useState<ExpenseCategory>(defaults.category);
   const isMileage = category === "mileage";
@@ -116,6 +131,40 @@ export function ExpenseForm({ jobs, defaults, mileageRateCents, action, expenseI
         </label>
         <input id="description" name="description" type="text" defaultValue={defaults.description} className="input" placeholder="e.g. Drywall and screws" />
       </div>
+
+      {(canAttachReceipt || receiptHref) && (
+        <div className="space-y-2">
+          <label htmlFor="receipt" className="label">
+            Receipt <span className="font-normal text-slate-400">(optional)</span>
+          </label>
+          {receiptHref && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm">
+              <a href={receiptHref} target="_blank" rel="noopener noreferrer" className="font-medium text-ink-800 hover:underline">
+                View receipt
+              </a>
+              <label className="flex items-center gap-2 text-slate-600">
+                <input type="checkbox" name="remove_receipt" className="h-4 w-4" />
+                Remove
+              </label>
+            </div>
+          )}
+          {canAttachReceipt && (
+            <>
+              <input
+                id="receipt"
+                name="receipt"
+                type="file"
+                accept={RECEIPT_ACCEPT}
+                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-ink-900 hover:file:bg-slate-200"
+              />
+              <p className="text-xs text-slate-500">
+                Photo or PDF, up to 4 MB.{receiptHref ? " Choosing a new file replaces the current one." : ""} Only
+                people who can see this expense can open it.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {state.error && <p className="error">{state.error}</p>}
 

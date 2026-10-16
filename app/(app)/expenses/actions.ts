@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +8,7 @@ import { getSessionContext } from "@/lib/session";
 import { parseDollars } from "@/lib/calc";
 import { isExpenseCategory, isValidDateKey, type ExpenseCategory } from "@/lib/expenses";
 import { track } from "@/lib/analytics/server";
+import { RECEIPTS_BUCKET, checkReceipt, receiptFromForm, receiptPath } from "@/lib/receipts";
 
 export type ExpenseFormState = { error?: string };
 
@@ -54,6 +56,38 @@ function parseExpenseForm(formData: FormData, mileageRateCents: number): ParsedE
   return { amount_cents: cents, spent_on: spentOn, job_id: jobId, category, description, miles: null };
 }
 
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * Upload a receipt to the private bucket (SPEC §5.4). Pro only (§9) — the
+ * storage insert policy checks the plan too, so this is the friendly message,
+ * not the enforcement. Returns the stored path, or an error for the form.
+ */
+async function uploadReceipt(
+  supabase: Supabase,
+  file: File,
+  organization: { id: string; plan: string },
+  expenseId: string,
+): Promise<{ path: string } | ExpenseFormState> {
+  if (organization.plan !== "pro") return { error: "Receipt attachments are part of Pro." };
+  const check = checkReceipt(file);
+  if (!check.ok) return { error: check.error };
+
+  const path = receiptPath(organization.id, expenseId, check.extension, randomUUID().slice(0, 8));
+  const { error } = await supabase.storage
+    .from(RECEIPTS_BUCKET)
+    .upload(path, await file.arrayBuffer(), { contentType: file.type, upsert: false });
+  if (error) return { error: "Couldn't upload that receipt. Please try again." };
+  return { path };
+}
+
+async function removeReceipt(supabase: Supabase, path: string | null) {
+  if (!path) return;
+  // Best-effort: an object left behind is only wasted space, never exposed —
+  // the select policy hides a receipt whose expense is gone.
+  await supabase.storage.from(RECEIPTS_BUCKET).remove([path]);
+}
+
 export async function createExpense(_prev: ExpenseFormState, formData: FormData): Promise<ExpenseFormState> {
   const ctx = await requireMembership();
   const parsed = parseExpenseForm(formData, ctx.organization.mileage_rate_cents);
@@ -65,12 +99,29 @@ export async function createExpense(_prev: ExpenseFormState, formData: FormData)
     if (!job) return { error: "That job no longer exists." };
   }
 
+  // The id is chosen here so the receipt can be uploaded under it first and
+  // the row inserted with receipt_path already set — one "insert" in
+  // history, not an insert followed by an edit.
+  const id = randomUUID();
+  let receipt_path: string | null = null;
+  const file = receiptFromForm(formData);
+  if (file) {
+    const uploaded = await uploadReceipt(supabase, file, ctx.organization, id);
+    if (!("path" in uploaded)) return uploaded;
+    receipt_path = uploaded.path;
+  }
+
   const { error } = await supabase.from("expenses").insert({
     ...parsed,
+    id,
+    receipt_path,
     organization_id: ctx.membership.organization_id,
     user_id: ctx.user.id,
   });
-  if (error) return { error: "Couldn't save that expense. Please try again." };
+  if (error) {
+    await removeReceipt(supabase, receipt_path);
+    return { error: "Couldn't save that expense. Please try again." };
+  }
 
   track("expense_added", { userId: ctx.user.id, organizationId: ctx.membership.organization_id }, {
     category: parsed.category,
@@ -90,8 +141,27 @@ export async function updateExpense(_prev: ExpenseFormState, formData: FormData)
 
   // The audit trigger snapshots before/after (§8.4); RLS limits who can update.
   const supabase = await createClient();
-  const { data, error } = await supabase.from("expenses").update(parsed).eq("id", id).select("id");
-  if (error || !data?.length) return { error: "Couldn't update that expense." };
+  const { data: existing } = await supabase.from("expenses").select("receipt_path").eq("id", id).maybeSingle();
+  if (!existing) return { error: "Couldn't update that expense." };
+
+  // A new file replaces the old receipt; "remove" clears it. Otherwise the
+  // receipt stays exactly as it was.
+  let receipt_path = existing.receipt_path;
+  const file = receiptFromForm(formData);
+  if (file) {
+    const uploaded = await uploadReceipt(supabase, file, ctx.organization, id);
+    if (!("path" in uploaded)) return uploaded;
+    receipt_path = uploaded.path;
+  } else if (formData.get("remove_receipt") === "on") {
+    receipt_path = null;
+  }
+
+  const { data, error } = await supabase.from("expenses").update({ ...parsed, receipt_path }).eq("id", id).select("id");
+  if (error || !data?.length) {
+    if (receipt_path !== existing.receipt_path) await removeReceipt(supabase, receipt_path);
+    return { error: "Couldn't update that expense." };
+  }
+  if (receipt_path !== existing.receipt_path) await removeReceipt(supabase, existing.receipt_path);
 
   revalidatePath("/", "layout");
   redirect("/expenses");
@@ -103,7 +173,11 @@ export async function deleteExpense(formData: FormData) {
   if (!id) return;
 
   const supabase = await createClient();
-  await supabase.from("expenses").delete().eq("id", id);
+  // Only remove the receipt once the row is really gone (RLS may refuse the
+  // delete); the storage delete policy allows it then, since no expense with
+  // that id exists any more.
+  const { data: deleted } = await supabase.from("expenses").delete().eq("id", id).select("receipt_path");
+  await removeReceipt(supabase, deleted?.[0]?.receipt_path ?? null);
 
   revalidatePath("/", "layout");
   redirect("/expenses");

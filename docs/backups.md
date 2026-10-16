@@ -17,8 +17,13 @@ expenses, audit events) and the `auth` schema (the accounts themselves).
 Restoring one without the other gives you data nobody can log in to, or logins
 with no data.
 
-Storage objects are not included. Nothing in v1 writes to storage —
-`receipt_path` exists on expenses but is unused.
+Storage objects are **not** included. Since Sprint 8 (2026-10-16), receipt
+files live in the private `receipts` Storage bucket, and the nightly dump
+carries only each expense's `receipt_path`, not the file it points to. A
+restore brings back every expense, but a "View receipt" link on a restored
+expense will find nothing until the files themselves are backed up somehow.
+This is a known gap, not an oversight: backing up the bucket is its own
+piece of work.
 
 ## Setting it up
 
