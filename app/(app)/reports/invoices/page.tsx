@@ -39,14 +39,16 @@ export default async function InvoicesPage() {
       <div>
         <h1 className="text-2xl font-semibold">Invoices</h1>
         <p className="text-slate-500">
-          <Link href="/reports" className="hover:underline">← Reports</Link>
+          <Link href="/reports" className="hover:underline">
+            ← Reports
+          </Link>
         </p>
       </div>
 
       {!invoices?.length ? (
         <p className="card text-sm text-slate-500">
-          No invoices yet. Create one from a client&apos;s report: go to Reports, pick a client and
-          period, then &quot;Save as invoice&quot;.
+          No invoices yet. Create one from a client&apos;s report: go to
+          Reports, pick a client and period, then &quot;Save as invoice&quot;.
         </p>
       ) : (
         <div className="card overflow-x-auto p-0">
@@ -64,18 +66,27 @@ export default async function InvoicesPage() {
               {invoices.map((inv) => (
                 <tr key={inv.id}>
                   <td className="px-4 py-2">
-                    <Link href={`/reports/invoices/${inv.id}`} className="font-medium hover:underline">
+                    <Link
+                      href={`/reports/invoices/${inv.id}`}
+                      className="font-medium hover:underline"
+                    >
                       {inv.number ?? "Draft"}
                     </Link>
                   </td>
-                  <td className="px-3 py-2 text-slate-600">{inv.clients?.name ?? "—"}</td>
+                  <td className="px-3 py-2 text-slate-600">
+                    {inv.clients?.name ?? "—"}
+                  </td>
                   <td className="px-3 py-2">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[inv.status]}`}>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[inv.status]}`}
+                    >
                       {STATUS_LABEL[inv.status]}
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-slate-600">
-                    {inv.issued_on ? formatDocShortDate(inv.issued_on, tz) : "—"}
+                    {inv.issued_on
+                      ? formatDocShortDate(inv.issued_on, tz)
+                      : "—"}
                   </td>
                   <td className="whitespace-nowrap px-4 py-2 text-right font-medium tabular-nums">
                     {formatCents(inv.total_cents)}

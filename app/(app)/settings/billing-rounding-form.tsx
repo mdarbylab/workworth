@@ -31,27 +31,46 @@ export function BillingRoundingForm({
   return (
     <form action={action} className="flex flex-wrap items-end gap-3">
       <div>
-        <label htmlFor="increment" className="label">Round each visit to</label>
+        <label htmlFor="increment" className="label">
+          Round each visit to
+        </label>
         <select
           id="increment"
           name="increment"
-          defaultValue={timeRoundingMinutes === null ? "" : String(timeRoundingMinutes)}
+          defaultValue={
+            timeRoundingMinutes === null ? "" : String(timeRoundingMinutes)
+          }
           className="input"
         >
           {INCREMENTS.map((i) => (
-            <option key={i.value} value={i.value}>{i.label}</option>
+            <option key={i.value} value={i.value}>
+              {i.label}
+            </option>
           ))}
         </select>
       </div>
       <div>
-        <label htmlFor="mode" className="label">Direction</label>
-        <select id="mode" name="mode" defaultValue={timeRoundingMode} className="input">
+        <label htmlFor="mode" className="label">
+          Direction
+        </label>
+        <select
+          id="mode"
+          name="mode"
+          defaultValue={timeRoundingMode}
+          className="input"
+        >
           {MODES.map((m) => (
-            <option key={m.value} value={m.value}>{m.label}</option>
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
           ))}
         </select>
       </div>
-      <button type="submit" disabled={pending} className="btn-secondary w-auto px-4 py-2 text-sm">
+      <button
+        type="submit"
+        disabled={pending}
+        className="btn-secondary w-auto px-4 py-2 text-sm"
+      >
         {pending ? "Saving…" : "Save"}
       </button>
       {state.error && <p className="error w-full">{state.error}</p>}

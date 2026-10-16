@@ -21,21 +21,33 @@ function audit(args) {
   try {
     report = JSON.parse(out);
   } catch {
-    throw new Error("npm audit did not return JSON (is the registry reachable?)");
+    throw new Error(
+      "npm audit did not return JSON (is the registry reachable?)",
+    );
   }
-  if (report.error) throw new Error(`npm audit failed: ${report.error.summary ?? "unknown error"}`);
+  if (report.error)
+    throw new Error(
+      `npm audit failed: ${report.error.summary ?? "unknown error"}`,
+    );
   const found = new Map();
   for (const vuln of Object.values(report.vulnerabilities ?? {})) {
     for (const via of vuln.via) {
       if (typeof via === "string") continue; // a transitive path; the advisory itself is listed under its own package
       const id = via.url?.split("/").pop() ?? String(via.source);
-      found.set(id, { package: via.name, severity: via.severity, title: via.title, url: via.url });
+      found.set(id, {
+        package: via.name,
+        severity: via.severity,
+        title: via.title,
+        url: via.url,
+      });
     }
   }
   return found;
 }
 
-const allowlist = JSON.parse(readFileSync(new URL("./audit-allowlist.json", import.meta.url), "utf8"));
+const allowlist = JSON.parse(
+  readFileSync(new URL("./audit-allowlist.json", import.meta.url), "utf8"),
+);
 const allowed = new Map(allowlist.advisories.map((a) => [a.id, a]));
 const today = new Date().toISOString().slice(0, 10);
 
@@ -47,13 +59,22 @@ for (const [id, adv] of all) {
   const entry = allowed.get(id);
   const label = `${id} ${adv.package} (${adv.severity}): ${adv.title}`;
   if (!entry) failures.push(label);
-  else if (prod.has(id)) failures.push(`${label} [allowlisted as dev-only, but reaches a production dependency]`);
-  else if (entry.reviewBy < today) failures.push(`${label} [allowlist review date ${entry.reviewBy} has passed]`);
+  else if (prod.has(id))
+    failures.push(
+      `${label} [allowlisted as dev-only, but reaches a production dependency]`,
+    );
+  else if (entry.reviewBy < today)
+    failures.push(
+      `${label} [allowlist review date ${entry.reviewBy} has passed]`,
+    );
   else console.log(`allowed until ${entry.reviewBy}: ${label}`);
 }
 
 for (const id of allowed.keys()) {
-  if (!all.has(id)) console.log(`note: ${id} is allowlisted but no longer reported; remove it from scripts/audit-allowlist.json`);
+  if (!all.has(id))
+    console.log(
+      `note: ${id} is allowlisted but no longer reported; remove it from scripts/audit-allowlist.json`,
+    );
 }
 
 if (failures.length) {

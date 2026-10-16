@@ -3,7 +3,10 @@ import type { Tables } from "@/lib/supabase/types";
 
 export type SessionContext = {
   user: { id: string; email: string | null };
-  membership: Pick<Tables<"memberships">, "id" | "role" | "organization_id" | "display_name"> | null;
+  membership: Pick<
+    Tables<"memberships">,
+    "id" | "role" | "organization_id" | "display_name"
+  > | null;
   organization: Tables<"organizations"> | null;
   /** The person who created the business. Only they can delete it or remove anyone (SPEC §6). */
   isCreator: boolean;

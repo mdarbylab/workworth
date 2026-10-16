@@ -4,7 +4,10 @@ import { redirect } from "next/navigation";
 import { getSessionContext, nameFromEmail } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
-import { subscriptionStatusLabel, type SubscriptionStatus } from "@/lib/billing";
+import {
+  subscriptionStatusLabel,
+  type SubscriptionStatus,
+} from "@/lib/billing";
 import { signOut } from "@/app/(auth)/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { FeedbackLink } from "@/components/feedback-link";
@@ -25,7 +28,10 @@ import { removeMember } from "./actions";
 export const metadata: Metadata = { title: "Settings" };
 
 function timezoneOptions(current: string): string[] {
-  const list = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
+  const list =
+    typeof Intl.supportedValuesOf === "function"
+      ? Intl.supportedValuesOf("timeZone")
+      : [];
   return list.includes(current) ? list : [current, ...list];
 }
 
@@ -43,21 +49,24 @@ export default async function SettingsPage({
   const isCreator = ctx.isCreator;
 
   const supabase = await createClient();
-  const [{ data: members }, { data: subscription }, siteUrl, params] = await Promise.all([
-    supabase
-      .from("memberships")
-      .select("id, user_id, role, invited_email, invite_token, accepted_at, display_name")
-      .eq("organization_id", org.id)
-      .is("removed_at", null)
-      .order("created_at"),
-    supabase
-      .from("subscriptions")
-      .select("status, current_period_end, cancel_at")
-      .eq("organization_id", org.id)
-      .maybeSingle(),
-    getSiteUrl(),
-    searchParams,
-  ]);
+  const [{ data: members }, { data: subscription }, siteUrl, params] =
+    await Promise.all([
+      supabase
+        .from("memberships")
+        .select(
+          "id, user_id, role, invited_email, invite_token, accepted_at, display_name",
+        )
+        .eq("organization_id", org.id)
+        .is("removed_at", null)
+        .order("created_at"),
+      supabase
+        .from("subscriptions")
+        .select("status, current_period_end, cancel_at")
+        .eq("organization_id", org.id)
+        .maybeSingle(),
+      getSiteUrl(),
+      searchParams,
+    ]);
 
   const people = members ?? [];
   const seatsUsed = people.length; // pending invites hold a seat (§6)
@@ -92,21 +101,25 @@ export default async function SettingsPage({
       <section className="card space-y-3">
         <h2 className="font-semibold">Mileage</h2>
         <p className="text-sm text-slate-500">
-          Used to calculate mileage expenses. Update it yourself each year — WorkWorth doesn&apos;t
-          assume a rate for you.
+          Used to calculate mileage expenses. Update it yourself each year —
+          WorkWorth doesn&apos;t assume a rate for you.
         </p>
         {canManage ? (
           <MileageRateForm mileageRateCents={org.mileage_rate_cents} />
         ) : (
-          <Row label="Rate per mile" value={`$${(org.mileage_rate_cents / 100).toFixed(2)}`} />
+          <Row
+            label="Rate per mile"
+            value={`$${(org.mileage_rate_cents / 100).toFixed(2)}`}
+          />
         )}
       </section>
 
       <section className="card space-y-3">
         <h2 className="font-semibold">Billing rounding</h2>
         <p className="text-sm text-slate-500">
-          Rounds tracked time for revenue, reports, client reports and invoices — never the time
-          itself. Today, Time and Jobs always show exactly what was tracked.
+          Rounds tracked time for revenue, reports, client reports and invoices
+          — never the time itself. Today, Time and Jobs always show exactly what
+          was tracked.
         </p>
         {org.plan === "pro" ? (
           canManage ? (
@@ -132,7 +145,9 @@ export default async function SettingsPage({
       <section className="card space-y-4">
         <div className="flex items-baseline justify-between">
           <h2 className="font-semibold">People</h2>
-          <span className="text-xs text-slate-500">{seatsUsed} of {org.seat_limit} seats</span>
+          <span className="text-xs text-slate-500">
+            {seatsUsed} of {org.seat_limit} seats
+          </span>
         </div>
 
         <ul className="divide-y divide-slate-100">
@@ -148,14 +163,23 @@ export default async function SettingsPage({
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                      {label} {isMe && <span className="font-normal text-slate-400">(you)</span>}
+                      {label}{" "}
+                      {isMe && (
+                        <span className="font-normal text-slate-400">
+                          (you)
+                        </span>
+                      )}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {m.role === "owner" ? "Created this business" : "Full access"} ·{" "}
-                      {pending ? "Invited — hasn't joined yet" : "Active"}
+                      {m.role === "owner"
+                        ? "Created this business"
+                        : "Full access"}{" "}
+                      · {pending ? "Invited — hasn't joined yet" : "Active"}
                     </p>
                     {!isMe && m.invited_email && (
-                      <p className="truncate text-xs text-slate-400">{m.invited_email}</p>
+                      <p className="truncate text-xs text-slate-400">
+                        {m.invited_email}
+                      </p>
                     )}
                   </div>
                   {isCreator && !isMe && (
@@ -173,9 +197,14 @@ export default async function SettingsPage({
                 </div>
                 {canManage && pending && m.invite_token && (
                   <div className="rounded-lg bg-slate-50 p-3 text-xs">
-                    <p className="mb-2 text-slate-600">Send this link to {m.invited_email}. They sign in with that email and tap Join.</p>
+                    <p className="mb-2 text-slate-600">
+                      Send this link to {m.invited_email}. They sign in with
+                      that email and tap Join.
+                    </p>
                     <div className="flex flex-wrap items-center gap-2">
-                      <code className="min-w-0 flex-1 truncate rounded bg-white px-2 py-1 text-[11px] text-slate-700">{inviteUrl}</code>
+                      <code className="min-w-0 flex-1 truncate rounded bg-white px-2 py-1 text-[11px] text-slate-700">
+                        {inviteUrl}
+                      </code>
                       <CopyButton text={inviteUrl} />
                       <a
                         href={`mailto:${m.invited_email}?subject=${encodeURIComponent(`Join ${org.name} on WorkWorth`)}&body=${encodeURIComponent(`Join ${org.name} on WorkWorth to track your time and expenses:\n\n${inviteUrl}`)}`}
@@ -200,7 +229,8 @@ export default async function SettingsPage({
           <>
             <p className="text-sm text-slate-700">
               {subscriptionStatusLabel(
-                (subscription?.status as SubscriptionStatus | undefined) ?? null,
+                (subscription?.status as SubscriptionStatus | undefined) ??
+                  null,
                 subscription?.current_period_end ?? null,
                 subscription?.cancel_at ?? null,
                 org.timezone,
@@ -214,17 +244,23 @@ export default async function SettingsPage({
               Free — {seatsUsed} of {org.seat_limit} seats used
             </p>
             <p className="text-sm text-slate-500">
-              Everyone on the free plan has the same access: you both see all of the business&apos;s time,
-              expenses and reports. Up to 10 people, separate roles and permissions, invoicing and tax
-              estimates come with Pro.
+              Everyone on the free plan has the same access: you both see all of
+              the business&apos;s time, expenses and reports. Up to 10 people,
+              separate roles and permissions, invoicing and tax estimates come
+              with Pro.
             </p>
             {isCreator ? (
               <div className="flex flex-wrap gap-2">
                 <UpgradeForm interval="month" label="Upgrade — $25/mo" />
-                <UpgradeForm interval="year" label="Upgrade — $240/yr ($20/mo)" />
+                <UpgradeForm
+                  interval="year"
+                  label="Upgrade — $240/yr ($20/mo)"
+                />
               </div>
             ) : (
-              <p className="text-sm text-slate-500">Ask the business owner to upgrade to Pro.</p>
+              <p className="text-sm text-slate-500">
+                Ask the business owner to upgrade to Pro.
+              </p>
             )}
           </>
         )}
@@ -235,7 +271,8 @@ export default async function SettingsPage({
         <section className="card space-y-2">
           <h2 className="font-semibold">Feedback</h2>
           <p className="text-sm text-slate-600">
-            WorkWorth is in beta. Tell us what&apos;s missing or broken — it goes straight to us.
+            WorkWorth is in beta. Tell us what&apos;s missing or broken — it
+            goes straight to us.
           </p>
           <FeedbackLink email={supportEmail} className="btn-secondary" />
         </section>
@@ -244,9 +281,15 @@ export default async function SettingsPage({
       <section className="card space-y-2">
         <h2 className="font-semibold">Legal</h2>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <Link href="/privacy" className="text-ink-800 hover:underline">Privacy Policy</Link>
-          <Link href="/terms" className="text-ink-800 hover:underline">Terms of Service</Link>
-          <Link href="/impressum" className="text-ink-800 hover:underline">Impressum</Link>
+          <Link href="/privacy" className="text-ink-800 hover:underline">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="text-ink-800 hover:underline">
+            Terms of Service
+          </Link>
+          <Link href="/impressum" className="text-ink-800 hover:underline">
+            Impressum
+          </Link>
         </div>
         <CookiePreferencesButton />
       </section>
@@ -257,7 +300,9 @@ export default async function SettingsPage({
         <Row label="Email" value={ctx.user.email ?? "—"} />
         <PasswordForm />
         <form action={signOut}>
-          <button type="submit" className="btn-secondary">Sign out</button>
+          <button type="submit" className="btn-secondary">
+            Sign out
+          </button>
         </form>
       </section>
 

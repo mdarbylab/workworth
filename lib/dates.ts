@@ -1,7 +1,14 @@
 // Timezone helpers built on Intl only. All storage is UTC; display and day
 // grouping use the organization's IANA timezone (SPEC §7).
 
-type Parts = { year: number; month: number; day: number; hour: number; minute: number; second: number };
+type Parts = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+};
 
 function partsInTz(date: Date, tz: string): Parts {
   const dtf = new Intl.DateTimeFormat("en-US", {
@@ -29,7 +36,14 @@ function partsInTz(date: Date, tz: string): Parts {
 /** Milliseconds to add to UTC to get wall-clock time in `tz` at `date`. */
 export function tzOffsetMs(date: Date, tz: string): number {
   const p = partsInTz(date, tz);
-  const asUtc = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  const asUtc = Date.UTC(
+    p.year,
+    p.month - 1,
+    p.day,
+    p.hour,
+    p.minute,
+    p.second,
+  );
   return asUtc - Math.floor(date.getTime() / 1000) * 1000;
 }
 
@@ -71,23 +85,44 @@ export function startOfDay(date: Date, tz: string): Date {
 }
 
 /** Parse "YYYY-MM-DD" + "HH:MM" as wall-clock time in `tz`. Null if malformed. */
-export function parseDateTime(dateStr: string, timeStr: string, tz: string): Date | null {
+export function parseDateTime(
+  dateStr: string,
+  timeStr: string,
+  tz: string,
+): Date | null {
   const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
   const t = /^(\d{2}):(\d{2})$/.exec(timeStr);
   if (!d || !t) return null;
   const [year, month, day] = [Number(d[1]), Number(d[2]), Number(d[3])];
   const [hour, minute] = [Number(t[1]), Number(t[2])];
-  if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59) return null;
+  if (
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31 ||
+    hour > 23 ||
+    minute > 59
+  )
+    return null;
   const result = zonedToUtc(year, month, day, hour, minute, tz);
   return Number.isNaN(result.getTime()) ? null : result;
 }
 
 export function formatTime(date: Date, tz: string): string {
-  return new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }
 
 export function formatDate(date: Date, tz: string): string {
-  return new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short", month: "short", day: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(date);
 }
 
 export function formatDateTime(date: Date, tz: string): string {
@@ -95,10 +130,17 @@ export function formatDateTime(date: Date, tz: string): string {
 }
 
 /** Heading for a day group: "Today", "Yesterday", or "Monday, Sep 6". */
-export function formatDayHeading(key: string, tz: string, now = new Date()): string {
+export function formatDayHeading(
+  key: string,
+  tz: string,
+  now = new Date(),
+): string {
   const today = dateKey(now, tz);
   if (key === today) return "Today";
-  const yesterday = dateKey(new Date(startOfDay(now, tz).getTime() - 12 * 3600 * 1000), tz);
+  const yesterday = dateKey(
+    new Date(startOfDay(now, tz).getTime() - 12 * 3600 * 1000),
+    tz,
+  );
   if (key === yesterday) return "Yesterday";
   const [y, m, d] = key.split("-").map(Number);
   const date = zonedToUtc(y, m, d, 12, 0, tz);

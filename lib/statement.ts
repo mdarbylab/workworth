@@ -50,12 +50,19 @@ export type Statement = {
  * business's own numbers and never belong on a document sent to a customer.
  * Only stopped entries count, so a running timer never lands on paperwork.
  */
-export async function buildStatement(clientId: string, period: Period): Promise<Statement | null> {
+export async function buildStatement(
+  clientId: string,
+  period: Period,
+): Promise<Statement | null> {
   const supabase = await createClient();
 
   const [{ data: org }, { data: client }] = await Promise.all([
     supabase.from("organizations").select("*").limit(1).maybeSingle(),
-    supabase.from("clients").select("id, name, email, phone").eq("id", clientId).maybeSingle(),
+    supabase
+      .from("clients")
+      .select("id, name, email, phone")
+      .eq("id", clientId)
+      .maybeSingle(),
   ]);
   if (!org || !client) return null;
   const rounding = roundingConfigFor(org);
@@ -104,7 +111,9 @@ export async function buildStatement(clientId: string, period: Period): Promise<
 
   const jobs = Array.from(byJob.values()).map((j) => {
     const priced =
-      j.billingType === "hourly" ? j.hourlyRateCents !== null : j.fixedPriceCents !== null;
+      j.billingType === "hourly"
+        ? j.hourlyRateCents !== null
+        : j.fixedPriceCents !== null;
     return {
       ...j,
       amountCents: priced
@@ -128,7 +137,9 @@ export async function buildStatement(clientId: string, period: Period): Promise<
     period,
     jobs,
     totalSeconds: jobs.reduce((s, j) => s + j.seconds, 0),
-    totalAmountCents: priced.length ? priced.reduce((s, j) => s + (j.amountCents ?? 0), 0) : null,
+    totalAmountCents: priced.length
+      ? priced.reduce((s, j) => s + (j.amountCents ?? 0), 0)
+      : null,
     hasUnpricedWork: jobs.some((j) => j.amountCents === null),
   };
 }

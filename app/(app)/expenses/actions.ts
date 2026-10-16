@@ -6,9 +6,18 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/session";
 import { parseDollars } from "@/lib/calc";
-import { isExpenseCategory, isValidDateKey, type ExpenseCategory } from "@/lib/expenses";
+import {
+  isExpenseCategory,
+  isValidDateKey,
+  type ExpenseCategory,
+} from "@/lib/expenses";
 import { track } from "@/lib/analytics/server";
-import { RECEIPTS_BUCKET, checkReceipt, receiptFromForm, receiptPath } from "@/lib/receipts";
+import {
+  RECEIPTS_BUCKET,
+  checkReceipt,
+  receiptFromForm,
+  receiptPath,
+} from "@/lib/receipts";
 
 export type ExpenseFormState = { error?: string };
 
@@ -32,7 +41,10 @@ type ParsedExpense = {
  * current mileage_rate_cents (Settings) — never trusted from the client,
  * the same way invoice totals are server-derived rather than client-sent.
  */
-function parseExpenseForm(formData: FormData, mileageRateCents: number): ParsedExpense | ExpenseFormState {
+function parseExpenseForm(
+  formData: FormData,
+  mileageRateCents: number,
+): ParsedExpense | ExpenseFormState {
   const spentOn = String(formData.get("spent_on") ?? "");
   if (!isValidDateKey(spentOn)) return { error: "Enter a valid date." };
 
@@ -44,16 +56,32 @@ function parseExpenseForm(formData: FormData, mileageRateCents: number): ParsedE
 
   if (category === "mileage") {
     const miles = Number(String(formData.get("miles") ?? "").trim());
-    if (!Number.isFinite(miles) || miles <= 0) return { error: "Enter the miles driven." };
+    if (!Number.isFinite(miles) || miles <= 0)
+      return { error: "Enter the miles driven." };
     const cents = Math.round(miles * mileageRateCents);
-    return { amount_cents: cents, spent_on: spentOn, job_id: jobId, category, description, miles };
+    return {
+      amount_cents: cents,
+      spent_on: spentOn,
+      job_id: jobId,
+      category,
+      description,
+      miles,
+    };
   }
 
   const cents = parseDollars(String(formData.get("amount") ?? ""));
-  if (cents === null || Number.isNaN(cents)) return { error: "Enter the amount." };
+  if (cents === null || Number.isNaN(cents))
+    return { error: "Enter the amount." };
   if (cents <= 0) return { error: "Amount must be more than zero." };
 
-  return { amount_cents: cents, spent_on: spentOn, job_id: jobId, category, description, miles: null };
+  return {
+    amount_cents: cents,
+    spent_on: spentOn,
+    job_id: jobId,
+    category,
+    description,
+    miles: null,
+  };
 }
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -69,15 +97,25 @@ async function uploadReceipt(
   organization: { id: string; plan: string },
   expenseId: string,
 ): Promise<{ path: string } | ExpenseFormState> {
-  if (organization.plan !== "pro") return { error: "Receipt attachments are part of Pro." };
+  if (organization.plan !== "pro")
+    return { error: "Receipt attachments are part of Pro." };
   const check = checkReceipt(file);
   if (!check.ok) return { error: check.error };
 
-  const path = receiptPath(organization.id, expenseId, check.extension, randomUUID().slice(0, 8));
+  const path = receiptPath(
+    organization.id,
+    expenseId,
+    check.extension,
+    randomUUID().slice(0, 8),
+  );
   const { error } = await supabase.storage
     .from(RECEIPTS_BUCKET)
-    .upload(path, await file.arrayBuffer(), { contentType: file.type, upsert: false });
-  if (error) return { error: "Couldn't upload that receipt. Please try again." };
+    .upload(path, await file.arrayBuffer(), {
+      contentType: file.type,
+      upsert: false,
+    });
+  if (error)
+    return { error: "Couldn't upload that receipt. Please try again." };
   return { path };
 }
 
@@ -88,14 +126,24 @@ async function removeReceipt(supabase: Supabase, path: string | null) {
   await supabase.storage.from(RECEIPTS_BUCKET).remove([path]);
 }
 
-export async function createExpense(_prev: ExpenseFormState, formData: FormData): Promise<ExpenseFormState> {
+export async function createExpense(
+  _prev: ExpenseFormState,
+  formData: FormData,
+): Promise<ExpenseFormState> {
   const ctx = await requireMembership();
-  const parsed = parseExpenseForm(formData, ctx.organization.mileage_rate_cents);
+  const parsed = parseExpenseForm(
+    formData,
+    ctx.organization.mileage_rate_cents,
+  );
   if (!("amount_cents" in parsed)) return parsed;
 
   const supabase = await createClient();
   if (parsed.job_id) {
-    const { data: job } = await supabase.from("jobs").select("id").eq("id", parsed.job_id).maybeSingle();
+    const { data: job } = await supabase
+      .from("jobs")
+      .select("id")
+      .eq("id", parsed.job_id)
+      .maybeSingle();
     if (!job) return { error: "That job no longer exists." };
   }
 
@@ -123,25 +171,39 @@ export async function createExpense(_prev: ExpenseFormState, formData: FormData)
     return { error: "Couldn't save that expense. Please try again." };
   }
 
-  track("expense_added", { userId: ctx.user.id, organizationId: ctx.membership.organization_id }, {
-    category: parsed.category,
-    has_job: parsed.job_id !== null,
-  });
+  track(
+    "expense_added",
+    { userId: ctx.user.id, organizationId: ctx.membership.organization_id },
+    {
+      category: parsed.category,
+      has_job: parsed.job_id !== null,
+    },
+  );
   revalidatePath("/", "layout");
   redirect("/expenses");
 }
 
-export async function updateExpense(_prev: ExpenseFormState, formData: FormData): Promise<ExpenseFormState> {
+export async function updateExpense(
+  _prev: ExpenseFormState,
+  formData: FormData,
+): Promise<ExpenseFormState> {
   const ctx = await requireMembership();
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Missing expense." };
 
-  const parsed = parseExpenseForm(formData, ctx.organization.mileage_rate_cents);
+  const parsed = parseExpenseForm(
+    formData,
+    ctx.organization.mileage_rate_cents,
+  );
   if (!("amount_cents" in parsed)) return parsed;
 
   // The audit trigger snapshots before/after (§8.4); RLS limits who can update.
   const supabase = await createClient();
-  const { data: existing } = await supabase.from("expenses").select("receipt_path").eq("id", id).maybeSingle();
+  const { data: existing } = await supabase
+    .from("expenses")
+    .select("receipt_path")
+    .eq("id", id)
+    .maybeSingle();
   if (!existing) return { error: "Couldn't update that expense." };
 
   // A new file replaces the old receipt; "remove" clears it. Otherwise the
@@ -156,12 +218,18 @@ export async function updateExpense(_prev: ExpenseFormState, formData: FormData)
     receipt_path = null;
   }
 
-  const { data, error } = await supabase.from("expenses").update({ ...parsed, receipt_path }).eq("id", id).select("id");
+  const { data, error } = await supabase
+    .from("expenses")
+    .update({ ...parsed, receipt_path })
+    .eq("id", id)
+    .select("id");
   if (error || !data?.length) {
-    if (receipt_path !== existing.receipt_path) await removeReceipt(supabase, receipt_path);
+    if (receipt_path !== existing.receipt_path)
+      await removeReceipt(supabase, receipt_path);
     return { error: "Couldn't update that expense." };
   }
-  if (receipt_path !== existing.receipt_path) await removeReceipt(supabase, existing.receipt_path);
+  if (receipt_path !== existing.receipt_path)
+    await removeReceipt(supabase, existing.receipt_path);
 
   revalidatePath("/", "layout");
   redirect("/expenses");
@@ -176,7 +244,11 @@ export async function deleteExpense(formData: FormData) {
   // Only remove the receipt once the row is really gone (RLS may refuse the
   // delete); the storage delete policy allows it then, since no expense with
   // that id exists any more.
-  const { data: deleted } = await supabase.from("expenses").delete().eq("id", id).select("receipt_path");
+  const { data: deleted } = await supabase
+    .from("expenses")
+    .delete()
+    .eq("id", id)
+    .select("receipt_path");
   await removeReceipt(supabase, deleted?.[0]?.receipt_path ?? null);
 
   revalidatePath("/", "layout");

@@ -11,7 +11,11 @@ export function DeleteAccountForm() {
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="text-sm text-red-700 hover:underline">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-sm text-red-700 hover:underline"
+      >
         Delete my account…
       </button>
     );
@@ -20,12 +24,28 @@ export function DeleteAccountForm() {
   return (
     <form action={action} className="space-y-3">
       <div>
-        <label htmlFor="confirm_delete" className="label">Type DELETE to confirm</label>
-        <input id="confirm_delete" name="confirm" type="text" autoComplete="off" required className="input" placeholder="DELETE" />
+        <label htmlFor="confirm_delete" className="label">
+          Type DELETE to confirm
+        </label>
+        <input
+          id="confirm_delete"
+          name="confirm"
+          type="text"
+          autoComplete="off"
+          required
+          className="input"
+          placeholder="DELETE"
+        />
       </div>
       {state.error && <p className="error">{state.error}</p>}
       <div className="flex gap-2">
-        <button type="button" onClick={() => setOpen(false)} className="btn-secondary w-auto px-4">Cancel</button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="btn-secondary w-auto px-4"
+        >
+          Cancel
+        </button>
         <button
           type="submit"
           disabled={pending}

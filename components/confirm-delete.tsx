@@ -17,7 +17,10 @@ export function ConfirmDelete({ action, id, label, message }: Props) {
       }}
     >
       <input type="hidden" name="id" value={id} />
-      <button type="submit" className="w-full py-2 text-sm text-red-700 hover:underline">
+      <button
+        type="submit"
+        className="w-full py-2 text-sm text-red-700 hover:underline"
+      >
         {label}
       </button>
     </form>

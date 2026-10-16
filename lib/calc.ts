@@ -18,7 +18,10 @@ export function revenueCents(job: BillingFields, seconds: number): number {
 }
 
 export type RoundingMode = "up" | "nearest" | "down";
-export type RoundingConfig = { incrementMinutes: number; mode: RoundingMode } | null;
+export type RoundingConfig = {
+  incrementMinutes: number;
+  mode: RoundingMode;
+} | null;
 
 /**
  * §8.1: rounding (Pro, Sprint 7) applies only at the billing surface, never
@@ -31,16 +34,27 @@ export function roundSeconds(seconds: number, config: RoundingConfig): number {
   if (!config || config.incrementMinutes <= 0) return seconds;
   const incSec = config.incrementMinutes * 60;
   const units = seconds / incSec;
-  const rounded = config.mode === "up" ? Math.ceil(units) : config.mode === "down" ? Math.floor(units) : Math.round(units);
+  const rounded =
+    config.mode === "up"
+      ? Math.ceil(units)
+      : config.mode === "down"
+        ? Math.floor(units)
+        : Math.round(units);
   return rounded * incSec;
 }
 
 /** Off for free-plan orgs regardless of the stored setting (SPEC §8.1: "a paid feature later"). */
 export function roundingConfigFor(
-  org: Pick<Tables<"organizations">, "plan" | "time_rounding_minutes" | "time_rounding_mode">,
+  org: Pick<
+    Tables<"organizations">,
+    "plan" | "time_rounding_minutes" | "time_rounding_mode"
+  >,
 ): RoundingConfig {
   if (org.plan !== "pro" || org.time_rounding_minutes === null) return null;
-  return { incrementMinutes: org.time_rounding_minutes, mode: org.time_rounding_mode };
+  return {
+    incrementMinutes: org.time_rounding_minutes,
+    mode: org.time_rounding_mode,
+  };
 }
 
 /** §8.3: profit = revenue − expenses. */
@@ -54,7 +68,10 @@ export function profitCents(revenue: number, expenses: number): number {
  * entry could otherwise show $90,000/hr alongside "0m". This doesn't round
  * the stored duration itself (§8.1: no rounding in v1), only suppresses the
  * rate display for durations too short to show. */
-export function effectiveRateCents(profit: number, seconds: number): number | null {
+export function effectiveRateCents(
+  profit: number,
+  seconds: number,
+): number | null {
   if (seconds < 60) return null;
   return Math.round(profit / (seconds / 3600));
 }
@@ -77,7 +94,10 @@ export function formatClock(seconds: number): string {
   return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+const usd = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
 const usdWhole = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",

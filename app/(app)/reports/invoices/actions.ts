@@ -21,8 +21,11 @@ async function requireMembership() {
 }
 
 /** Invoicing is Pro-only (SPEC §9) and gated the same as Settings -> Business. */
-function checkInvoicingAccess(ctx: Pick<SessionContext, "organization" | "hasFullAccess">): string | null {
-  if (ctx.organization?.plan !== "pro") return "Invoicing comes with Pro. Upgrade in Settings to use it.";
+function checkInvoicingAccess(
+  ctx: Pick<SessionContext, "organization" | "hasFullAccess">,
+): string | null {
+  if (ctx.organization?.plan !== "pro")
+    return "Invoicing comes with Pro. Upgrade in Settings to use it.";
   if (!ctx.hasFullAccess) return "You don't have access to invoices.";
   return null;
 }
@@ -53,7 +56,8 @@ export async function createInvoiceFromStatement(
   );
 
   const statement = await buildStatement(clientId, period);
-  if (!statement) return { error: "Couldn't load that client's work for this period." };
+  if (!statement)
+    return { error: "Couldn't load that client's work for this period." };
 
   const derived = deriveInvoiceLines(statement);
   if (derived.lines.length === 0) {
@@ -68,17 +72,27 @@ export async function createInvoiceFromStatement(
   const supabase = await createClient();
   const orgId = ctx.membership.organization_id;
 
-  const { data: number, error: numberError } = await supabase.rpc("next_invoice_number", {
-    p_organization_id: orgId,
-  });
-  if (numberError || !number) return { error: "Couldn't generate an invoice number. Please try again." };
+  const { data: number, error: numberError } = await supabase.rpc(
+    "next_invoice_number",
+    {
+      p_organization_id: orgId,
+    },
+  );
+  if (numberError || !number)
+    return { error: "Couldn't generate an invoice number. Please try again." };
 
   const { data: invoice, error: invoiceError } = await supabase
     .from("invoices")
-    .insert({ organization_id: orgId, client_id: clientId, number, status: "draft" })
+    .insert({
+      organization_id: orgId,
+      client_id: clientId,
+      number,
+      status: "draft",
+    })
     .select("id")
     .single();
-  if (invoiceError) return { error: "Couldn't create the invoice. Please try again." };
+  if (invoiceError)
+    return { error: "Couldn't create the invoice. Please try again." };
 
   const { error: linesError } = await supabase.from("invoice_lines").insert(
     derived.lines.map((l) => ({
@@ -92,7 +106,10 @@ export async function createInvoiceFromStatement(
     })),
   );
   if (linesError) {
-    return { error: "Created the invoice but couldn't add its line items. Delete the empty draft and try again." };
+    return {
+      error:
+        "Created the invoice but couldn't add its line items. Delete the empty draft and try again.",
+    };
   }
 
   if (derived.includedEntryIds.length) {
@@ -115,7 +132,10 @@ export async function createInvoiceFromStatement(
   redirect(`/reports/invoices/${invoice.id}`);
 }
 
-export async function markInvoiceSent(_prev: InvoiceFormState, formData: FormData): Promise<InvoiceFormState> {
+export async function markInvoiceSent(
+  _prev: InvoiceFormState,
+  formData: FormData,
+): Promise<InvoiceFormState> {
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Missing invoice." };
 
@@ -134,14 +154,21 @@ export async function markInvoiceSent(_prev: InvoiceFormState, formData: FormDat
     .eq("organization_id", ctx.membership.organization_id)
     .eq("status", "draft")
     .select("id");
-  if (error || !data?.length) return { error: "Couldn't mark this invoice sent." };
+  if (error || !data?.length)
+    return { error: "Couldn't mark this invoice sent." };
 
-  track("invoice_sent", { userId: ctx.user.id, organizationId: ctx.membership.organization_id });
+  track("invoice_sent", {
+    userId: ctx.user.id,
+    organizationId: ctx.membership.organization_id,
+  });
   revalidatePath("/", "layout");
   return { message: "Marked sent." };
 }
 
-export async function markInvoicePaid(_prev: InvoiceFormState, formData: FormData): Promise<InvoiceFormState> {
+export async function markInvoicePaid(
+  _prev: InvoiceFormState,
+  formData: FormData,
+): Promise<InvoiceFormState> {
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Missing invoice." };
 
@@ -157,9 +184,13 @@ export async function markInvoicePaid(_prev: InvoiceFormState, formData: FormDat
     .eq("organization_id", ctx.membership.organization_id)
     .eq("status", "sent")
     .select("id");
-  if (error || !data?.length) return { error: "Couldn't mark this invoice paid." };
+  if (error || !data?.length)
+    return { error: "Couldn't mark this invoice paid." };
 
-  track("invoice_paid", { userId: ctx.user.id, organizationId: ctx.membership.organization_id });
+  track("invoice_paid", {
+    userId: ctx.user.id,
+    organizationId: ctx.membership.organization_id,
+  });
   revalidatePath("/", "layout");
   return { message: "Marked paid." };
 }
@@ -167,7 +198,10 @@ export async function markInvoicePaid(_prev: InvoiceFormState, formData: FormDat
 /** Voiding frees any hours it held so they can be billed correctly on a
  * replacement invoice (SPEC §8.4 principle: fix by voiding + recreating,
  * never by silently editing a document that already left the business). */
-export async function voidInvoice(_prev: InvoiceFormState, formData: FormData): Promise<InvoiceFormState> {
+export async function voidInvoice(
+  _prev: InvoiceFormState,
+  formData: FormData,
+): Promise<InvoiceFormState> {
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Missing invoice." };
 
@@ -220,7 +254,10 @@ export async function deleteDraftInvoice(formData: FormData) {
 
 /** Lines are only writable while the parent invoice is a draft -- RLS
  * enforces this too, these are app-level errors for a nicer message. */
-export async function addInvoiceLine(_prev: InvoiceFormState, formData: FormData): Promise<InvoiceFormState> {
+export async function addInvoiceLine(
+  _prev: InvoiceFormState,
+  formData: FormData,
+): Promise<InvoiceFormState> {
   const ctx = await requireMembership();
   const denied = checkInvoicingAccess(ctx);
   if (denied) return { error: denied };
@@ -230,10 +267,12 @@ export async function addInvoiceLine(_prev: InvoiceFormState, formData: FormData
   if (!invoiceId || !description) return { error: "Enter a description." };
 
   const quantity = Number(String(formData.get("quantity") ?? "1").trim());
-  if (!Number.isFinite(quantity) || quantity <= 0) return { error: "Enter a valid quantity." };
+  if (!Number.isFinite(quantity) || quantity <= 0)
+    return { error: "Enter a valid quantity." };
 
   const unitCents = parseDollars(String(formData.get("unit_cents") ?? ""));
-  if (unitCents === null || Number.isNaN(unitCents)) return { error: "Enter a valid amount." };
+  if (unitCents === null || Number.isNaN(unitCents))
+    return { error: "Enter a valid amount." };
 
   const supabase = await createClient();
   const { error } = await supabase.from("invoice_lines").insert({
@@ -244,13 +283,19 @@ export async function addInvoiceLine(_prev: InvoiceFormState, formData: FormData
     unit_cents: unitCents,
     total_cents: Math.round(quantity * unitCents),
   });
-  if (error) return { error: "Couldn't add the line. The invoice may no longer be a draft." };
+  if (error)
+    return {
+      error: "Couldn't add the line. The invoice may no longer be a draft.",
+    };
 
   revalidatePath("/", "layout");
   return { message: "Added." };
 }
 
-export async function updateInvoiceLine(_prev: InvoiceFormState, formData: FormData): Promise<InvoiceFormState> {
+export async function updateInvoiceLine(
+  _prev: InvoiceFormState,
+  formData: FormData,
+): Promise<InvoiceFormState> {
   const ctx = await requireMembership();
   const denied = checkInvoicingAccess(ctx);
   if (denied) return { error: denied };
@@ -260,18 +305,26 @@ export async function updateInvoiceLine(_prev: InvoiceFormState, formData: FormD
   if (!id || !description) return { error: "Enter a description." };
 
   const quantity = Number(String(formData.get("quantity") ?? "1").trim());
-  if (!Number.isFinite(quantity) || quantity <= 0) return { error: "Enter a valid quantity." };
+  if (!Number.isFinite(quantity) || quantity <= 0)
+    return { error: "Enter a valid quantity." };
 
   const unitCents = parseDollars(String(formData.get("unit_cents") ?? ""));
-  if (unitCents === null || Number.isNaN(unitCents)) return { error: "Enter a valid amount." };
+  if (unitCents === null || Number.isNaN(unitCents))
+    return { error: "Enter a valid amount." };
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("invoice_lines")
-    .update({ description, quantity, unit_cents: unitCents, total_cents: Math.round(quantity * unitCents) })
+    .update({
+      description,
+      quantity,
+      unit_cents: unitCents,
+      total_cents: Math.round(quantity * unitCents),
+    })
     .eq("id", id)
     .eq("organization_id", ctx.membership.organization_id);
-  if (error) return { error: "Couldn't save. The invoice may no longer be a draft." };
+  if (error)
+    return { error: "Couldn't save. The invoice may no longer be a draft." };
 
   revalidatePath("/", "layout");
   return { message: "Saved." };
@@ -285,7 +338,11 @@ export async function removeInvoiceLine(formData: FormData) {
   if (!id) return;
 
   const supabase = await createClient();
-  await supabase.from("invoice_lines").delete().eq("id", id).eq("organization_id", ctx.membership.organization_id);
+  await supabase
+    .from("invoice_lines")
+    .delete()
+    .eq("id", id)
+    .eq("organization_id", ctx.membership.organization_id);
 
   revalidatePath("/", "layout");
 }

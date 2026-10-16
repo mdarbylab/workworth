@@ -8,13 +8,19 @@ import { createExpense } from "../actions";
 
 export const metadata: Metadata = { title: "Add expense" };
 
-export default async function NewExpensePage({ searchParams }: PageProps<"/expenses/new">) {
+export default async function NewExpensePage({
+  searchParams,
+}: PageProps<"/expenses/new">) {
   const { job } = await searchParams;
   const ctx = await getSessionContext();
   if (!ctx?.organization) redirect("/onboarding");
 
   const supabase = await createClient();
-  const { data: jobs } = await supabase.from("jobs").select("id, name, status").eq("status", "active").order("name");
+  const { data: jobs } = await supabase
+    .from("jobs")
+    .select("id, name, status")
+    .eq("status", "active")
+    .order("name");
   const requestedJob = typeof job === "string" ? job : "";
 
   return (

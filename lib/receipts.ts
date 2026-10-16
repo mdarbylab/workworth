@@ -23,13 +23,25 @@ const EXTENSIONS: Record<string, string> = {
 /** For the file input's `accept` attribute. Same list as the bucket allows. */
 export const RECEIPT_ACCEPT = Object.keys(EXTENSIONS).join(",");
 
-export type ReceiptCheck = { ok: true; extension: string } | { ok: false; error: string };
+export type ReceiptCheck =
+  { ok: true; extension: string } | { ok: false; error: string };
 
 /** Validate an uploaded file's type and size before it goes anywhere. */
-export function checkReceipt(file: { type: string; size: number }): ReceiptCheck {
+export function checkReceipt(file: {
+  type: string;
+  size: number;
+}): ReceiptCheck {
   const extension = EXTENSIONS[file.type];
-  if (!extension) return { ok: false, error: "Receipts must be a photo (JPEG, PNG, WebP, HEIC) or a PDF." };
-  if (file.size > MAX_RECEIPT_BYTES) return { ok: false, error: "That receipt is over 4 MB. Try a smaller photo or PDF." };
+  if (!extension)
+    return {
+      ok: false,
+      error: "Receipts must be a photo (JPEG, PNG, WebP, HEIC) or a PDF.",
+    };
+  if (file.size > MAX_RECEIPT_BYTES)
+    return {
+      ok: false,
+      error: "That receipt is over 4 MB. Try a smaller photo or PDF.",
+    };
   if (file.size === 0) return { ok: false, error: "That file is empty." };
   return { ok: true, extension };
 }
@@ -39,7 +51,12 @@ export function checkReceipt(file: { type: string; size: number }): ReceiptCheck
  * receipt never overwrites an object in place (the bucket has no update
  * policy) and a cached signed URL can't show the old file.
  */
-export function receiptPath(organizationId: string, expenseId: string, extension: string, suffix: string): string {
+export function receiptPath(
+  organizationId: string,
+  expenseId: string,
+  extension: string,
+  suffix: string,
+): string {
   return `${organizationId}/${expenseId}/receipt-${suffix}.${extension}`;
 }
 

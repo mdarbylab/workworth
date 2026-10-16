@@ -11,35 +11,57 @@ export const metadata: Metadata = { title: "Join a business" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export default async function InvitePage({ params }: PageProps<"/invite/[token]">) {
+export default async function InvitePage({
+  params,
+}: PageProps<"/invite/[token]">) {
   const { token } = await params;
   const ctx = await getSessionContext();
 
   // invite_preview is security definer and granted to anon, so someone who has
   // never had an account still gets told who invited them and to what.
   const supabase = await createClient();
-  const { data } = UUID.test(token) ? await supabase.rpc("invite_preview", { token }) : { data: null };
+  const { data } = UUID.test(token)
+    ? await supabase.rpc("invite_preview", { token })
+    : { data: null };
   const invite = data?.[0] ?? null;
 
   const next = `/invite/${token}`;
   const signupHref = `/signup?next=${encodeURIComponent(next)}${
-    invite?.invited_email ? `&email=${encodeURIComponent(invite.invited_email)}` : ""
+    invite?.invited_email
+      ? `&email=${encodeURIComponent(invite.invited_email)}`
+      : ""
   }`;
   const loginHref = `/login?next=${encodeURIComponent(next)}${
-    invite?.invited_email ? `&email=${encodeURIComponent(invite.invited_email)}` : ""
+    invite?.invited_email
+      ? `&email=${encodeURIComponent(invite.invited_email)}`
+      : ""
   }`;
 
   let body: React.ReactNode;
 
   if (!invite) {
-    body = <p className="text-sm text-slate-600">This invite link isn&apos;t valid. Ask the person who invited you for a new one.</p>;
+    body = (
+      <p className="text-sm text-slate-600">
+        This invite link isn&apos;t valid. Ask the person who invited you for a
+        new one.
+      </p>
+    );
   } else if (invite.state === "cancelled") {
-    body = <p className="text-sm text-slate-600">This invite to {invite.organization_name} was cancelled.</p>;
+    body = (
+      <p className="text-sm text-slate-600">
+        This invite to {invite.organization_name} was cancelled.
+      </p>
+    );
   } else if (invite.state === "accepted" && !ctx) {
     body = (
       <>
-        <p className="text-sm text-slate-600">This invite has already been used. Sign in to reach {invite.organization_name}.</p>
-        <Link href={loginHref} className="btn-primary">Sign in</Link>
+        <p className="text-sm text-slate-600">
+          This invite has already been used. Sign in to reach{" "}
+          {invite.organization_name}.
+        </p>
+        <Link href={loginHref} className="btn-primary">
+          Sign in
+        </Link>
       </>
     );
   } else if (!ctx) {
@@ -48,51 +70,83 @@ export default async function InvitePage({ params }: PageProps<"/invite/[token]"
     body = (
       <>
         <p className="text-sm text-slate-600">
-          You&apos;ve been invited to join <strong>{invite.organization_name}</strong> on WorkWorth, to track
+          You&apos;ve been invited to join{" "}
+          <strong>{invite.organization_name}</strong> on WorkWorth, to track
           your time and expenses together.
         </p>
         <p className="text-sm text-slate-600">
-          Create your account with <strong>{invite.invited_email}</strong> — the address the invite was sent to
-          — and you&apos;ll come straight back here to join.
+          Create your account with <strong>{invite.invited_email}</strong> — the
+          address the invite was sent to — and you&apos;ll come straight back
+          here to join.
         </p>
-        <Link href={signupHref} className="btn-primary">Create your account</Link>
+        <Link href={signupHref} className="btn-primary">
+          Create your account
+        </Link>
         <p className="text-center text-sm text-slate-500">
-          Already have one? <Link href={loginHref} className="font-medium text-ink-800 hover:underline">Sign in</Link>
+          Already have one?{" "}
+          <Link
+            href={loginHref}
+            className="font-medium text-ink-800 hover:underline"
+          >
+            Sign in
+          </Link>
         </p>
       </>
     );
   } else if (invite.state === "accepted") {
-    body = ctx.organization?.name === invite.organization_name ? (
-      <>
-        <p className="text-sm text-slate-600">You&apos;re already part of {invite.organization_name}.</p>
-        <Link href="/today" className="btn-primary">Go to Today</Link>
-      </>
-    ) : (
-      <p className="text-sm text-slate-600">This invite has already been used.</p>
-    );
+    body =
+      ctx.organization?.name === invite.organization_name ? (
+        <>
+          <p className="text-sm text-slate-600">
+            You&apos;re already part of {invite.organization_name}.
+          </p>
+          <Link href="/today" className="btn-primary">
+            Go to Today
+          </Link>
+        </>
+      ) : (
+        <p className="text-sm text-slate-600">
+          This invite has already been used.
+        </p>
+      );
   } else if (ctx.organization) {
     body = (
       <>
         <p className="text-sm text-slate-600">
-          Your account already belongs to <strong>{ctx.organization.name}</strong>. WorkWorth supports one business per account for now.
+          Your account already belongs to{" "}
+          <strong>{ctx.organization.name}</strong>. WorkWorth supports one
+          business per account for now.
         </p>
-        <Link href="/today" className="btn-secondary">Back to Today</Link>
+        <Link href="/today" className="btn-secondary">
+          Back to Today
+        </Link>
       </>
     );
-  } else if ((ctx.user.email ?? "").toLowerCase() !== (invite.invited_email ?? "").toLowerCase()) {
+  } else if (
+    (ctx.user.email ?? "").toLowerCase() !==
+    (invite.invited_email ?? "").toLowerCase()
+  ) {
     body = (
       <>
         <p className="text-sm text-slate-600">
-          This invite was sent to <strong>{invite.invited_email}</strong>, but you&apos;re signed in as{" "}
-          <strong>{ctx.user.email}</strong>.
+          This invite was sent to <strong>{invite.invited_email}</strong>, but
+          you&apos;re signed in as <strong>{ctx.user.email}</strong>.
         </p>
         <form action={signOut}>
-          <button type="submit" className="btn-secondary">Sign out and switch accounts</button>
+          <button type="submit" className="btn-secondary">
+            Sign out and switch accounts
+          </button>
         </form>
       </>
     );
   } else {
-    body = <AcceptForm token={token} organizationName={invite.organization_name} defaultName={ctx.displayName} />;
+    body = (
+      <AcceptForm
+        token={token}
+        organizationName={invite.organization_name}
+        defaultName={ctx.displayName}
+      />
+    );
   }
 
   return (
@@ -102,7 +156,9 @@ export default async function InvitePage({ params }: PageProps<"/invite/[token]"
       </div>
       <div className="card w-full max-w-sm space-y-4">
         <h1 className="text-xl font-semibold">
-          {invite && invite.state === "pending" ? `Join ${invite.organization_name}` : "Invitation"}
+          {invite && invite.state === "pending"
+            ? `Join ${invite.organization_name}`
+            : "Invitation"}
         </h1>
         {body}
       </div>

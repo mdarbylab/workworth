@@ -12,12 +12,18 @@ import { DeleteEntryButton } from "./delete-button";
 
 export const metadata: Metadata = { title: "Edit time" };
 
-type Snapshot = { job_id: string; started_at: string; stopped_at: string | null; notes: string | null };
+type Snapshot = {
+  job_id: string;
+  started_at: string;
+  stopped_at: string | null;
+  notes: string | null;
+};
 
 function asSnapshot(json: Json | null): Snapshot | null {
   if (!json || typeof json !== "object" || Array.isArray(json)) return null;
   const o = json as Record<string, Json | undefined>;
-  if (typeof o.job_id !== "string" || typeof o.started_at !== "string") return null;
+  if (typeof o.job_id !== "string" || typeof o.started_at !== "string")
+    return null;
   return {
     job_id: o.job_id,
     started_at: o.started_at,
@@ -26,27 +32,34 @@ function asSnapshot(json: Json | null): Snapshot | null {
   };
 }
 
-export default async function EditTimeEntryPage({ params }: PageProps<"/time/[id]">) {
+export default async function EditTimeEntryPage({
+  params,
+}: PageProps<"/time/[id]">) {
   const { id } = await params;
   const ctx = await getSessionContext();
   if (!ctx?.organization) redirect("/onboarding");
   const tz = ctx.organization.timezone;
 
   const supabase = await createClient();
-  const [{ data: entry }, { data: jobs }, { data: events }] = await Promise.all([
-    supabase.from("time_entries").select("*").eq("id", id).maybeSingle(),
-    supabase.from("jobs").select("id, name, status").order("name"),
-    supabase
-      .from("audit_events")
-      .select("id, action, before, after, created_at")
-      .eq("table_name", "time_entries")
-      .eq("record_id", id)
-      .order("created_at", { ascending: true }),
-  ]);
+  const [{ data: entry }, { data: jobs }, { data: events }] = await Promise.all(
+    [
+      supabase.from("time_entries").select("*").eq("id", id).maybeSingle(),
+      supabase.from("jobs").select("id, name, status").order("name"),
+      supabase
+        .from("audit_events")
+        .select("id, action, before, after, created_at")
+        .eq("table_name", "time_entries")
+        .eq("record_id", id)
+        .order("created_at", { ascending: true }),
+    ],
+  );
   if (!entry) notFound();
 
-  const jobName = (jobId: string) => jobs?.find((j) => j.id === jobId)?.name ?? "Unknown job";
-  const pickable = (jobs ?? []).filter((j) => j.status === "active" || j.id === entry.job_id);
+  const jobName = (jobId: string) =>
+    jobs?.find((j) => j.id === jobId)?.name ?? "Unknown job";
+  const pickable = (jobs ?? []).filter(
+    (j) => j.status === "active" || j.id === entry.job_id,
+  );
 
   // §8.4: original values come from the first update's "before" snapshot.
   const updates = (events ?? []).filter((e) => e.action === "update");
@@ -70,10 +83,15 @@ export default async function EditTimeEntryPage({ params }: PageProps<"/time/[id
         <h1 className="text-2xl font-semibold">Running timer</h1>
         <div className="card space-y-3">
           <p className="text-sm">
-            {jobName(entry.job_id)} — started {formatDateTime(new Date(entry.started_at), tz)}.
+            {jobName(entry.job_id)} — started{" "}
+            {formatDateTime(new Date(entry.started_at), tz)}.
           </p>
-          <p className="text-sm text-slate-500">Stop the timer from Today, then you can edit this entry.</p>
-          <Link href="/today" className="btn-primary">Go to Today</Link>
+          <p className="text-sm text-slate-500">
+            Stop the timer from Today, then you can edit this entry.
+          </p>
+          <Link href="/today" className="btn-primary">
+            Go to Today
+          </Link>
         </div>
       </div>
     );
@@ -88,7 +106,9 @@ export default async function EditTimeEntryPage({ params }: PageProps<"/time/[id
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Edit time</h1>
         {edits.length > 0 && (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">Edited</span>
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+            Edited
+          </span>
         )}
       </div>
 
@@ -116,7 +136,9 @@ export default async function EditTimeEntryPage({ params }: PageProps<"/time/[id
         <section className="card space-y-3">
           <h2 className="font-semibold">History</h2>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Original</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500">
+              Original
+            </p>
             <p className="text-sm">{describe(original)}</p>
           </div>
           <ol className="space-y-2 border-t border-slate-100 pt-3">
@@ -132,7 +154,9 @@ export default async function EditTimeEntryPage({ params }: PageProps<"/time/[id
               );
             })}
           </ol>
-          <p className="text-xs text-slate-400">Nothing is overwritten — every change is kept.</p>
+          <p className="text-xs text-slate-400">
+            Nothing is overwritten — every change is kept.
+          </p>
         </section>
       )}
 

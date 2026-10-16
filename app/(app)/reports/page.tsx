@@ -4,7 +4,12 @@ import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/session";
 import { periodQuery, resolvePeriod } from "@/lib/periods";
 import { buildReport } from "@/lib/reports";
-import { formatCents, formatDuration, formatRate, roundingConfigFor } from "@/lib/calc";
+import {
+  formatCents,
+  formatDuration,
+  formatRate,
+  roundingConfigFor,
+} from "@/lib/calc";
 import { PeriodPicker } from "./period-picker";
 import { TrackOnMount } from "@/components/analytics";
 import { ClientReportForm } from "./client-report-form";
@@ -12,7 +17,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Reports" };
 
-export default async function ReportsPage({ searchParams }: PageProps<"/reports">) {
+export default async function ReportsPage({
+  searchParams,
+}: PageProps<"/reports">) {
   const params = await searchParams;
   const ctx = await getSessionContext();
   if (!ctx?.organization) redirect("/onboarding");
@@ -25,13 +32,19 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
     supabase.from("clients").select("id, name").order("name"),
   ]);
   const q = periodQuery(period);
-  const hasFixed = report.rows.some((r) => r.jobId && r.revenueCents > 0 && r.seconds === 0);
+  const hasFixed = report.rows.some(
+    (r) => r.jobId && r.revenueCents > 0 && r.seconds === 0,
+  );
 
   const questions: Array<[string, string, string?]> = [
     ["How much did I work?", formatDuration(report.seconds)],
     ["How much did I make?", formatCents(report.revenueCents)],
     ["What did I spend?", formatCents(report.expensesCents)],
-    ["What did I actually make?", formatCents(report.profitCents), report.profitCents < 0 ? "text-red-700" : "text-ink-800"],
+    [
+      "What did I actually make?",
+      formatCents(report.profitCents),
+      report.profitCents < 0 ? "text-red-700" : "text-ink-800",
+    ],
     ["Effective hourly rate", formatRate(report.rateCents)],
   ];
 
@@ -48,23 +61,34 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
       <section className="card">
         <dl className="divide-y divide-slate-100">
           {questions.map(([label, value, cls]) => (
-            <div key={label} className="flex items-center justify-between gap-4 py-3">
+            <div
+              key={label}
+              className="flex items-center justify-between gap-4 py-3"
+            >
               <dt className="text-sm text-slate-600 sm:text-base">{label}</dt>
-              <dd className={`text-lg font-semibold tabular-nums sm:text-xl ${cls ?? ""}`}>{value}</dd>
+              <dd
+                className={`text-lg font-semibold tabular-nums sm:text-xl ${cls ?? ""}`}
+              >
+                {value}
+              </dd>
             </div>
           ))}
         </dl>
         <p className="pt-3 text-xs text-slate-400">
           Estimated — until invoicing exists.
-          {hasFixed && " Fixed-price jobs count their full price in any period with activity."}
-          {rounding && " Revenue is rounded per your billing settings; hours above are the real tracked time."}
+          {hasFixed &&
+            " Fixed-price jobs count their full price in any period with activity."}
+          {rounding &&
+            " Revenue is rounded per your billing settings; hours above are the real tracked time."}
         </p>
       </section>
 
       <section className="space-y-2">
         <h2 className="font-semibold">By job</h2>
         {report.rows.length === 0 ? (
-          <p className="card text-sm text-slate-500">No time or expenses in this period.</p>
+          <p className="card text-sm text-slate-500">
+            No time or expenses in this period.
+          </p>
         ) : (
           <div className="card overflow-x-auto p-0">
             <table className="w-full text-sm">
@@ -83,32 +107,61 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
                   <tr key={r.jobId ?? "none"}>
                     <td className="max-w-[12rem] px-4 py-2">
                       {r.jobId ? (
-                        <Link href={`/jobs/${r.jobId}`} className="block truncate font-medium hover:underline">{r.name}</Link>
+                        <Link
+                          href={`/jobs/${r.jobId}`}
+                          className="block truncate font-medium hover:underline"
+                        >
+                          {r.name}
+                        </Link>
                       ) : (
                         <span className="text-slate-500">{r.name}</span>
                       )}
-                      {r.clientName && <span className="block truncate text-xs text-slate-500">{r.clientName}</span>}
+                      {r.clientName && (
+                        <span className="block truncate text-xs text-slate-500">
+                          {r.clientName}
+                        </span>
+                      )}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatDuration(r.seconds)}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatCents(r.revenueCents)}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatCents(r.expensesCents)}</td>
-                    <td className={`whitespace-nowrap px-3 py-2 text-right font-medium tabular-nums ${r.profitCents < 0 ? "text-red-700" : ""}`}>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
+                      {formatDuration(r.seconds)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
+                      {formatCents(r.revenueCents)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
+                      {formatCents(r.expensesCents)}
+                    </td>
+                    <td
+                      className={`whitespace-nowrap px-3 py-2 text-right font-medium tabular-nums ${r.profitCents < 0 ? "text-red-700" : ""}`}
+                    >
                       {formatCents(r.profitCents)}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums">{formatRate(r.rateCents)}</td>
+                    <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums">
+                      {formatRate(r.rateCents)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot className="border-t border-slate-200 bg-slate-50 font-semibold">
                 <tr>
                   <td className="px-4 py-2">Total</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatDuration(report.seconds)}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatCents(report.revenueCents)}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatCents(report.expensesCents)}</td>
-                  <td className={`whitespace-nowrap px-3 py-2 text-right tabular-nums ${report.profitCents < 0 ? "text-red-700" : ""}`}>
+                  <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
+                    {formatDuration(report.seconds)}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
+                    {formatCents(report.revenueCents)}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
+                    {formatCents(report.expensesCents)}
+                  </td>
+                  <td
+                    className={`whitespace-nowrap px-3 py-2 text-right tabular-nums ${report.profitCents < 0 ? "text-red-700" : ""}`}
+                  >
                     {formatCents(report.profitCents)}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums">{formatRate(report.rateCents)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums">
+                    {formatRate(report.rateCents)}
+                  </td>
                 </tr>
               </tfoot>
             </table>
@@ -124,21 +177,40 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
           periodLabel={period.label}
         />
         {ctx.organization.plan === "pro" ? (
-          <Link href="/reports/invoices" className="text-sm text-ink-800 hover:underline">
+          <Link
+            href="/reports/invoices"
+            className="text-sm text-ink-800 hover:underline"
+          >
             View invoices →
           </Link>
         ) : (
-          <p className="text-xs text-slate-400">Save a client report as an invoice — comes with Pro.</p>
+          <p className="text-xs text-slate-400">
+            Save a client report as an invoice — comes with Pro.
+          </p>
         )}
       </section>
 
       <section className="space-y-2">
         <h2 className="font-semibold">Export CSV</h2>
         <div className="grid grid-cols-2 gap-3">
-          <a href={`/reports/export/time?${q}`} className="btn-secondary" download>Time entries</a>
-          <a href={`/reports/export/expenses?${q}`} className="btn-secondary" download>Expenses</a>
+          <a
+            href={`/reports/export/time?${q}`}
+            className="btn-secondary"
+            download
+          >
+            Time entries
+          </a>
+          <a
+            href={`/reports/export/expenses?${q}`}
+            className="btn-secondary"
+            download
+          >
+            Expenses
+          </a>
         </div>
-        <p className="text-xs text-slate-400">Times are in your business timezone ({ctx.organization.timezone}).</p>
+        <p className="text-xs text-slate-400">
+          Times are in your business timezone ({ctx.organization.timezone}).
+        </p>
       </section>
     </div>
   );

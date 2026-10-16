@@ -6,8 +6,17 @@ import { createCheckoutSession, type BillingState } from "./billing-actions";
 
 const initial: BillingState = {};
 
-export function UpgradeForm({ interval, label }: { interval: "month" | "year"; label: string }) {
-  const [state, action, pending] = useActionState(createCheckoutSession, initial);
+export function UpgradeForm({
+  interval,
+  label,
+}: {
+  interval: "month" | "year";
+  label: string;
+}) {
+  const [state, action, pending] = useActionState(
+    createCheckoutSession,
+    initial,
+  );
 
   return (
     <form

@@ -19,7 +19,9 @@ export default async function ExpensesPage() {
   const [{ data: expenses }, people] = await Promise.all([
     supabase
       .from("expenses")
-      .select("id, user_id, job_id, amount_cents, spent_on, category, description, miles, receipt_path, jobs(name)")
+      .select(
+        "id, user_id, job_id, amount_cents, spent_on, category, description, miles, receipt_path, jobs(name)",
+      )
       .order("spent_on", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(300),
@@ -57,18 +59,27 @@ export default async function ExpensesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Expenses</h1>
-        <Link href="/expenses/new" className="btn-primary w-auto px-4 py-2 text-sm">+ Add expense</Link>
+        <Link
+          href="/expenses/new"
+          className="btn-primary w-auto px-4 py-2 text-sm"
+        >
+          + Add expense
+        </Link>
       </div>
 
       <div className="card flex items-baseline justify-between">
         <span className="text-sm text-slate-600">{formatMonth(monthKey)}</span>
-        <span className="text-2xl font-semibold tabular-nums">{formatCents(monthTotal)}</span>
+        <span className="text-2xl font-semibold tabular-nums">
+          {formatCents(monthTotal)}
+        </span>
       </div>
 
       {groups.size === 0 ? (
         <div className="card space-y-2 text-center">
           <p className="text-slate-600">No expenses yet.</p>
-          <p className="text-sm text-slate-500">Materials, fuel, tools — anything you spend to do the work.</p>
+          <p className="text-sm text-slate-500">
+            Materials, fuel, tools — anything you spend to do the work.
+          </p>
         </div>
       ) : (
         Array.from(groups.entries()).map(([key, list]) => {
@@ -77,30 +88,45 @@ export default async function ExpensesPage() {
             <section key={key} className="space-y-2">
               <div className="flex items-baseline justify-between">
                 <h2 className="font-semibold">{formatDayHeading(key, tz)}</h2>
-                <span className="text-sm tabular-nums text-slate-500">{formatCents(dayTotal)}</span>
+                <span className="text-sm tabular-nums text-slate-500">
+                  {formatCents(dayTotal)}
+                </span>
               </div>
               <ul className="card divide-y divide-slate-100 p-0">
                 {list.map((x) => (
                   <li key={x.id}>
-                    <Link href={`/expenses/${x.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+                    <Link
+                      href={`/expenses/${x.id}`}
+                      className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50"
+                    >
                       <div className="min-w-0">
                         <p className="flex items-center gap-2 text-sm font-medium">
-                          <span className="truncate">{x.description || CATEGORY_LABELS[x.category]}</span>
+                          <span className="truncate">
+                            {x.description || CATEGORY_LABELS[x.category]}
+                          </span>
                           {x.receipt_path && (
-                            <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">Receipt</span>
+                            <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                              Receipt
+                            </span>
                           )}
                           {edited.has(x.id) && (
-                            <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">Edited</span>
+                            <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">
+                              Edited
+                            </span>
                           )}
                         </p>
                         <p className="truncate text-xs text-slate-500">
                           {CATEGORY_LABELS[x.category]}
-                          {x.category === "mileage" && x.miles !== null ? ` (${formatMiles(x.miles)})` : ""}
+                          {x.category === "mileage" && x.miles !== null
+                            ? ` (${formatMiles(x.miles)})`
+                            : ""}
                           {x.jobs?.name ? ` · ${x.jobs.name}` : " · No job"}
                           {showPerson && ` · ${personLabel(people, x.user_id)}`}
                         </p>
                       </div>
-                      <span className="shrink-0 text-sm font-semibold tabular-nums">{formatCents(x.amount_cents)}</span>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums">
+                        {formatCents(x.amount_cents)}
+                      </span>
                     </Link>
                   </li>
                 ))}

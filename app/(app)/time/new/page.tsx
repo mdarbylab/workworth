@@ -8,7 +8,9 @@ import { createTimeEntry } from "../actions";
 
 export const metadata: Metadata = { title: "Add time" };
 
-export default async function NewTimeEntryPage({ searchParams }: PageProps<"/time/new">) {
+export default async function NewTimeEntryPage({
+  searchParams,
+}: PageProps<"/time/new">) {
   const { job } = await searchParams;
   const ctx = await getSessionContext();
   if (!ctx?.organization) redirect("/onboarding");
@@ -16,7 +18,11 @@ export default async function NewTimeEntryPage({ searchParams }: PageProps<"/tim
 
   const supabase = await createClient();
   const [{ data: jobs }, { data: last }] = await Promise.all([
-    supabase.from("jobs").select("id, name, status").eq("status", "active").order("name"),
+    supabase
+      .from("jobs")
+      .select("id, name, status")
+      .eq("status", "active")
+      .order("name"),
     supabase
       .from("time_entries")
       .select("job_id")
@@ -28,7 +34,9 @@ export default async function NewTimeEntryPage({ searchParams }: PageProps<"/tim
 
   const now = new Date();
   // Default to a one-hour block ending now, rounded to the quarter hour.
-  const rounded = new Date(Math.floor(now.getTime() / (15 * 60 * 1000)) * 15 * 60 * 1000);
+  const rounded = new Date(
+    Math.floor(now.getTime() / (15 * 60 * 1000)) * 15 * 60 * 1000,
+  );
   const start = new Date(rounded.getTime() - 3600 * 1000);
   const requestedJob = typeof job === "string" ? job : "";
 

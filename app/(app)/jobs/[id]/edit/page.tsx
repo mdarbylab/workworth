@@ -6,9 +6,12 @@ import { updateJob } from "../../actions";
 
 export const metadata: Metadata = { title: "Edit job" };
 
-const centsToInput = (cents: number | null) => (cents === null ? "" : (cents / 100).toFixed(2));
+const centsToInput = (cents: number | null) =>
+  cents === null ? "" : (cents / 100).toFixed(2);
 
-export default async function EditJobPage({ params }: PageProps<"/jobs/[id]/edit">) {
+export default async function EditJobPage({
+  params,
+}: PageProps<"/jobs/[id]/edit">) {
   const { id } = await params;
   const supabase = await createClient();
   const [{ data: job }, { data: clients }] = await Promise.all([
@@ -31,8 +34,15 @@ export default async function EditJobPage({ params }: PageProps<"/jobs/[id]/edit
             name: job.name,
             clientName: job.clients?.name ?? "",
             billingType: job.billing_type,
-            amount: centsToInput(job.billing_type === "hourly" ? job.hourly_rate_cents : job.fixed_price_cents),
-            estimatedHours: job.estimated_minutes === null ? "" : String(job.estimated_minutes / 60),
+            amount: centsToInput(
+              job.billing_type === "hourly"
+                ? job.hourly_rate_cents
+                : job.fixed_price_cents,
+            ),
+            estimatedHours:
+              job.estimated_minutes === null
+                ? ""
+                : String(job.estimated_minutes / 60),
             notes: job.notes ?? "",
           }}
         />

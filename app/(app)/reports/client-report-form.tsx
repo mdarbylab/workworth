@@ -17,7 +17,8 @@ export function ClientReportForm({ clients, periodQuery, periodLabel }: Props) {
   if (clients.length === 0) {
     return (
       <p className="card text-sm text-slate-500">
-        Add a client to a job first. Reports are grouped by who the work was for.
+        Add a client to a job first. Reports are grouped by who the work was
+        for.
       </p>
     );
   }
@@ -31,7 +32,9 @@ export function ClientReportForm({ clients, periodQuery, periodLabel }: Props) {
       }}
     >
       <div className="min-w-0 flex-1">
-        <label htmlFor="report_client" className="label">Client</label>
+        <label htmlFor="report_client" className="label">
+          Client
+        </label>
         <select
           id="report_client"
           value={clientId}
@@ -39,13 +42,18 @@ export function ClientReportForm({ clients, periodQuery, periodLabel }: Props) {
           className="input"
         >
           {clients.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
           ))}
         </select>
       </div>
-      <button type="submit" className="btn-primary w-auto px-4">Create report</button>
+      <button type="submit" className="btn-primary w-auto px-4">
+        Create report
+      </button>
       <p className="w-full text-xs text-slate-400">
-        Covers {periodLabel}. Shows hours and what was done, never your expenses or profit.
+        Covers {periodLabel}. Shows hours and what was done, never your expenses
+        or profit.
       </p>
     </form>
   );

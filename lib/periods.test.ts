@@ -74,7 +74,11 @@ describe("resolvePeriod — last-month", () => {
 describe("resolvePeriod — custom", () => {
   it("accepts a valid from <= to range", () => {
     const now = new Date("2026-06-15T16:00:00.000Z");
-    const p = resolvePeriod({ period: "custom", from: "2026-06-01", to: "2026-06-10" }, NY, now);
+    const p = resolvePeriod(
+      { period: "custom", from: "2026-06-01", to: "2026-06-10" },
+      NY,
+      now,
+    );
     expect(p.key).toBe("custom");
     expect(p.fromKey).toBe("2026-06-01");
     expect(p.toKey).toBe("2026-06-10");
@@ -83,7 +87,11 @@ describe("resolvePeriod — custom", () => {
 
   it("accepts a single-day range where from equals to", () => {
     const now = new Date("2026-06-15T16:00:00.000Z");
-    const p = resolvePeriod({ period: "custom", from: "2026-06-05", to: "2026-06-05" }, NY, now);
+    const p = resolvePeriod(
+      { period: "custom", from: "2026-06-05", to: "2026-06-05" },
+      NY,
+      now,
+    );
     expect(p.key).toBe("custom");
     expect(p.fromKey).toBe("2026-06-05");
     expect(p.toKey).toBe("2026-06-05");
@@ -91,7 +99,11 @@ describe("resolvePeriod — custom", () => {
 
   it("falls back to month when from is after to", () => {
     const now = new Date("2026-06-15T16:00:00.000Z");
-    const p = resolvePeriod({ period: "custom", from: "2026-06-10", to: "2026-06-01" }, NY, now);
+    const p = resolvePeriod(
+      { period: "custom", from: "2026-06-10", to: "2026-06-01" },
+      NY,
+      now,
+    );
     expect(p.key).toBe("month");
   });
 
@@ -103,7 +115,11 @@ describe("resolvePeriod — custom", () => {
 
   it("falls back to month when from/to are not well-formed date keys", () => {
     const now = new Date("2026-06-15T16:00:00.000Z");
-    const p = resolvePeriod({ period: "custom", from: "06/10/2026", to: "2026-06-20" }, NY, now);
+    const p = resolvePeriod(
+      { period: "custom", from: "06/10/2026", to: "2026-06-20" },
+      NY,
+      now,
+    );
     expect(p.key).toBe("month");
   });
 
@@ -122,7 +138,11 @@ describe("resolvePeriod — custom", () => {
 
 describe("periodQuery", () => {
   it("encodes a non-custom period by key alone", () => {
-    const p = resolvePeriod({ period: "week" }, NY, new Date("2026-06-15T16:00:00.000Z"));
+    const p = resolvePeriod(
+      { period: "week" },
+      NY,
+      new Date("2026-06-15T16:00:00.000Z"),
+    );
     expect(periodQuery(p)).toBe("period=week");
   });
 

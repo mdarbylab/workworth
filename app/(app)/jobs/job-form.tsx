@@ -24,9 +24,23 @@ type Props = {
 };
 
 const initial: JobFormState = {};
-const empty: JobDefaults = { name: "", clientName: "", billingType: "hourly", amount: "", estimatedHours: "", notes: "" };
+const empty: JobDefaults = {
+  name: "",
+  clientName: "",
+  billingType: "hourly",
+  amount: "",
+  estimatedHours: "",
+  notes: "",
+};
 
-export function JobForm({ clientNames, action, defaults = empty, jobId, submitLabel, cancelHref }: Props) {
+export function JobForm({
+  clientNames,
+  action,
+  defaults = empty,
+  jobId,
+  submitLabel,
+  cancelHref,
+}: Props) {
   const [state, formAction, pending] = useActionState(action, initial);
 
   return (
@@ -34,8 +48,19 @@ export function JobForm({ clientNames, action, defaults = empty, jobId, submitLa
       {jobId && <input type="hidden" name="id" value={jobId} />}
 
       <div>
-        <label htmlFor="name" className="label">Job name</label>
-        <input id="name" name="name" type="text" required autoFocus={!jobId} defaultValue={defaults.name} className="input" placeholder="e.g. Kitchen remodel" />
+        <label htmlFor="name" className="label">
+          Job name
+        </label>
+        <input
+          id="name"
+          name="name"
+          type="text"
+          required
+          autoFocus={!jobId}
+          defaultValue={defaults.name}
+          className="input"
+          placeholder="e.g. Kitchen remodel"
+        />
       </div>
 
       <div>
@@ -59,11 +84,15 @@ export function JobForm({ clientNames, action, defaults = empty, jobId, submitLa
         </datalist>
       </div>
 
-      <BillingFields defaultType={defaults.billingType} defaultAmount={defaults.amount} />
+      <BillingFields
+        defaultType={defaults.billingType}
+        defaultAmount={defaults.amount}
+      />
 
       <div>
         <label htmlFor="estimated_hours" className="label">
-          Estimated hours <span className="font-normal text-slate-400">(optional)</span>
+          Estimated hours{" "}
+          <span className="font-normal text-slate-400">(optional)</span>
         </label>
         <input
           id="estimated_hours"
@@ -82,13 +111,21 @@ export function JobForm({ clientNames, action, defaults = empty, jobId, submitLa
         <label htmlFor="notes" className="label">
           Notes <span className="font-normal text-slate-400">(optional)</span>
         </label>
-        <textarea id="notes" name="notes" rows={3} defaultValue={defaults.notes} className="input" />
+        <textarea
+          id="notes"
+          name="notes"
+          rows={3}
+          defaultValue={defaults.notes}
+          className="input"
+        />
       </div>
 
       {state.error && <p className="error">{state.error}</p>}
 
       <div className="flex gap-3">
-        <Link href={cancelHref} className="btn-secondary">Cancel</Link>
+        <Link href={cancelHref} className="btn-secondary">
+          Cancel
+        </Link>
         <button type="submit" disabled={pending} className="btn-primary">
           {pending ? "Saving…" : submitLabel}
         </button>

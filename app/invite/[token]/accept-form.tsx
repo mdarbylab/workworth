@@ -20,11 +20,14 @@ export function AcceptForm({
     <form action={action} className="space-y-4">
       <input type="hidden" name="token" value={token} />
       <p className="text-sm text-slate-600">
-        You&apos;ve been invited to track time and expenses for <strong>{organizationName}</strong>.
-        On the free plan you both see the whole business.
+        You&apos;ve been invited to track time and expenses for{" "}
+        <strong>{organizationName}</strong>. On the free plan you both see the
+        whole business.
       </p>
       <div>
-        <label htmlFor="display_name" className="label">Your name</label>
+        <label htmlFor="display_name" className="label">
+          Your name
+        </label>
         <input
           id="display_name"
           name="display_name"
@@ -36,7 +39,9 @@ export function AcceptForm({
           className="input"
           placeholder="Alex Rivera"
         />
-        <p className="mt-1 text-xs text-slate-500">This is how you appear to the rest of the business.</p>
+        <p className="mt-1 text-xs text-slate-500">
+          This is how you appear to the rest of the business.
+        </p>
       </div>
       {state.error && <p className="error">{state.error}</p>}
       <button type="submit" disabled={pending} className="btn-primary">

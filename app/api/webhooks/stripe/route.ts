@@ -16,7 +16,8 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!signature || !secret) return Response.json({ ok: false }, { status: 400 });
+  if (!signature || !secret)
+    return Response.json({ ok: false }, { status: 400 });
 
   let event: Stripe.Event;
   try {
@@ -36,9 +37,15 @@ export async function POST(request: Request) {
         const organizationId = session.client_reference_id;
         const customerId = session.customer;
         const subscriptionId = session.subscription;
-        if (!organizationId || typeof customerId !== "string" || typeof subscriptionId !== "string") break;
+        if (
+          !organizationId ||
+          typeof customerId !== "string" ||
+          typeof subscriptionId !== "string"
+        )
+          break;
 
-        const subscription = await stripe().subscriptions.retrieve(subscriptionId);
+        const subscription =
+          await stripe().subscriptions.retrieve(subscriptionId);
         await applyEvent(supabase, subscription, customerId, organizationId);
         break;
       }
@@ -73,8 +80,12 @@ async function applyEvent(
     p_stripe_customer_id: stripeCustomerId,
     p_stripe_subscription_id: subscription.id,
     p_status: subscription.status,
-    p_current_period_end: item ? new Date(item.current_period_end * 1000).toISOString() : undefined,
-    p_cancel_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : undefined,
+    p_current_period_end: item
+      ? new Date(item.current_period_end * 1000).toISOString()
+      : undefined,
+    p_cancel_at: subscription.cancel_at
+      ? new Date(subscription.cancel_at * 1000).toISOString()
+      : undefined,
     p_price_interval: item?.price.recurring?.interval,
     ...(organizationId ? { p_organization_id: organizationId } : {}),
   });

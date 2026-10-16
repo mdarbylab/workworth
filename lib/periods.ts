@@ -40,19 +40,24 @@ function dayStart(key: string, tz: string): Date {
 
 const fmtMonth = (key: string) => {
   const [y, m] = keyParts(key);
-  return new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(
-    new Date(Date.UTC(y, m - 1, 1)),
-  );
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(y, m - 1, 1)));
 };
 
 const fmtDay = (key: string) => {
   const [y, m, d] = keyParts(key);
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(
-    new Date(Date.UTC(y, m - 1, d)),
-  );
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(y, m - 1, d)));
 };
 
-const isKey = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+const isKey = (v: unknown): v is string =>
+  typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 /**
  * Resolve the report period from query params, in the org's timezone.
@@ -66,23 +71,44 @@ export function resolvePeriod(
   const today = dateKey(now, tz);
   const [y, m] = keyParts(today);
 
-  if (params.period === "custom" && isKey(params.from) && isKey(params.to) && params.from <= params.to) {
+  if (
+    params.period === "custom" &&
+    isKey(params.from) &&
+    isKey(params.to) &&
+    params.from <= params.to
+  ) {
     const fromKey = params.from;
     const toKey = params.to;
     const from = dayStart(fromKey, tz);
     const to = dayAfter(toKey, tz);
     if (!Number.isNaN(from.getTime()) && !Number.isNaN(to.getTime())) {
-      return { key: "custom", label: `${fmtDay(fromKey)} – ${fmtDay(toKey)}`, from, to, fromKey, toKey };
+      return {
+        key: "custom",
+        label: `${fmtDay(fromKey)} – ${fmtDay(toKey)}`,
+        from,
+        to,
+        fromKey,
+        toKey,
+      };
     }
   }
 
   if (params.period === "week") {
     // Monday-start week containing today.
-    const weekday = new Date(startOfDay(now, tz).getTime() + 12 * 3600 * 1000).getUTCDay(); // 0 = Sunday
+    const weekday = new Date(
+      startOfDay(now, tz).getTime() + 12 * 3600 * 1000,
+    ).getUTCDay(); // 0 = Sunday
     const back = (weekday + 6) % 7;
     const fromKey = addDaysKey(today, -back, tz);
     const toKey = addDaysKey(fromKey, 6, tz);
-    return { key: "week", label: "This week", from: dayStart(fromKey, tz), to: dayAfter(toKey, tz), fromKey, toKey };
+    return {
+      key: "week",
+      label: "This week",
+      from: dayStart(fromKey, tz),
+      to: dayAfter(toKey, tz),
+      fromKey,
+      toKey,
+    };
   }
 
   if (params.period === "last-month") {
@@ -91,7 +117,14 @@ export function resolvePeriod(
     const fromKey = `${ly}-${String(lm).padStart(2, "0")}-01`;
     const to = zonedToUtc(y, m, 1, 0, 0, tz);
     const toKey = addDaysKey(today.slice(0, 8) + "01", -1, tz);
-    return { key: "last-month", label: fmtMonth(fromKey), from: dayStart(fromKey, tz), to, fromKey, toKey };
+    return {
+      key: "last-month",
+      label: fmtMonth(fromKey),
+      from: dayStart(fromKey, tz),
+      to,
+      fromKey,
+      toKey,
+    };
   }
 
   const fromKey = `${y}-${String(m).padStart(2, "0")}-01`;
@@ -99,9 +132,18 @@ export function resolvePeriod(
   const nm = m === 12 ? 1 : m + 1;
   const to = zonedToUtc(ny, nm, 1, 0, 0, tz);
   const toKey = dateKey(new Date(to.getTime() - 12 * 3600 * 1000), tz);
-  return { key: "month", label: fmtMonth(fromKey), from: dayStart(fromKey, tz), to, fromKey, toKey };
+  return {
+    key: "month",
+    label: fmtMonth(fromKey),
+    from: dayStart(fromKey, tz),
+    to,
+    fromKey,
+    toKey,
+  };
 }
 
 export function periodQuery(p: Period): string {
-  return p.key === "custom" ? `period=custom&from=${p.fromKey}&to=${p.toKey}` : `period=${p.key}`;
+  return p.key === "custom"
+    ? `period=custom&from=${p.fromKey}&to=${p.toKey}`
+    : `period=${p.key}`;
 }

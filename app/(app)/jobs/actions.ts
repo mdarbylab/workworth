@@ -23,15 +23,18 @@ function parseJobForm(formData: FormData): JobFields | JobFormState {
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Give the job a name." };
 
-  const billingType = formData.get("billing_type") === "fixed" ? "fixed" : "hourly";
+  const billingType =
+    formData.get("billing_type") === "fixed" ? "fixed" : "hourly";
   const cents = parseDollars(String(formData.get("amount") ?? ""));
-  if (cents !== null && Number.isNaN(cents)) return { error: "Enter a valid dollar amount, or leave it blank." };
+  if (cents !== null && Number.isNaN(cents))
+    return { error: "Enter a valid dollar amount, or leave it blank." };
 
   const estHoursRaw = String(formData.get("estimated_hours") ?? "").trim();
   let estimatedMinutes: number | null = null;
   if (estHoursRaw !== "") {
     const hours = Number(estHoursRaw);
-    if (!Number.isFinite(hours) || hours < 0) return { error: "Estimated hours must be a positive number." };
+    if (!Number.isFinite(hours) || hours < 0)
+      return { error: "Estimated hours must be a positive number." };
     estimatedMinutes = Math.round(hours * 60);
   }
 
@@ -46,7 +49,10 @@ function parseJobForm(formData: FormData): JobFields | JobFormState {
 }
 
 /** Client type-ahead: reuse by name (case-insensitive) or create (SPEC §5.2). */
-async function resolveClientId(orgId: string, clientName: string): Promise<string | null | { error: string }> {
+async function resolveClientId(
+  orgId: string,
+  clientName: string,
+): Promise<string | null | { error: string }> {
   if (!clientName) return null;
   const supabase = await createClient();
   const { data: existing } = await supabase
@@ -67,14 +73,20 @@ async function resolveClientId(orgId: string, clientName: string): Promise<strin
   return created.id;
 }
 
-export async function createJob(_prev: JobFormState, formData: FormData): Promise<JobFormState> {
+export async function createJob(
+  _prev: JobFormState,
+  formData: FormData,
+): Promise<JobFormState> {
   const ctx = await requireMembership();
   const orgId = ctx.membership.organization_id;
 
   const fields = parseJobForm(formData);
   if (!("name" in fields)) return fields;
 
-  const clientId = await resolveClientId(orgId, String(formData.get("client_name") ?? "").trim());
+  const clientId = await resolveClientId(
+    orgId,
+    String(formData.get("client_name") ?? "").trim(),
+  );
   if (clientId && typeof clientId === "object") return clientId;
 
   const supabase = await createClient();
@@ -85,15 +97,22 @@ export async function createJob(_prev: JobFormState, formData: FormData): Promis
     .single();
   if (error) return { error: "Couldn't save the job. Please try again." };
 
-  track("job_created", { userId: ctx.user.id, organizationId: orgId }, {
-    billing_type: fields.billing_type,
-    has_client: clientId !== null,
-  });
+  track(
+    "job_created",
+    { userId: ctx.user.id, organizationId: orgId },
+    {
+      billing_type: fields.billing_type,
+      has_client: clientId !== null,
+    },
+  );
   revalidatePath("/", "layout");
   redirect(`/jobs/${job.id}`);
 }
 
-export async function updateJob(_prev: JobFormState, formData: FormData): Promise<JobFormState> {
+export async function updateJob(
+  _prev: JobFormState,
+  formData: FormData,
+): Promise<JobFormState> {
   const ctx = await requireMembership();
   const orgId = ctx.membership.organization_id;
   const id = String(formData.get("id") ?? "");
@@ -102,7 +121,10 @@ export async function updateJob(_prev: JobFormState, formData: FormData): Promis
   const fields = parseJobForm(formData);
   if (!("name" in fields)) return fields;
 
-  const clientId = await resolveClientId(orgId, String(formData.get("client_name") ?? "").trim());
+  const clientId = await resolveClientId(
+    orgId,
+    String(formData.get("client_name") ?? "").trim(),
+  );
   if (clientId && typeof clientId === "object") return clientId;
 
   const supabase = await createClient();

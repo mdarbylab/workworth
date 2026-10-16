@@ -11,21 +11,26 @@ export function OrgForm() {
 
   useEffect(() => {
     if (timezoneRef.current) {
-      timezoneRef.current.value = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "";
+      timezoneRef.current.value =
+        Intl.DateTimeFormat().resolvedOptions().timeZone ?? "";
     }
   }, []);
 
   return (
     <form action={action} className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold">What&apos;s your business called?</h1>
+        <h1 className="text-xl font-semibold">
+          What&apos;s your business called?
+        </h1>
         <p className="mt-1 text-sm text-slate-500">
           You can change this later in Settings.
         </p>
       </div>
 
       <div>
-        <label htmlFor="name" className="label">Business name</label>
+        <label htmlFor="name" className="label">
+          Business name
+        </label>
         <input
           id="name"
           name="name"

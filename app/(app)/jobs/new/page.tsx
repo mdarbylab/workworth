@@ -7,7 +7,10 @@ export const metadata: Metadata = { title: "New job" };
 
 export default async function NewJobPage() {
   const supabase = await createClient();
-  const { data: clients } = await supabase.from("clients").select("name").order("name");
+  const { data: clients } = await supabase
+    .from("clients")
+    .select("name")
+    .order("name");
 
   return (
     <div className="space-y-6">

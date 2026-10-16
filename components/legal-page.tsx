@@ -22,9 +22,17 @@ export function LegalPage({
       <p className="mt-1 text-sm text-slate-500">Last updated {updated}</p>
       <div className="legal mt-6 space-y-4">{children}</div>
       <p className="mt-10 border-t border-slate-200 pt-4 text-xs text-slate-400">
-        <Link href="/privacy" className="hover:underline">Privacy</Link> ·{" "}
-        <Link href="/terms" className="hover:underline">Terms</Link> ·{" "}
-        <Link href="/impressum" className="hover:underline">Impressum</Link>
+        <Link href="/privacy" className="hover:underline">
+          Privacy
+        </Link>{" "}
+        ·{" "}
+        <Link href="/terms" className="hover:underline">
+          Terms
+        </Link>{" "}
+        ·{" "}
+        <Link href="/impressum" className="hover:underline">
+          Impressum
+        </Link>
       </p>
     </main>
   );

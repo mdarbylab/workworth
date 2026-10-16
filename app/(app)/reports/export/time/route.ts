@@ -16,7 +16,11 @@ export async function GET(request: NextRequest) {
 
   const sp = request.nextUrl.searchParams;
   const period = resolvePeriod(
-    { period: sp.get("period") ?? undefined, from: sp.get("from") ?? undefined, to: sp.get("to") ?? undefined },
+    {
+      period: sp.get("period") ?? undefined,
+      from: sp.get("from") ?? undefined,
+      to: sp.get("to") ?? undefined,
+    },
     tz,
   );
 
@@ -24,7 +28,9 @@ export async function GET(request: NextRequest) {
   const [{ data: entries }, people] = await Promise.all([
     supabase
       .from("time_entries")
-      .select("id, user_id, started_at, stopped_at, duration_seconds, notes, source, jobs(name, clients(name))")
+      .select(
+        "id, user_id, started_at, stopped_at, duration_seconds, notes, source, jobs(name, clients(name))",
+      )
       .not("stopped_at", "is", null)
       .gte("started_at", period.from.toISOString())
       .lt("started_at", period.to.toISOString())
@@ -66,15 +72,34 @@ export async function GET(request: NextRequest) {
     ];
   });
 
-  track("csv_exported", { userId: ctx.user.id, organizationId: ctx.organization.id }, {
-    kind: "time",
-    period: period.key,
-    rows: rows.length,
-  });
+  track(
+    "csv_exported",
+    { userId: ctx.user.id, organizationId: ctx.organization.id },
+    {
+      kind: "time",
+      period: period.key,
+      rows: rows.length,
+    },
+  );
 
   const csv = toCsv(
-    ["Date", "Start", "Stop date", "Stop", "Hours", "Job", "Client", "Person", "Source", "Edited", "Notes"],
+    [
+      "Date",
+      "Start",
+      "Stop date",
+      "Stop",
+      "Hours",
+      "Job",
+      "Client",
+      "Person",
+      "Source",
+      "Edited",
+      "Notes",
+    ],
     rows,
   );
-  return csvResponse(`workworth-time-${period.fromKey}-to-${period.toKey}.csv`, csv);
+  return csvResponse(
+    `workworth-time-${period.fromKey}-to-${period.toKey}.csv`,
+    csv,
+  );
 }

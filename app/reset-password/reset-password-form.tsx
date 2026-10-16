@@ -12,12 +12,16 @@ export function ResetPasswordForm() {
     <div className="space-y-5">
       <div>
         <h1 className="text-xl font-semibold">Set a new password</h1>
-        <p className="mt-1 text-sm text-slate-500">Choose a new password for your account.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          Choose a new password for your account.
+        </p>
       </div>
 
       <form action={action} className="space-y-4">
         <div>
-          <label htmlFor="password" className="label">New password</label>
+          <label htmlFor="password" className="label">
+            New password
+          </label>
           <input
             id="password"
             name="password"
@@ -30,7 +34,9 @@ export function ResetPasswordForm() {
           />
         </div>
         <div>
-          <label htmlFor="confirm" className="label">Confirm password</label>
+          <label htmlFor="confirm" className="label">
+            Confirm password
+          </label>
           <input
             id="confirm"
             name="confirm"
