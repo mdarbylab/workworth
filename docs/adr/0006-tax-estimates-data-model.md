@@ -1,6 +1,6 @@
 # ADR 0006: Tax estimates data model
 
-- **Status:** Proposed
+- **Status:** Accepted (owner merged PR #36, 2026-10-17)
 - **Date:** 2026-10-17
 - **Requirements:** REQ-047, REQ-048
 
@@ -27,6 +27,6 @@ Option 1.
 
 ## Consequences
 
-- Each January someone must add the new year's row; until then the screen says the year's rates aren't loaded rather than guessing. Who owns that is still open (SPEC §14) and is put to the owner in the SL-02 pull request.
+- Each January someone must add the new year's row; until then the screen says the year's rates aren't loaded rather than guessing. Claude proposes it by migration each December and the owner approves it (SPEC §14, settled 2026-10-17).
 - Two new tables with RLS enter the SL-05 security re-audit list. Neither is org-scoped: `tax_years` holds no customer data and `tax_consents` holds only a user id, a version and a timestamp.
 - The estimate inherits the Reports definition of profit (tracked time × rate, fixed prices, expenses), not cash received. The disclaimer says so.

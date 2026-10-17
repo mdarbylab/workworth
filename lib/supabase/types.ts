@@ -494,6 +494,27 @@ export type Database = {
           },
         ]
       }
+      tax_brackets: {
+        Row: {
+          filing_status: string
+          lower_cents: number
+          rate_bp: number
+          tax_year: number
+        }
+        Insert: {
+          filing_status: string
+          lower_cents: number
+          rate_bp: number
+          tax_year: number
+        }
+        Update: {
+          filing_status?: string
+          lower_cents?: number
+          rate_bp?: number
+          tax_year?: number
+        }
+        Relationships: []
+      }
       tax_consents: {
         Row: {
           agreed_at: string
@@ -512,6 +533,24 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_profiles: {
+        Row: {
+          filing_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          filing_status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          filing_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tax_years: {
         Row: {
           additional_medicare_rate_bp: number
@@ -523,6 +562,10 @@ export type Database = {
           se_earnings_factor_bp: number
           social_security_rate_bp: number
           social_security_wage_base_cents: number
+          standard_deduction_head_cents: number
+          standard_deduction_joint_cents: number
+          standard_deduction_separate_cents: number
+          standard_deduction_single_cents: number
           source: string
           tax_year: number
         }
@@ -536,6 +579,10 @@ export type Database = {
           se_earnings_factor_bp: number
           social_security_rate_bp: number
           social_security_wage_base_cents: number
+          standard_deduction_head_cents: number
+          standard_deduction_joint_cents: number
+          standard_deduction_separate_cents: number
+          standard_deduction_single_cents: number
           source: string
           tax_year: number
         }
@@ -549,6 +596,10 @@ export type Database = {
           se_earnings_factor_bp?: number
           social_security_rate_bp?: number
           social_security_wage_base_cents?: number
+          standard_deduction_head_cents?: number
+          standard_deduction_joint_cents?: number
+          standard_deduction_separate_cents?: number
+          standard_deduction_single_cents?: number
           source?: string
           tax_year?: number
         }

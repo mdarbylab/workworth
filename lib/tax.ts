@@ -15,14 +15,36 @@ export type TaxYearRates = {
   additional_medicare_threshold_single_cents: number;
   additional_medicare_threshold_joint_cents: number;
   additional_medicare_threshold_separate_cents: number;
+  standard_deduction_single_cents: number;
+  standard_deduction_joint_cents: number;
+  standard_deduction_separate_cents: number;
+  standard_deduction_head_cents: number;
 };
 
 /** The columns to select from `tax_years` to get a TaxYearRates. */
 export const TAX_YEAR_COLUMNS =
-  "tax_year, se_earnings_factor_bp, social_security_rate_bp, social_security_wage_base_cents, medicare_rate_bp, additional_medicare_rate_bp, additional_medicare_threshold_single_cents, additional_medicare_threshold_joint_cents, additional_medicare_threshold_separate_cents";
+  "tax_year, se_earnings_factor_bp, social_security_rate_bp, social_security_wage_base_cents, medicare_rate_bp, additional_medicare_rate_bp, additional_medicare_threshold_single_cents, additional_medicare_threshold_joint_cents, additional_medicare_threshold_separate_cents, standard_deduction_single_cents, standard_deduction_joint_cents, standard_deduction_separate_cents, standard_deduction_head_cents";
 
-/** Filing status arrives with federal income tax (SL-03); until then, single. */
-export type FilingStatus = "single" | "joint" | "separate";
+/** Per account (`tax_profiles`); single until the account picks one (ADR 0007). */
+export type FilingStatus = "single" | "joint" | "separate" | "head";
+
+export const FILING_STATUSES: Array<{ value: FilingStatus; label: string }> = [
+  { value: "single", label: "Single" },
+  { value: "joint", label: "Married filing jointly" },
+  { value: "separate", label: "Married filing separately" },
+  { value: "head", label: "Head of household" },
+];
+
+export function isFilingStatus(v: unknown): v is FilingStatus {
+  return FILING_STATUSES.some((s) => s.value === v);
+}
+
+/** One row of `tax_brackets`: the rate on income above `lower_cents`, up to the next row's lower bound. */
+export type TaxBracket = {
+  filing_status: FilingStatus;
+  lower_cents: number;
+  rate_bp: number;
+};
 
 export type SelfEmploymentTax = {
   earningsCents: number;
@@ -53,10 +75,12 @@ export function selfEmploymentTax(
       totalCents: 0,
     };
   }
+  // Head of household uses the single threshold, as the IRS does.
   const threshold = {
     single: rates.additional_medicare_threshold_single_cents,
     joint: rates.additional_medicare_threshold_joint_cents,
     separate: rates.additional_medicare_threshold_separate_cents,
+    head: rates.additional_medicare_threshold_single_cents,
   }[status];
   const ss = bp(
     Math.min(earnings, rates.social_security_wage_base_cents),
@@ -74,6 +98,106 @@ export function selfEmploymentTax(
     additionalMedicareCents: additional,
     totalCents: ss + medicare + additional,
   };
+}
+
+/** Tax on `taxableCents` through one filing status's brackets. */
+export function bracketTax(
+  taxableCents: number,
+  brackets: TaxBracket[],
+): number {
+  const sorted = [...brackets].sort((a, b) => a.lower_cents - b.lower_cents);
+  let tax = 0;
+  sorted.forEach((b, i) => {
+    const upper = sorted[i + 1]?.lower_cents ?? Infinity;
+    const slice = Math.min(taxableCents, upper) - b.lower_cents;
+    if (slice > 0) tax += (slice * b.rate_bp) / 10_000;
+  });
+  return Math.round(tax);
+}
+
+export type FederalIncomeTax = {
+  seDeductionCents: number;
+  standardDeductionCents: number;
+  taxableCents: number;
+  taxCents: number;
+};
+
+/**
+ * A year's federal income tax on the business's profit, assuming it is the
+ * person's only income: profit less half the self-employment tax and the
+ * standard deduction, through the brackets. No qualified business income
+ * deduction (ADR 0007), so it leans toward setting aside too much.
+ */
+export function federalIncomeTax(
+  profitCents: number,
+  rates: TaxYearRates,
+  brackets: TaxBracket[],
+  status: FilingStatus,
+): FederalIncomeTax {
+  const seDeduction = Math.round(
+    selfEmploymentTax(profitCents, rates, status).totalCents / 2,
+  );
+  const standard = {
+    single: rates.standard_deduction_single_cents,
+    joint: rates.standard_deduction_joint_cents,
+    separate: rates.standard_deduction_separate_cents,
+    head: rates.standard_deduction_head_cents,
+  }[status];
+  const taxable = Math.max(0, profitCents - seDeduction - standard);
+  return {
+    seDeductionCents: seDeduction,
+    standardDeductionCents: standard,
+    taxableCents: taxable,
+    taxCents: bracketTax(
+      taxable,
+      brackets.filter((b) => b.filing_status === status),
+    ),
+  };
+}
+
+/** Share of `endKey`'s year elapsed by the end of that day, from 1/365 (or 1/366) to 1. */
+export function yearFraction(endKey: string): number {
+  const year = Number(endKey.slice(0, 4));
+  const day =
+    (Date.parse(`${endKey}T00:00:00Z`) - Date.UTC(year, 0, 1)) / 86_400_000 + 1;
+  const days = (Date.UTC(year + 1, 0, 1) - Date.UTC(year, 0, 1)) / 86_400_000;
+  return day / days;
+}
+
+/**
+ * Income tax owed by a point in the year: the tax on year-to-date profit
+ * annualized over the share of the year gone, times that share (ADR 0007).
+ * Progressive brackets make this more than taxing the profit so far as if
+ * it were the whole year, so early quarters don't come up short.
+ */
+export function incomeTaxToDate(
+  ytdProfitCents: number,
+  fraction: number,
+  rates: TaxYearRates,
+  brackets: TaxBracket[],
+  status: FilingStatus,
+): number {
+  if (fraction <= 0) return 0;
+  const annual = federalIncomeTax(
+    Math.round(ytdProfitCents / fraction),
+    rates,
+    brackets,
+    status,
+  ).taxCents;
+  return Math.round(annual * fraction);
+}
+
+/** Tax owed to date at each period end → what each period sets aside: the increase on earlier periods, never below zero. Null for a period not started. */
+export function spreadSetAside(
+  owedToDate: Array<number | null>,
+): Array<number | null> {
+  let setAside = 0;
+  return owedToDate.map((owed) => {
+    if (owed === null) return null;
+    const due = Math.max(0, owed - setAside);
+    setAside += due;
+    return due;
+  });
 }
 
 export type TaxQuarter = {
@@ -156,14 +280,17 @@ export function setAsideByQuarter(
   rates: TaxYearRates,
   status: FilingStatus = "single",
 ): Array<QuarterSetAside | null> {
-  let setAside = 0;
-  return ytdProfitCents.map((profit) => {
-    if (profit === null) return null;
-    const ytdTax = selfEmploymentTax(profit, rates, status).totalCents;
-    const due = Math.max(0, ytdTax - setAside);
-    setAside += due;
-    return { ytdTaxCents: ytdTax, setAsideCents: due };
-  });
+  const owed = ytdProfitCents.map((profit) =>
+    profit === null
+      ? null
+      : selfEmploymentTax(profit, rates, status).totalCents,
+  );
+  const due = spreadSetAside(owed);
+  return owed.map((ytdTax, i) =>
+    ytdTax === null
+      ? null
+      : { ytdTaxCents: ytdTax, setAsideCents: due[i] ?? 0 },
+  );
 }
 
 export function hasAgreedToTaxDisclaimer(
