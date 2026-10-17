@@ -494,6 +494,66 @@ export type Database = {
           },
         ]
       }
+      tax_consents: {
+        Row: {
+          agreed_at: string
+          disclaimer_version: number
+          user_id: string
+        }
+        Insert: {
+          agreed_at?: string
+          disclaimer_version: number
+          user_id: string
+        }
+        Update: {
+          agreed_at?: string
+          disclaimer_version?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tax_years: {
+        Row: {
+          additional_medicare_rate_bp: number
+          additional_medicare_threshold_joint_cents: number
+          additional_medicare_threshold_separate_cents: number
+          additional_medicare_threshold_single_cents: number
+          created_at: string
+          medicare_rate_bp: number
+          se_earnings_factor_bp: number
+          social_security_rate_bp: number
+          social_security_wage_base_cents: number
+          source: string
+          tax_year: number
+        }
+        Insert: {
+          additional_medicare_rate_bp: number
+          additional_medicare_threshold_joint_cents: number
+          additional_medicare_threshold_separate_cents: number
+          additional_medicare_threshold_single_cents: number
+          created_at?: string
+          medicare_rate_bp: number
+          se_earnings_factor_bp: number
+          social_security_rate_bp: number
+          social_security_wage_base_cents: number
+          source: string
+          tax_year: number
+        }
+        Update: {
+          additional_medicare_rate_bp?: number
+          additional_medicare_threshold_joint_cents?: number
+          additional_medicare_threshold_separate_cents?: number
+          additional_medicare_threshold_single_cents?: number
+          created_at?: string
+          medicare_rate_bp?: number
+          se_earnings_factor_bp?: number
+          social_security_rate_bp?: number
+          social_security_wage_base_cents?: number
+          source?: string
+          tax_year?: number
+        }
+        Relationships: []
+      }
       time_entries: {
         Row: {
           created_at: string

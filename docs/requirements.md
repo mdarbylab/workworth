@@ -54,8 +54,9 @@ Everything shipped before 2026-10-16 was approved by the owner when its sprint m
 | REQ-044 | The database is dumped nightly, encrypted, to a separate private repository | 11 | I | v1 | Implemented |
 | REQ-045 | The app works on iPhone Safari, Android Chrome and desktop Chrome at 375px and 1280px | 13.10 | D | v1 | Implemented |
 | REQ-046 | Receipts (Pro only) are stored in a private Supabase Storage bucket under `{organization_id}/{expense_id}/{file}`, visible only to someone who can see the expense; uploads are images or PDF up to 4 MB; viewing is only through a signed link that expires after a minute | 5.4, 11 | T, I | Sprint 8 | Implemented |
-| REQ-047 | Tax estimates show a quarterly "set aside" amount (self-employment tax, federal income tax by filing status, and a state estimate) against the four IRS due dates, from rate tables versioned by `tax_year`; progressive-bracket states are labelled as an effective-rate approximation | 14 (SL-02 to SL-04) | T | SL-02 to SL-04 | Approved |
-| REQ-048 | Tax estimates unlock only after the account explicitly agrees to a one-time disclaimer, recorded per account | 14 (SL-02) | T | SL-02 | Approved |
+| REQ-047 | Tax estimates show a quarterly "set aside" amount (self-employment tax, federal income tax by filing status, and a state estimate) against the four IRS due dates, from rate tables versioned by `tax_year`; progressive-bracket states are labelled as an effective-rate approximation | 5.10, 14 (SL-02 to SL-04) | T | SL-02 to SL-04 | Approved |
+| REQ-048 | Tax estimates unlock only after the account explicitly agrees to a one-time disclaimer, recorded per account | 5.10, 14 (SL-02) | T, I | SL-02 | Implemented |
+| REQ-049 | The official release ships as iOS and Android apps, alongside the web app | 3, 10, 14 (Release) | D | Not yet a slice | Proposed |
 
 ## Verification evidence
 
@@ -70,4 +71,6 @@ Everything shipped before 2026-10-16 was approved by the owner when its sprint m
 | REQ-034 | `lib/calc.test.ts`: `profitCents`, `effectiveRateCents`, `the formatDuration / effectiveRateCents boundary`, `formatRate` |
 | REQ-037 | `lib/billing.test.ts`: `subscriptionStatusLabel` |
 | REQ-046 | `lib/receipts.test.ts`: `checkReceipt`, `receiptPath` (file checks and path shape only; storage policies were checked live on 2026-10-16, see docs/history.md) |
+| REQ-047 | `lib/tax.test.ts`: `selfEmploymentTax`, `estimatedTaxQuarters`, `setAsideByQuarter` (self-employment tax only; federal and state come with SL-03 and SL-04) |
+| REQ-048 | `lib/tax.test.ts`: `hasAgreedToTaxDisclaimer` (the version check only; the `tax_consents` policies are by inspection until the SL-05 cross-tenant suite) |
 | REQ-040 | `scripts/secret-scan.sh` (`npm run scan:secrets`) covers committed secrets; customer data is by inspection |

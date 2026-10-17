@@ -190,6 +190,26 @@ export default async function ReportsPage({
         )}
       </section>
 
+      {ctx.hasFullAccess && (
+        <section className="space-y-2">
+          <h2 className="font-semibold">Taxes</h2>
+          <Link
+            href="/reports/taxes"
+            className="card flex items-center justify-between gap-4 hover:bg-slate-50"
+          >
+            <span>
+              <span className="block font-medium">Tax estimates</span>
+              <span className="block text-sm text-slate-500">
+                How much to set aside for each quarterly IRS payment.
+              </span>
+            </span>
+            <span aria-hidden className="text-slate-400">
+              →
+            </span>
+          </Link>
+        </section>
+      )}
+
       <section className="space-y-2">
         <h2 className="font-semibold">Export CSV</h2>
         <div className="grid grid-cols-2 gap-3">

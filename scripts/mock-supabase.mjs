@@ -324,6 +324,25 @@ const audit_events = [
 const invoices = [];
 const invoice_lines = [];
 
+// Same figures as supabase/migrations/20261017000000_tax_estimates.sql.
+const taxYear = (tax_year, wageBase) => ({
+  tax_year,
+  se_earnings_factor_bp: 9235,
+  social_security_rate_bp: 1240,
+  social_security_wage_base_cents: wageBase,
+  medicare_rate_bp: 290,
+  additional_medicare_rate_bp: 90,
+  additional_medicare_threshold_single_cents: 20000000,
+  additional_medicare_threshold_joint_cents: 25000000,
+  additional_medicare_threshold_separate_cents: 12500000,
+  source: "mock",
+});
+const tax_years = [taxYear(2025, 17610000), taxYear(2026, 18450000)];
+// MOCK_TAX_AGREED=1 skips the tax disclaimer.
+const tax_consents = process.env.MOCK_TAX_AGREED
+  ? [{ user_id: ME, disclaimer_version: 1, agreed_at: hoursAgo(1) }]
+  : [];
+
 const tables = {
   organizations,
   memberships,
@@ -335,6 +354,8 @@ const tables = {
   subscriptions,
   invoices,
   invoice_lines,
+  tax_years,
+  tax_consents,
 };
 
 // MOCK_EMPTY=1 keeps only the org and owner, for exercising empty states.
