@@ -325,7 +325,7 @@ const invoices = [];
 const invoice_lines = [];
 
 // Same figures as supabase/migrations/20261017000000_tax_estimates.sql.
-const taxYear = (tax_year, wageBase) => ({
+const taxYear = (tax_year, wageBase, std) => ({
   tax_year,
   se_earnings_factor_bp: 9235,
   social_security_rate_bp: 1240,
@@ -335,9 +335,42 @@ const taxYear = (tax_year, wageBase) => ({
   additional_medicare_threshold_single_cents: 20000000,
   additional_medicare_threshold_joint_cents: 25000000,
   additional_medicare_threshold_separate_cents: 12500000,
+  standard_deduction_single_cents: std,
+  standard_deduction_joint_cents: std * 2,
+  standard_deduction_separate_cents: std,
+  standard_deduction_head_cents: std * 1.5,
   source: "mock",
 });
-const tax_years = [taxYear(2025, 17610000), taxYear(2026, 18450000)];
+const tax_years = [
+  taxYear(2025, 17610000, 1575000),
+  taxYear(2026, 18450000, 1610000),
+];
+// Same figures as supabase/migrations/20261017010000_federal_income_tax.sql.
+const BRACKET_TOPS = {
+  2025: {
+    single: [11925, 48475, 103350, 197300, 250525, 626350],
+    joint: [23850, 96950, 206700, 394600, 501050, 751600],
+    separate: [11925, 48475, 103350, 197300, 250525, 375800],
+    head: [17000, 64850, 103350, 197300, 250500, 626350],
+  },
+  2026: {
+    single: [12400, 50400, 105700, 201775, 256225, 640600],
+    joint: [24800, 100800, 211400, 403550, 512450, 768700],
+    separate: [12400, 50400, 105700, 201775, 256225, 384350],
+    head: [17700, 67450, 105700, 201750, 256200, 640600],
+  },
+};
+const tax_brackets = Object.entries(BRACKET_TOPS).flatMap(([year, byStatus]) =>
+  Object.entries(byStatus).flatMap(([filing_status, tops]) =>
+    [0, ...tops].map((lower, i) => ({
+      tax_year: Number(year),
+      filing_status,
+      lower_cents: lower * 100,
+      rate_bp: [1000, 1200, 2200, 2400, 3200, 3500, 3700][i],
+    })),
+  ),
+);
+const tax_profiles = [];
 // MOCK_TAX_AGREED=1 skips the tax disclaimer.
 const tax_consents = process.env.MOCK_TAX_AGREED
   ? [{ user_id: ME, disclaimer_version: 1, agreed_at: hoursAgo(1) }]
@@ -355,7 +388,9 @@ const tables = {
   invoices,
   invoice_lines,
   tax_years,
+  tax_brackets,
   tax_consents,
+  tax_profiles,
 };
 
 // MOCK_EMPTY=1 keeps only the org and owner, for exercising empty states.
@@ -632,6 +667,13 @@ if (isMain)
             updated_at: now.toISOString(),
             ...r,
           }));
+          // Upserts (on_conflict) replace the row they collide with.
+          const conflict = url.searchParams.get("on_conflict")?.split(",");
+          if (conflict && tables[table])
+            tables[table] = tables[table].filter(
+              (old) =>
+                !rows.some((r) => conflict.every((c) => r[c] === old[c])),
+            );
           tables[table]?.push(...rows);
           return json(res, 201, wantsObject ? rows[0] : rows);
         }

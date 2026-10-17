@@ -71,6 +71,6 @@ Everything shipped before 2026-10-16 was approved by the owner when its sprint m
 | REQ-034 | `lib/calc.test.ts`: `profitCents`, `effectiveRateCents`, `the formatDuration / effectiveRateCents boundary`, `formatRate` |
 | REQ-037 | `lib/billing.test.ts`: `subscriptionStatusLabel` |
 | REQ-046 | `lib/receipts.test.ts`: `checkReceipt`, `receiptPath` (file checks and path shape only; storage policies were checked live on 2026-10-16, see docs/history.md) |
-| REQ-047 | `lib/tax.test.ts`: `selfEmploymentTax`, `estimatedTaxQuarters`, `setAsideByQuarter` (self-employment tax only; federal and state come with SL-03 and SL-04) |
+| REQ-047 | `lib/tax.test.ts`: `selfEmploymentTax`, `estimatedTaxQuarters`, `setAsideByQuarter`, `bracketTax`, `federalIncomeTax`, `yearFraction`, `incomeTaxToDate`, `spreadSetAside` (self-employment and federal income tax; state comes with SL-04) |
 | REQ-048 | `lib/tax.test.ts`: `hasAgreedToTaxDisclaimer` (the version check only; the `tax_consents` policies are by inspection until the SL-05 cross-tenant suite) |
 | REQ-040 | `scripts/secret-scan.sh` (`npm run scan:secrets`) covers committed secrets; customer data is by inspection |

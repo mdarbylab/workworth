@@ -256,17 +256,25 @@ no filing, no return math, nothing paid.
   Business), because the estimate needs the whole business's profit.
 - **Self-employment tax (SL-02):** 92.35% of year-to-date profit, Social
   Security up to the year's wage base, Medicare on all of it, plus
-  additional Medicare above the threshold (single filer until SL-03 adds
-  filing status); nothing under $400 of net earnings. Shown as a headline
+  additional Medicare above the filing status's threshold; nothing under $400 of net earnings. Shown as a headline
   "set aside" for the next payment, then a row per IRS payment period
   (Jan–Mar, Apr–May, Jun–Aug, Sep–Dec) against its due date (Apr 15,
   Jun 15, Sep 15, Jan 15, moved past weekends and federal holidays). Each
   period sets aside the tax on year-to-date profit through its end less
   what earlier periods set aside, never below zero.
-- **Rates** come from `tax_years`, one row per year, never from code.
-  Until a year's row exists the screen says so instead of guessing.
-- Federal income tax (SL-03) and a state estimate (SL-04) are added to the
-  same screen.
+- **Federal income tax (SL-03, ADR 0007):** filing status (single,
+  married filing jointly or separately, head of household) is picked on the
+  screen and saved per account (`tax_profiles`); until then, single, and
+  the screen says so. Taxable income is profit less half the
+  self-employment tax and the standard deduction, through the year's
+  brackets, assuming the business is the person's only income. No
+  qualified business income deduction, so the estimate leans toward
+  setting aside too much. Income tax to date is annualized: the year's tax
+  at the pace so far, times the share of the year gone. Each period's
+  set-aside covers both taxes together.
+- **Rates** come from `tax_years` and `tax_brackets`, never from code.
+  Until a year's rows exist the screen says so instead of guessing.
+- A state estimate (SL-04) is added to the same screen.
 
 ---
 
@@ -307,7 +315,9 @@ All tables have `id uuid`, `created_at`, `updated_at`. All org-scoped tables hav
 | `audit_events` | change history | actor_user_id, table_name, record_id, action, before (jsonb), after (jsonb) |
 | `invoices` | a billed document for a client (§5.9, Sprint 6) | organization_id, client_id (nullable), number (`INV-0001`, sequential per org), status (`draft`/`sent`/`paid`/`void`), issued_on, due_on, total_cents (derived — see invoice_lines) |
 | `invoice_lines` | one invoice's line items | organization_id, invoice_id, job_id (nullable, traceability only), description, quantity, unit_cents, total_cents (`invoices.total_cents` is a trigger-maintained sum of these, never written directly by app code) |
-| `tax_years` | tax rates by year (§5.10, SL-02; not org-scoped, read-only reference data) | tax_year (key), se_earnings_factor_bp, social_security_rate_bp, social_security_wage_base_cents, medicare_rate_bp, additional_medicare_rate_bp, additional_medicare_threshold_{single,joint,separate}_cents, source. Rates in basis points, amounts in cents |
+| `tax_years` | tax rates by year (§5.10, SL-02; not org-scoped, read-only reference data) | tax_year (key), se_earnings_factor_bp, social_security_rate_bp, social_security_wage_base_cents, medicare_rate_bp, additional_medicare_rate_bp, additional_medicare_threshold_{single,joint,separate}_cents, standard_deduction_{single,joint,separate,head}_cents (SL-03), source. Rates in basis points, amounts in cents |
+| `tax_brackets` | federal income tax brackets (§5.10, SL-03; read-only reference data) | tax_year, filing_status, lower_cents, rate_bp: the rate on income above lower_cents, up to the next row's |
+| `tax_profiles` | the account's filing status (§5.10, SL-03; per account) | user_id (key), filing_status (`single`/`joint`/`separate`/`head`), updated_at |
 | `tax_consents` | the tax disclaimer agreement (§5.10, SL-02; per account, not org-scoped) | user_id, disclaimer_version, agreed_at (database clock) |
 | `subscriptions` | Pro billing (Sprint 3) | organization_id (unique), stripe_customer_id (unique), stripe_subscription_id, status (`trialing`/`active`/`past_due`/`canceled`/`incomplete`/`incomplete_expired`/`unpaid`), current_period_end, cancel_at (nullable — Stripe's own cancellation-scheduled timestamp; not always equal to current_period_end, e.g. a trial cancels at the trial's end), price_interval (`month`/`year`) |
 
@@ -479,6 +489,7 @@ last sprints were scoped; it carries over unchanged.
 | Sprint 6 | Invoicing (§5.9) |
 | Sprint 7 | Mileage expenses (§5.4) and billing rounding (§8.1) |
 | Sprint 8 | Receipt attachments on expenses (§5.4) |
+| SL-02 | Tax estimates part 1: consent gate and self-employment tax (§5.10). Merged 2026-10-17 (PR #36); the owner applied its migration to the live database the same day |
 
 What happened in each, and why, is in [docs/history.md](docs/history.md).
 
@@ -487,21 +498,21 @@ What happened in each, and why, is in [docs/history.md](docs/history.md).
 | Slice | Scope | Requirements |
 |---|---|---|
 | SL-01 | Live check of the 10-seat cap through the real invite, signup and accept screens: invite up to 10 accounts on the live Pro org, confirm each accepts, confirm the 11th is refused with the plan-aware message. Needs the owner (real accounts and sign-in are off-limits to Claude). Not blocking anything: the database-level limit was already proven live on 2026-10-07. | REQ-026 |
-| SL-02 *(in progress)* | **Tax estimates, part 1: consent gate and self-employment tax.** The one-time disclaimer (an estimate, not tax advice, consult a professional) with explicit agreement recorded per account before the feature unlocks; then self-employment tax (15.3% plus additional Medicare above the threshold) shown as "set aside this much" per quarter against the four IRS due dates (Apr 15, Jun 15, Sep 15, Jan 15). Rates come from a `tax_year`-versioned table, never hardcoded. Needs an ADR first (data model). | REQ-047, REQ-048 |
-| SL-03 | **Tax estimates, part 2: federal income tax**, bracket-based, with filing status as an input. | REQ-047 |
+| SL-03 *(in progress)* | **Tax estimates, part 2: federal income tax**, bracket-based, with filing status as an input. | REQ-047 |
 | SL-04 | **Tax estimates, part 3: state.** No-tax and flat-rate states get an exact estimate; progressive-bracket states (CA, NY and others) get a clearly labelled single effective-rate approximation with extra caveat language, not full bracket modelling. | REQ-047 |
 | SL-05 | **Security-hardening close**, before any integration opens an external connection: re-audit every RLS policy and security-definer function added since Sprint 5 (seat limit, invoicing, mileage, receipts and their storage policies, tax estimates) for consistency and least privilege; re-check the receipt bucket's policies; revisit the deferred Supabase performance lints; run the `security-review` skill as a structured pass; add an automated cross-tenant leak test suite (handbook quality gate, **(planned)** here). | REQ-038, REQ-039 |
 
 Tax estimates are a cash-flow planning estimate, not a filing tool: no
 e-filing and no return math. Two decisions were taken knowingly on
 2026-10-09: federal **and** state, not federal only; and approximating
-progressive-bracket states rather than modelling them. Still open: who
-updates the rate tables each January. Proposed with SL-02 (2026-10-17), for
-the owner to decide at merge: Claude adds the new year's `tax_years` row by
-migration each December once the SSA publishes the wage base (October) and
-the IRS publishes the year's figures, the owner approves it like any other
-PR, and until it lands the screen says the year isn't loaded rather than
-guessing.
+progressive-bracket states rather than modelling them. Who updates the
+rate tables each January was settled when the owner merged SL-02
+(2026-10-17): Claude adds the new year's rows by migration each December
+once the SSA publishes the wage base (October) and the IRS publishes the
+year's figures, the owner approves it like any other PR, and until it
+lands the screen says the year isn't loaded rather than guessing. Open with
+SL-03, for the owner at merge: whether to add a simplified qualified
+business income deduction (ADR 0007 leaves it out).
 
 ### Release
 

@@ -8,13 +8,20 @@ import { resolvePeriod } from "@/lib/periods";
 import { buildReport } from "@/lib/reports";
 import { formatCents, roundingConfigFor } from "@/lib/calc";
 import {
+  FILING_STATUSES,
   TAX_YEAR_COLUMNS,
   estimatedTaxQuarters,
+  federalIncomeTax,
   hasAgreedToTaxDisclaimer,
+  incomeTaxToDate,
+  isFilingStatus,
   selfEmploymentTax,
-  setAsideByQuarter,
+  spreadSetAside,
+  yearFraction,
+  type TaxBracket,
 } from "@/lib/tax";
 import { TaxConsentForm } from "./consent-form";
+import { FilingStatusForm } from "./filing-status-form";
 
 export const metadata: Metadata = { title: "Tax estimates" };
 
@@ -107,13 +114,35 @@ export default async function TaxesPage() {
       ? thisYear - 1
       : thisYear;
 
-  const { data: rates } = await supabase
-    .from("tax_years")
-    .select(TAX_YEAR_COLUMNS)
-    .eq("tax_year", year)
-    .maybeSingle();
+  const [{ data: rates }, { data: bracketRows }, { data: profile }] =
+    await Promise.all([
+      supabase
+        .from("tax_years")
+        .select(TAX_YEAR_COLUMNS)
+        .eq("tax_year", year)
+        .maybeSingle(),
+      supabase
+        .from("tax_brackets")
+        .select("filing_status, lower_cents, rate_bp")
+        .eq("tax_year", year),
+      supabase
+        .from("tax_profiles")
+        .select("filing_status")
+        .eq("user_id", ctx.user.id)
+        .maybeSingle(),
+    ]);
+  const brackets = (bracketRows ?? []).filter((b): b is TaxBracket =>
+    isFilingStatus(b.filing_status),
+  );
+  // No profile yet: single, and the screen says so (ADR 0007).
+  const statusChosen = isFilingStatus(profile?.filing_status);
+  const status = isFilingStatus(profile?.filing_status)
+    ? profile.filing_status
+    : "single";
+  const statusLabel =
+    FILING_STATUSES.find((s) => s.value === status)?.label ?? "Single";
 
-  if (!rates) {
+  if (!rates || !brackets.some((b) => b.filing_status === status)) {
     return (
       <div className="space-y-6">
         <Header />
@@ -138,15 +167,38 @@ export default async function TaxesPage() {
       return (await buildReport(period, rounding)).profitCents;
     }),
   );
-  const setAside = setAsideByQuarter(ytdProfit, rates);
+  // Tax owed by each period's end (or today, for the one in progress):
+  // self-employment tax on actual profit, income tax annualized (ADR 0007).
+  const fractions = quarters.map((q) =>
+    yearFraction(q.toKey < today ? q.toKey : today),
+  );
+  const seOwed = ytdProfit.map((p) =>
+    p === null ? null : selfEmploymentTax(p, rates, status).totalCents,
+  );
+  const incomeOwed = ytdProfit.map((p, i) =>
+    p === null
+      ? null
+      : incomeTaxToDate(p, fractions[i], rates, brackets, status),
+  );
+  const setAside = spreadSetAside(
+    seOwed.map((se, i) => (se === null ? null : se + (incomeOwed[i] ?? 0))),
+  );
 
-  const started = ytdProfit.filter((p): p is number => p !== null);
-  const profitSoFar = started.at(-1) ?? 0;
-  const tax = selfEmploymentTax(profitSoFar, rates);
+  const lastStarted = ytdProfit.findLastIndex((p) => p !== null);
+  const profitSoFar = ytdProfit[lastStarted] ?? 0;
+  const tax = selfEmploymentTax(profitSoFar, rates, status);
+  const incomeSoFar = incomeOwed[lastStarted] ?? 0;
+  const fractionSoFar = fractions[lastStarted] ?? 1;
+  const projected = federalIncomeTax(
+    Math.round(profitSoFar / fractionSoFar),
+    rates,
+    brackets,
+    status,
+  );
 
   // The payment to plan for now: the earliest started period not yet due.
   const nextIndex = quarters.findIndex(
-    (q, i) => setAside[i] && q.dueKey >= today,
+    (q, i) => setAside[i] !== null && q.dueKey >= today,
   );
   const next = nextIndex >= 0 ? quarters[nextIndex] : null;
   const nextOpen = next ? next.toKey >= today : false;
@@ -157,7 +209,7 @@ export default async function TaxesPage() {
     return {
       ...q,
       profitCents: profit === null ? null : profit - prev,
-      setAsideCents: setAside[i]?.setAsideCents ?? null,
+      setAsideCents: setAside[i],
       state:
         q.fromKey > today
           ? "Not started"
@@ -177,10 +229,10 @@ export default async function TaxesPage() {
         {next ? (
           <>
             <p className="text-sm text-slate-600">
-              Set aside for self-employment tax, due {fmtKey(next.dueKey)}
+              Set aside for federal tax, due {fmtKey(next.dueKey)}
             </p>
             <p className="text-3xl font-semibold tabular-nums text-ink-900">
-              {formatCents(setAside[nextIndex]?.setAsideCents ?? 0)}
+              {formatCents(setAside[nextIndex] ?? 0)}
             </p>
             <p className="text-xs text-slate-500">
               {nextOpen
@@ -193,6 +245,9 @@ export default async function TaxesPage() {
             Every {year} payment date has passed.
           </p>
         )}
+        <div className="pt-3">
+          <FilingStatusForm status={status} chosen={statusChosen} />
+        </div>
       </section>
 
       <section className="space-y-2">
@@ -267,6 +322,8 @@ export default async function TaxesPage() {
                   ] as const)
                 : []),
               ["Self-employment tax", tax.totalCents],
+              ["Federal income tax", incomeSoFar],
+              ["Total to set aside so far", tax.totalCents + incomeSoFar],
             ] as const
           ).map(([label, cents]) => (
             <div
@@ -283,9 +340,16 @@ export default async function TaxesPage() {
           ))}
         </dl>
         <p className="pt-3 text-xs text-slate-400">
-          An estimate, not tax advice. Self-employment tax only (Social Security
-          and Medicare) on the profit shown in Reports; it doesn&apos;t include
-          income tax. The extra Medicare tax uses the single-filer threshold.
+          An estimate, not tax advice, on the profit shown in Reports, filing as{" "}
+          {statusLabel.toLowerCase()}. Income tax assumes this business is your
+          only income: at this pace the year&apos;s profit is about{" "}
+          {formatCents(Math.round(profitSoFar / fractionSoFar))}, which after
+          half the self-employment tax and the{" "}
+          {formatCents(projected.standardDeductionCents)} standard deduction
+          comes to about {formatCents(projected.taxCents)} of income tax for the
+          year. It leaves out the qualified business income deduction and other
+          deductions and credits, so it leans toward setting aside too much.
+          State tax isn&apos;t included.
         </p>
       </section>
     </div>
